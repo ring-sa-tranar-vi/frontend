@@ -1,3 +1,5 @@
+@import "tailwindcss";
+
 :root {
   font-family: system-ui, sans-serif;
   color: #111827;
@@ -12,15 +14,4 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-}
-
-.app {
-  display: grid;
-  min-height: 100vh;
-  place-items: center;
-}
-
-h1 {
-  margin: 0;
-  font-size: 2.5rem;
 }
