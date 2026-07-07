@@ -1,17 +1,315 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
 @import 'tailwindcss';
 
 :root {
-  font-family: system-ui, sans-serif;
-  color: #111827;
-  background: #ffffff;
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
+  /* Typography */
+  --brand-font: 'Nunito', system-ui, sans-serif;
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1.0625rem;
+  --text-lg: 1.1875rem;
+  --text-xl: 1.375rem;
+  --text-2xl: 1.75rem;
+
+  --brand-browser-top: #d8cef2;
+  --brand-primary: #5836d6;
+  --brand-primary-strong: #5b3fe6;
+  --brand-primary-deep: #53479d;
+
+  --brand-ink: #100b2f;
+  --brand-ink-soft: #2b254d;
+  --brand-muted: #6f6a93;
+
+  --brand-page: #f5f0ff;
+  --brand-page-start: #f7f2ff;
+  --brand-page-end: #ffffff;
+
+  --brand-soft: #eeeaff;
+  --brand-surface: #fffaff;
+  --brand-surface-soft: #fbf8ff;
+  --brand-surface-glass: rgba(255, 250, 255, 0.7);
+  --brand-surface-raised: rgba(255, 250, 255, 0.78);
+  --brand-control: #f4efff;
+
+  --brand-border: #d8ccff;
+  --brand-border-light: #e3d9ff;
+  --brand-border-field: #ddd2ff;
+  --brand-border-strong: #8067d9;
+  --brand-panel-border: rgba(83, 64, 211, 0.35);
+  --brand-overlay: rgba(255, 255, 255, 0.45);
+  --brand-backdrop: rgba(30, 18, 70, 0.18);
+
+  --brand-shadow: rgba(88, 54, 214, 0);
+  --brand-image-shadow: rgba(42, 32, 88, 0.12);
+
+  --brand-danger: #ef4444;
+  --brand-on-primary: #ffffff;
+  --brand-on-danger: #ffffff;
+
+  /* Component tokens */
+  --brand-card-bg: #f5f2fb;
+  --brand-card-border: #e3d9ff;
+  --brand-field-bg: #f5f2fb;
+  --brand-field-border: #ddd2ff;
+  --brand-title-ink: #281d7a;
+  --brand-body-ink: #5c567f;
+  --brand-btn-secondary-bg: #f0ecfc;
+  --brand-btn-secondary-border: #c5b0f0;
+  --brand-btn-secondary-text: #53479d;
+  --brand-btn-secondary-hover: #e3d9ff;
+
+  --brand-call-background: radial-gradient(
+    circle at top,
+    var(--brand-page-start) 0%,
+    var(--brand-page-end) 58%
+  );
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+  background-color: var(--brand-browser-top);
+}
+
+html {
+  min-height: 100svh;
+  min-height: 100dvh;
+  background-color: var(--brand-browser-top);
+  background:
+    radial-gradient(circle at top, rgba(123, 99, 217, 0.18), transparent 38%),
+    linear-gradient(180deg, var(--brand-browser-top) 0%, #efe7fb 100%);
+  color-scheme: light;
+  overflow-x: hidden;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  position: relative;
+  margin: 0;
+  min-height: 100svh;
+  min-height: 100dvh;
+  font-family: var(--brand-font);
+  background-color: var(--brand-browser-top);
+  background:
+    radial-gradient(circle at top, rgba(123, 99, 217, 0.16), transparent 34%),
+    linear-gradient(180deg, var(--brand-browser-top) 0%, #efe7fb 100%);
+  color: var(--brand-ink);
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior-y: none;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-body {
-  margin: 0;
-  min-width: 320px;
-  min-height: 100vh;
+body::before {
+  content: '';
+  position: fixed;
+  inset: calc(-28svh - env(safe-area-inset-top)) 0 0 0;
+  background-color: #eee7fb;
+  background-image:
+    linear-gradient(rgba(238, 231, 251, 0.92), rgba(238, 231, 251, 0.72)),
+    url('/start-page/background.webp');
+  background-size: cover;
+  background-position: center top;
+  background-repeat: no-repeat;
+  pointer-events: none;
+  z-index: -1;
+}
+
+button,
+[role='button'],
+a,
+label,
+summary {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button,
+[role='button'],
+a {
+  -webkit-touch-callout: none;
+  user-select: none;
+  touch-action: manipulation;
+}
+
+input:not([type='range']),
+textarea,
+select {
+  font-size: 16px;
+}
+
+::selection {
+  background: rgba(91, 63, 214, 0.18);
+  color: var(--brand-ink);
+}
+
+body.admin-shell {
+  overflow-x: hidden;
+}
+
+#root {
+  min-height: 100svh;
+  min-height: 100dvh;
+  overflow-x: clip;
+}
+
+.app-root {
+  height: 100svh;
+  height: 100dvh;
+  min-height: 100svh;
+  min-height: 100dvh;
+}
+
+.app-root-shell {
+  background-color: #eee7fb;
+  background-image:
+    linear-gradient(rgba(238, 231, 251, 0.9), rgba(238, 231, 251, 0.6)),
+    url('/start-page/background.webp');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.app-stage {
+  --stage-inline-pad: clamp(1.25rem, 5cqw, 1.75rem);
+  --stage-safe-top: max(
+    clamp(1.15rem, 4.1cqh, 3rem),
+    calc(env(safe-area-inset-top) + 0.75rem)
+  );
+  --stage-safe-bottom: max(
+    clamp(0.9rem, 2.4cqh, 1.75rem),
+    calc(env(safe-area-inset-bottom) + 0.5rem)
+  );
+  --stage-control-max-width: min(
+    calc(100% - (var(--stage-inline-pad) * 2)),
+    360px
+  );
+  isolation: isolate;
+  background:
+    radial-gradient(circle at top, rgba(136, 111, 226, 0.18), transparent 32%),
+    linear-gradient(180deg, #fbf8ff 0%, #f5efff 100%);
+}
+
+.home-stage {
+  --home-auth-top: var(--stage-safe-top);
+  --home-auth-right: var(--stage-inline-pad);
+  --home-footer-gap: clamp(0.6rem, 1.4cqh, 0.75rem);
+  --home-cta-min-height: clamp(56px, 7cqh, 60px);
+  --hero-logo-top: max(
+    clamp(14px, 2.4cqh, 22px),
+    calc(env(safe-area-inset-top) + 8px)
+  );
+  --hero-logo-width: min(86cqw, 48cqh, 370px);
+  --hero-logo-height: calc(var(--hero-logo-width) * 0.546);
+  --hero-logo-bottom: calc(var(--hero-logo-top) + var(--hero-logo-height));
+  --hero-logo-overlap: clamp(18px, calc(var(--hero-logo-height) * 0.12), 24px);
+  --hero-trainer-width: clamp(240px, min(100cqw, 64cqh), 430px);
+  --hero-trainer-height: calc(var(--hero-trainer-width) * 2.02);
+  --hero-trainer-top: calc(var(--hero-logo-bottom) - var(--hero-logo-overlap));
+  --hero-trainer-glow-width: clamp(
+    220px,
+    calc(var(--hero-trainer-width) * 0.74),
+    320px
+  );
+  --hero-trainer-glow-height: clamp(
+    230px,
+    calc(var(--hero-trainer-width) * 0.84),
+    360px
+  );
+  --hero-trainer-glow-top: calc(
+    var(--hero-trainer-top) + clamp(92px, 13cqh, 128px)
+  );
+}
+
+.home-stage-logo {
+  top: var(--hero-logo-top);
+  width: var(--hero-logo-width);
+}
+
+.home-stage-trainer-glow {
+  top: var(--hero-trainer-glow-top);
+  width: var(--hero-trainer-glow-width);
+  height: var(--hero-trainer-glow-height);
+}
+
+.home-stage-trainer-image {
+  top: var(--hero-trainer-top);
+  width: var(--hero-trainer-width);
+}
+
+.app-sheet-scroll {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.app-sheet-scroll::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+.app-sheet-surface {
+  border-top: 1px solid rgba(255, 255, 255, 0.92);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 254, 255, 0.98) 0%,
+    rgba(250, 245, 255, 0.98) 52%,
+    rgba(245, 238, 255, 0.98) 100%
+  );
+  box-shadow:
+    0 -20px 60px rgba(55, 38, 110, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.82);
+}
+
+.app-sheet-footer {
+  border-top: 1px solid rgba(216, 204, 255, 0.8);
+  background: linear-gradient(
+    180deg,
+    rgba(252, 248, 255, 0.82) 0%,
+    rgba(247, 241, 255, 0.96) 100%
+  );
+  backdrop-filter: blur(12px);
+}
+
+.home-footer-plate {
+  border-top: 1px solid rgba(255, 255, 255, 0.75);
+  background: #e9e0ef;
+  box-shadow:
+    0 -16px 44px rgba(55, 38, 110, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.82);
+}
+
+.app-shell-footer-surface {
+  border-top: 1px solid rgba(255, 255, 255, 0.75);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 252, 255, 0.9) 0%,
+    rgba(247, 241, 255, 0.98) 100%
+  );
+  box-shadow:
+    0 -16px 44px rgba(55, 38, 110, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(14px);
+}
+
+@keyframes pulse-ring {
+  0%,
+  100% {
+    box-shadow: 0 0 6px 3px rgba(196, 176, 255, 0.55);
+  }
+  50% {
+    box-shadow: 0 0 12px 5px rgba(196, 176, 255, 0.2);
+  }
+}
+
+.call-pulse-ring {
+  position: absolute;
+  inset: -3px;
+  border-radius: 9999px;
+  border: 2px solid rgba(196, 176, 255, 0.85);
+  pointer-events: none;
+  animation: pulse-ring 2s ease-in-out infinite;
 }
