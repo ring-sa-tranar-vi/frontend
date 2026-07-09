@@ -45,7 +45,7 @@ jobs:
         run: npm install -g firebase-tools
 
       - name: Deploy to Firebase Hosting (Staging)
-        run: firebase deploy --only hosting --project ${{ env.PROJECT_ID }} --site staging-ringsatranarvi-app
+        run: firebase deploy --only hosting --project ${{ env.PROJECT_ID }} --app staging-ringsatranarvi-app
 
   deploy-production:
     name: 'Deploy to Production'
@@ -82,4 +82,4 @@ jobs:
         run: npm install -g firebase-tools
 
       - name: Deploy to Firebase Hosting (Production)
-        run: firebase deploy --only hosting --project ${{ env.PROJECT_ID }} --site prod-ringsatranarvi-app
+        run: firebase deploy --only hosting --project ${{ env.PROJECT_ID }} --app prod-ringsatranarvi-app
