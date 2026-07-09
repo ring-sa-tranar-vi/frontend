@@ -1,6 +1,6 @@
-const API_URL = (
-  import.meta.env.VITE_API_URL ?? 'https://backend-training.up.railway.app'
-).replace(/\/$/, '')
+import { getApiBaseUrl } from '../apiBaseUrl'
+
+const API_URL = getApiBaseUrl()
 
 type ApiFetchOptions = {
   token?: string

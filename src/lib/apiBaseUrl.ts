@@ -8,9 +8,6 @@ export function getApiBaseUrl(): string {
     ['localhost', '127.0.0.1', '::1'].includes(window.location.hostname)
 
   return (
-    import.meta.env.VITE_API_URL ??
-    (isLocalHost
-      ? 'http://localhost:8080'
-      : 'https://backend-training.up.railway.app')
+    import.meta.env.VITE_API_URL ?? (isLocalHost ? 'http://localhost:8080' : '')
   ).replace(/\/$/, '')
 }
