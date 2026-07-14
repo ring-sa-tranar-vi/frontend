@@ -191,6 +191,27 @@ Main routes:
 - Tamil
 - Urdu
 
+## Deployment & CI/CD
+We deploy the React application to **Firebase Hosting** using GitHub Actions. Because this is a Single Page Application (SPA), the environment-specific variables (like backend API URLs) must be baked into the code at build time.
+
+### The Workflow
+
+All deployments are triggered by merging code into the `main` branch.
+
+1.  **Staging Build & Deploy:** \* The pipeline builds the React app injecting the Staging API URL (`VITE_API_URL`).
+    - The compiled code is deployed to our Staging Firebase Hosting site using Firebase Deploy Targets.
+2.  **Production Build & Deploy:**
+    - The pipeline pauses and waits for manual approval via GitHub Environments.
+    - Once approved, the pipeline runs a _fresh build_, injecting the Production API URL.
+    - The compiled code is deployed to our Production Firebase Hosting site.
+
+### Firebase Configuration (`firebase.json`)
+
+Our repository relies on a `firebase.json` file in the root directory. This configuration ensures that:
+
+- Firebase understands our specific deployment targets (`staging` vs `prod`).
+- All unknown traffic is rewritten to `/index.html` to allow React Router to handle client-side navigation without throwing 404 errors.
+
 ## Related Repositories
 - Backend: [Repository Link](https://github.com/ring-sa-tranar-vi/backend)
 - Infrastructure: [Repository Link](https://github.com/ring-sa-tranar-vi/infrastructure)

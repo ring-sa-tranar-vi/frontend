@@ -35,6 +35,8 @@ jobs:
         run: npm run build
         env:
           VITE_API_URL: ${{ env.STAGING_API_URL }}
+          VITE_CLERK_PUBLISHABLE_KEY: ${{ vars.CLERK_PUBLISHABLE_KEY }}
+          VITE_FARO_URL: ${{ vars.VITE_FARO_URL }}
 
       - name: Authenticate to GCP
         uses: google-github-actions/auth@v3
@@ -75,6 +77,8 @@ jobs:
         run: npm run build
         env:
           VITE_API_URL: ${{ env.PRODUCTION_API_URL }}
+          VITE_CLERK_PUBLISHABLE_KEY: ${{ vars.CLERK_PUBLISHABLE_KEY }}
+          VITE_FARO_URL: ${{ vars.VITE_FARO_URL }}
 
       - name: Authenticate to GCP
         uses: google-github-actions/auth@v3
