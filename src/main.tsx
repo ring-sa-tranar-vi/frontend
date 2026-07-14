@@ -15,19 +15,25 @@ import {
 } from '@grafana/faro-react'
 import { TracingInstrumentation } from '@grafana/faro-web-tracing'
 
-initializeFaro({
-  url: 'https://faro-collector-prod-eu-north-0.grafana.net/collect/9e36dac7f625728f41392c8e7a905770',
-  app: {
-    name: 'ringsatranarvi-frontend',
-    version: '1.0.0',
-    environment: 'production',
-  },
-  instrumentations: [
-    ...getWebInstrumentations(),
-    new TracingInstrumentation(),
-    new ReactIntegration(),
-  ],
-})
+const faroUrl = import.meta.env.VITE_FARO_URL
+
+if (faroUrl) {
+  initializeFaro({
+    url: import.meta.env.VITE_FARO_URL,
+    app: {
+      name: 'ringsatranarvi-frontend',
+      version: '1.0.0',
+      environment: import.meta.env.MODE || 'production',
+    },
+    instrumentations: [
+      ...getWebInstrumentations(),
+      new TracingInstrumentation(),
+      new ReactIntegration(),
+    ],
+  })
+} else {
+  console.warn('Faro URL not found.')
+}
 
 const router = createRouter({ routeTree })
 const queryClient = new QueryClient()
