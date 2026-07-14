@@ -1,261 +1,197 @@
-# Frontend- Ring så tränar vi
+# Ring så Tränar Vi - Frontend
 
 ## Overview
 
-A brief description of the application.
+This frontend powers the Ring så Tränar Vi fitness app for older adults. It provides a user interface for starting AI-guided workout sessions, managing user preferences, and allowing administrators to manage workouts, trainers, and feedback.
 
-Example:
+The application connects to the backend API for authentication, data management, and workout functionality.
 
-The frontend is a React application used by customers to manage orders, view invoices, and update account information. It communicates with the backend through a REST API.
+## Architecture
 
----
+The frontend follows a feature-based React architecture:
+
+```text
+Client Browser
+        |
+        ▼
+Routes (TanStack Router)
+        |
+        ▼
+Features
+        |
+        ▼
+API Layer
+        |
+        ▼
+Backend REST API
+```
+
+- Routes handle navigation and page-level composition
+- Features contain business logic and user-facing functionality
+- API modules handle backend communication
+- Hooks manage reusable state and data fetching
+- Components contain shared UI elements
+
+## Responsibilities
+
+The frontend is responsible for:
+
+- Handling user authentication and authorization
+- Managing application routing and UI state
+- Communicating with backend REST APIs
+- Providing AI trainer session interfaces
+- Providing admin management interfaces
+- Supporting multiple languages
 
 ## Tech Stack
 
-| Technology | Purpose |
-|------------|---------|
-| React | UI framework |
-| TypeScript | Type safety |
-| Vite | Build tool |
-| Tailwind CSS | Styling |
+The application is built with:
 
----
-
-## Getting Started
-
-### Prerequisites
-
-- Node.js 20+
-- npm
-
-### Installation
-
-```bash
-npm install
-```
-
-### Start development server
-
-```bash
-npm run dev
-```
-
-### Build
-
-```bash
-npm run build
-```
-
-<!--- ### Run tests
-
- ```bash  npm test ``` -->
-
----
-
-## Environment Variables
-
-| Variable | Description |
-|----------|-------------|
-
-
-Example:
-
-```env
-VITE_API_URL=http://localhost:8080
-```
+- React 19
+- TypeScript
+- Vite
+- TanStack Router
+- TanStack Query
+- Tailwind CSS
+- Clerk Authentication
+- Gemini AI integration
+- i18next localization
+- Lucide React icons
 
 ---
 
 ## Project Structure
-
-<!--
-
-```
 src/
-│
-├── assets/
-├── components/
-│   ├── common/
-│   ├── layout/
-│   └── ui/
-├── pages/
-├── hooks/
-├── services/
-├── api/
-├── context/
-├── store/
-├── routes/
-├── utils/
-├── types/
-└── App.tsx
+├── routes/          - Application routes
+├── features/        - Feature-specific functionality
+├── api/             - Backend API integrations
+├── hooks/           - Reusable React hooks
+├── components/      - Shared UI components
+├── lib/             - Shared utilities and configuration
+├── locales/         - Translation files
+└── assets/          - Static assets
+
+### Main features:
+
+- features/HomePage - Landing page and workout start flow
+- features/session - AI coach session experience
+- features/adminPage - Admin dashboard and management tools
+- features/auth - User profile synchronization
+  
+## Getting Started
+
+### Prerequisites
+- Node.js 20+
+- npm
+### Installation
+
+#### Clone repository 
+```bash
+git clone https://github.com/ring-sa-tranar-vi/frontend.git
 ```
--->
-
-Explain the purpose of each folder.
-
----
-
-## Application Architecture
-
-Describe:
-
-- Component hierarchy
-- State management
-- Routing
-- API communication
-- Authentication flow
-
-Example:
-
+#### Install Dependencies 
+```bash
+cd frontend
+npm install
 ```
-User
-   ↓
-React Router
-   ↓
-Page
-   ↓
-Components
-   ↓
-API Service
-   ↓
-Backend
+Create an environment file and add required variables.
+
+#### Run locally
+```bash
+npm run dev
+```
+The application will run locally through Vite.
+
+#### Build for production
+```bash
+npm run build
+```
+#### Preview production build
+```bash
+npm run preview
+```
+#### Run format check
+```bash
+npm run format:check
+```
+## Authentication
+
+Authentication is handled through Clerk.
+
+- Users sign in through Clerk
+- Authenticated users receive access to workout functionality
+- Admin routes require admin permissions
+
+## Environment Variables
+
+Required:
+```text
+VITE_CLERK_PUBLISHABLE_KEY
 ```
 
----
+Optional:
 
-## 🚀 Deployment & CI/CD
+```text
+VITE_API_URL
+VITE_DEBUG
+VITE_DEBUG_WORKOUT_ID
+```
 
-We deploy the React application to **Firebase Hosting** using GitHub Actions. Because this is a Single Page Application (SPA), the environment-specific variables (like backend API URLs) must be baked into the code at build time.
+```VITE_API_URL``` controls the backend API connection.
 
-### The Workflow
-
-All deployments are triggered by merging code into the `main` branch.
-
-1.  **Staging Build & Deploy:** * The pipeline builds the React app injecting the Staging API URL (`VITE_API_URL`).
-    * The compiled code is deployed to our Staging Firebase Hosting site using Firebase Deploy Targets.
-2.  **Production Build & Deploy:**
-    * The pipeline pauses and waits for manual approval via GitHub Environments.
-    * Once approved, the pipeline runs a *fresh build*, injecting the Production API URL.
-    * The compiled code is deployed to our Production Firebase Hosting site.
-
-### Firebase Configuration (`firebase.json`)
-
-Our repository relies on a `firebase.json` file in the root directory. This configuration ensures that:
-* Firebase understands our specific deployment targets (`staging` vs `prod`).
-* All unknown traffic is rewritten to `/index.html` to allow React Router to handle client-side navigation without throwing 404 errors.
-
-## Routing
-
-| Route | Description |
-|--------|-------------|
-
----
-
-## State Management
-
-Explain:
-
-- Global state
-- Local state
-- Context providers
-- Redux slices (if applicable)
-
-Example:
-
-Authentication is stored globally in Redux while form state is managed locally within components.
-
----
 
 ## API Integration
 
-Explain:
+The frontend communicates with the backend REST API through reusable API modules.
 
-- Base URL
-- Authentication
-- Error handling
-- Request interceptors
+- API base URL is configured through `VITE_API_URL`
+- Authentication tokens are provided through Clerk
+- API modules are located in `src/api`
 
-Example:
+## Routing
 
-```
-Page
- ↓
-API Service
- ↓
-Axios Client
- ↓
-Backend API
-```
+The application uses TanStack Router for client-side routing.
 
----
+Main routes:
 
-<!--- ## Component Guidelines
+| Route | Description |
+|-------|-------------|
+| `/` | Main landing page and workout start flow |
+| `/admin` | Admin dashboard |
+| `/admin/workouts` | Workout management |
+| `/admin/trainers` | Trainer management |
+| `/admin/feedback` | Feedback management |
 
-Document conventions.
+## Available Scripts
 
-Example:
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Start development server |
+| `npm run build` | Create production build |
+| `npm run preview` | Preview production build |
+| `npm run lint` | Run linting |
+| `npm run format` | Format code |
+| `npm run format:check` | Check formatting |
 
-- Components should be reusable.
-- Keep components focused on a single responsibility.
-- Place tests next to components.
-- Use PascalCase filenames.
+## Key Features
 
---- 
+- AI-powered trainer call sessions
+- Personalized workout selection
+- Workout completion tracking
+- Trainer preferences
+- Multi-language support
+- Admin dashboard for managing workouts, trainers, and feedback
 
-## Coding Standards
+### Supported languages:
 
-- ESLint
-- Prettier
-- Naming conventions
-- Folder naming
-- Import ordering
+- English
+- Swedish
+- Somali
+- Tamil
+- Urdu
 
----
+## Related Repositories
+- Backend: https://github.com/ring-sa-tranar-vi/backend
+- Infrastructure: https://github.com/ring-sa-tranar-vi/infrastructure
 
-## Testing
-
-Describe:
-
-- Unit tests
-- Integration tests
-- E2E tests
-
-Example:
-
-```bash
-npm test
-```
-
----
- --> 
-<!-- ## Deployment
-
-Explain:
-
-- Build command
-- Hosting platform
-- CI/CD pipeline
-
---- -->
-
-## Troubleshooting
-
-Common issues and solutions.
-
-Example:
-
-### Port already in use
-
-```bash
-lsof -i :5173
-kill -9 <PID>
-```
-
----
-
-## Future Improvements
-
-- Dark mode
-- Localization
-- Offline support
 
