@@ -192,7 +192,7 @@ Main routes:
 - Urdu
 
 ## Related Repositories
-- Backend: https://github.com/ring-sa-tranar-vi/backend
-- Infrastructure: https://github.com/ring-sa-tranar-vi/infrastructure
+- Backend: [Repository Link](https://github.com/ring-sa-tranar-vi/backend)
+- Infrastructure: [Repository Link](https://github.com/ring-sa-tranar-vi/infrastructure)
 
 
