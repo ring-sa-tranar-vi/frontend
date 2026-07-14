@@ -58,18 +58,19 @@ The application is built with:
 - i18next localization
 - Lucide React icons
 
----
-
 ## Project Structure
+
+```text
 src/
-├── routes/          - Application routes
-├── features/        - Feature-specific functionality
-├── api/             - Backend API integrations
-├── hooks/           - Reusable React hooks
-├── components/      - Shared UI components
-├── lib/             - Shared utilities and configuration
-├── locales/         - Translation files
-└── assets/          - Static assets
+├── routes/          # Application routes
+├── features/        # Feature-specific functionality
+├── api/             # Backend API integrations
+├── hooks/           # Reusable React hooks
+├── components/      # Shared UI components
+├── lib/             # Shared utilities and configuration
+├── locales/         # Translation files
+└── assets/          # Static assets
+```
 
 ### Main features:
 
