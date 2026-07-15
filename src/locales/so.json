@@ -70,8 +70,57 @@
   },
   "home": {
     "callTrainer": "Wac tababaraha",
-    "settings": "Dejinta",
+    "settings": "Liiska",
     "logoAlt": "Wac oo tababar"
+  },
+  "menu": {
+    "title": "Liiska",
+    "subtitle": "Wax walba hal meel",
+    "activity": {
+      "title": "Dhaqdhaqaaqaaga",
+      "description": "La soco taxanaha tababarka adigoon maalin walba goobo badan muujin.",
+      "streakAriaLabel": "{{count}} maalmood oo xiriir ah",
+      "daysInRow": "maalmood oo xiriir ah",
+      "encouragement": "Shaqo fiican!",
+      "weekSummary": "Toddobaadkan waxaad tababartay {{count}} maalmood.",
+      "personalRecord": "Rikoorkaaga: {{count}} maalmood"
+    },
+    "events": {
+      "title": "Dhacdooyin goobta ah",
+      "eyebrow": "Kuu dhow",
+      "headline": "Si wadajir ah goobta ugu tababar",
+      "description": "Hel dhaqdhaqaaqyo ammaan ah iyo qabanqaabiyeyaal deegaanka ah.",
+      "cta": "Hel dhacdo goobta ah",
+      "notConnected": "Raadinta dhacdooyinka weli lama heli karo."
+    },
+    "calendar": {
+      "title": "Kalandar",
+      "description": "Hal meel ka arag tababarrada, dhacdooyinka iyo wicitaannada.",
+      "previousMonth": "Bishii hore",
+      "nextMonth": "Bisha xigta",
+      "workout": "Tababar",
+      "callback": "Wicitaan",
+      "nextActivity": "Dhaqdhaqaaqa xiga",
+      "withTrainer": "la socda {{name}}",
+      "calmWorkout": "Tababar deggan",
+      "completedWorkout": "Tababar la dhammeeyay"
+    },
+    "callback": {
+      "title": "Codso in lagu soo waco",
+      "description": "Dooro maalin iyo waqti uu tababaruhu kuu soo waco.",
+      "chooseDay": "Dooro maalin",
+      "hour": "Saacad",
+      "minute": "Daqiiqad",
+      "repeat": "Ku celi",
+      "repeatNever": "Marna",
+      "repeatWeekly": "Toddobaad kasta",
+      "repeatEveryOtherWeek": "Labadii toddobaadba mar",
+      "confirm": "Xaqiiji wicitaanka",
+      "confirming": "Waa la xaqiijinayaa…",
+      "confirmed": "Wicitaanka waa la xaqiijiyay.",
+      "confirmError": "Wicitaanka lama xaqiijin karin.",
+      "notConnected": "Wicitaannada weli lama heli karo."
+    }
   },
   "settings": {
     "title": "Dejinta",

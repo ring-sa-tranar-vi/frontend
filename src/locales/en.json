@@ -70,8 +70,57 @@
   },
   "home": {
     "callTrainer": "Call trainer",
-    "settings": "Settings",
+    "settings": "Menu",
     "logoAlt": "Call and train"
+  },
+  "menu": {
+    "title": "Menu",
+    "subtitle": "Everything in one place",
+    "activity": {
+      "title": "Your activity",
+      "description": "Follow your training streak without giving every day its own circle.",
+      "streakAriaLabel": "{{count}} days in a row",
+      "daysInRow": "days in a row",
+      "encouragement": "Great job!",
+      "weekSummary": "You trained {{count}} days this week.",
+      "personalRecord": "Personal record: {{count}} days"
+    },
+    "events": {
+      "title": "In-person events",
+      "eyebrow": "Near you",
+      "headline": "Train together in person",
+      "description": "Find welcoming activities and local organizers that suit you.",
+      "cta": "Find an in-person event",
+      "notConnected": "Event search is not available yet."
+    },
+    "calendar": {
+      "title": "Calendar",
+      "description": "See your workouts, booked events, and callbacks in one place.",
+      "previousMonth": "Previous month",
+      "nextMonth": "Next month",
+      "workout": "Workout",
+      "callback": "Callback",
+      "nextActivity": "Next activity",
+      "withTrainer": "with {{name}}",
+      "calmWorkout": "Gentle workout",
+      "completedWorkout": "Completed workout"
+    },
+    "callback": {
+      "title": "Request a callback",
+      "description": "Choose any weekday and time and the trainer will call you.",
+      "chooseDay": "Choose weekday",
+      "hour": "Hour",
+      "minute": "Minute",
+      "repeat": "Repeat",
+      "repeatNever": "Never",
+      "repeatWeekly": "Every week",
+      "repeatEveryOtherWeek": "Every other week",
+      "confirm": "Confirm callback",
+      "confirming": "Confirming…",
+      "confirmed": "The callback is confirmed.",
+      "confirmError": "The callback could not be confirmed.",
+      "notConnected": "Callbacks are not available yet."
+    }
   },
   "settings": {
     "title": "Settings",

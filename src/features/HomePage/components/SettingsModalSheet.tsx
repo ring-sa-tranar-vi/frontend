@@ -1,6 +1,6 @@
 import { SignOutButton, useAuth } from '@clerk/react'
 import { useNavigate } from '@tanstack/react-router'
-import { CircleHelp, Globe, Settings, User } from 'lucide-react'
+import { CircleHelp, Globe, Menu, User } from 'lucide-react'
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useMyProfile } from '../../../hooks/useMyProfile'
 import { useUpdateProfile } from '../../../hooks/useUpdateProfile'
@@ -21,6 +21,8 @@ import {
 } from '../../../components/AppSheet'
 import LanguageSwitcher from '../../../components/LanguageSwitcher'
 import SupportSheet from './SupportSheet'
+import { guestTrainerOptions } from './menu/guestTrainerData'
+import MenuPlaceholderSections from './menu/MenuPlaceholderSections'
 
 type ProfileSettings = {
   name?: string | null
@@ -65,9 +67,9 @@ function SettingsStatusSheet({
     <>
       <AppSheet
         open={open}
-        title={t('settings.title')}
+        title={t('menu.title')}
         subtitle=""
-        icon={<Settings size={20} strokeWidth={2.4} />}
+        icon={<Menu size={20} strokeWidth={2.4} />}
         onClose={() => setOpen(false)}
         height="compact"
         footer={
@@ -83,6 +85,169 @@ function SettingsStatusSheet({
       >
         <AppSheetNotice>{message}</AppSheetNotice>
       </AppSheet>
+    </>
+  )
+}
+
+function ProfilePreferenceSections({
+  fullName,
+  setFullName,
+  selectedTrainerId,
+  setSelectedTrainerId,
+  intensityLevel,
+  setIntensityLevel,
+  context,
+  setContext,
+  setSupportOpen,
+  isGuest,
+}: {
+  fullName: string
+  setFullName: (value: string) => void
+  selectedTrainerId: number | null
+  setSelectedTrainerId: (value: number) => void
+  intensityLevel: number
+  setIntensityLevel: (value: number) => void
+  context: string
+  setContext: (value: string) => void
+  setSupportOpen: (value: boolean) => void
+  isGuest: boolean
+}) {
+  const { t, i18n } = useTranslation()
+
+  return (
+    <div className="divide-y divide-(--brand-border)/60 border-t border-(--brand-border)/60">
+      <section className="py-6">
+        <div className="mb-2 flex items-center gap-2">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-(--brand-surface) text-(--brand-primary-deep)">
+            <User size={20} />
+          </div>
+          <label htmlFor="fullName">
+            <AppSheetSectionTitle>
+              {t('settings.fullName')}
+            </AppSheetSectionTitle>
+          </label>
+        </div>
+
+        <AppSheetSectionText>
+          {t('settings.fullNameDescription')}
+        </AppSheetSectionText>
+
+        <input
+          id="fullName"
+          name="fullName"
+          type="text"
+          autoComplete="off"
+          value={fullName}
+          onChange={(event) => setFullName(event.target.value)}
+          placeholder={t('settings.fullNamePlaceholder')}
+          className="mt-3 w-full rounded-2xl border border-(--brand-border-field) bg-(--brand-control) px-4 py-3.5 text-[length:var(--text-base)] font-semibold text-(--brand-ink) transition placeholder:text-(--brand-muted) focus-visible:border-(--brand-border-strong) focus-visible:ring-2 focus-visible:ring-(--brand-border-strong) focus-visible:ring-offset-2 focus-visible:outline-none"
+        />
+
+        {!isGuest ? (
+          <p className="mt-2 text-[length:var(--text-xs)] leading-snug font-semibold text-(--brand-body-ink)">
+            {fullName.trim()
+              ? t('settings.fullNameFound')
+              : t('settings.noFullNameFound')}
+          </p>
+        ) : null}
+      </section>
+
+      <section className="py-6">
+        <TrainerSelectionModal
+          selectedTrainerId={selectedTrainerId}
+          onTrainerSelect={setSelectedTrainerId}
+          trainersOverride={isGuest ? guestTrainerOptions : undefined}
+        />
+      </section>
+
+      <section className="py-6">
+        <IntensitySlider value={intensityLevel} onChange={setIntensityLevel} />
+      </section>
+
+      <section className="py-6">
+        <ContextModel value={context} onChange={setContext} />
+      </section>
+
+      <section className="py-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-(--brand-surface) text-(--brand-primary-deep)">
+              <Globe size={20} />
+            </div>
+            <AppSheetSectionTitle>
+              {t('settings.language')}
+            </AppSheetSectionTitle>
+          </div>
+          <LanguageSwitcher
+            value={i18n.language}
+            onChange={(language: string) => i18n.changeLanguage(language)}
+          />
+        </div>
+      </section>
+
+      <section className="py-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-(--brand-surface) text-(--brand-primary-deep)">
+              <CircleHelp size={20} />
+            </div>
+            <AppSheetSectionTitle>{t('settings.getHelp')}</AppSheetSectionTitle>
+          </div>
+          <button
+            className="rounded-full bg-(--brand-primary) px-4 py-2 text-[length:var(--text-sm)] font-extrabold text-white transition hover:opacity-95"
+            onClick={() => setSupportOpen(true)}
+          >
+            {t('settings.getHelpButton')}
+          </button>
+        </div>
+      </section>
+    </div>
+  )
+}
+
+function GuestMenuSheet({
+  open,
+  setOpen,
+}: {
+  open: boolean
+  setOpen: (v: boolean) => void
+}) {
+  const { t } = useTranslation()
+  const [fullName, setFullName] = useState('')
+  const [selectedTrainerId, setSelectedTrainerId] = useState<number | null>(
+    DEFAULT_TRAINER_ID,
+  )
+  const [intensityLevel, setIntensityLevel] = useState(DEFAULT_INTENSITY_LEVEL)
+  const [context, setContext] = useState('')
+  const [supportOpen, setSupportOpen] = useState(false)
+
+  return (
+    <>
+      <AppSheet
+        open={open}
+        title={t('menu.title')}
+        subtitle={t('menu.subtitle')}
+        icon={<Menu size={20} strokeWidth={2.4} />}
+        onClose={() => setOpen(false)}
+        height="large"
+      >
+        <div className="pb-2">
+          <MenuPlaceholderSections />
+          <ProfilePreferenceSections
+            fullName={fullName}
+            setFullName={setFullName}
+            selectedTrainerId={selectedTrainerId}
+            setSelectedTrainerId={setSelectedTrainerId}
+            intensityLevel={intensityLevel}
+            setIntensityLevel={setIntensityLevel}
+            context={context}
+            setContext={setContext}
+            setSupportOpen={setSupportOpen}
+            isGuest
+          />
+        </div>
+      </AppSheet>
+      <SupportSheet open={supportOpen} setOpen={setSupportOpen} />
     </>
   )
 }
@@ -115,17 +280,11 @@ export default function SettingsModalSheet({
     return null
   }
 
-  if (isLoaded && !isSignedIn) {
-    return (
-      <SettingsStatusSheet
-        open={open}
-        setOpen={setOpen}
-        message={t('settings.notLoggedIn')}
-      />
-    )
+  if (!isLoaded || !isSignedIn) {
+    return <GuestMenuSheet open={open} setOpen={setOpen} />
   }
 
-  if (!isLoaded || isLoading) {
+  if (isLoading) {
     return (
       <SettingsStatusSheet
         open={open}
@@ -159,7 +318,7 @@ function SettingsModalBody({
   setOpen: (v: boolean) => void
   profile: ProfileSettings
 }) {
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const [fullName, setFullName] = useState(profile.name?.trim() ?? '')
   const [intensityLevel, setIntensityLevel] = useState(() =>
@@ -242,9 +401,9 @@ function SettingsModalBody({
     <>
       <AppSheet
         open={open}
-        title={t('settings.title')}
-        subtitle={t('settings.subtitle')}
-        icon={<Settings size={20} strokeWidth={2.4} />}
+        title={t('menu.title')}
+        subtitle={t('menu.subtitle')}
+        icon={<Menu size={20} strokeWidth={2.4} />}
         onClose={() => setOpen(false)}
         height="large"
         footer={
@@ -264,94 +423,23 @@ function SettingsModalBody({
           </section>
         }
       >
-        <div className="divide-y divide-(--brand-border)/60 pb-2">
-          <section className="py-6">
-            <div className="mb-2 flex items-center gap-2">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-(--brand-surface) text-(--brand-primary-deep)">
-                <User size={20} />
-              </div>
-              <label htmlFor="fullName">
-                <AppSheetSectionTitle>
-                  {t('settings.fullName')}
-                </AppSheetSectionTitle>
-              </label>
-            </div>
+        <div className="pb-2">
+          <MenuPlaceholderSections />
 
-            <AppSheetSectionText>
-              {t('settings.fullNameDescription')}
-            </AppSheetSectionText>
+          <ProfilePreferenceSections
+            fullName={fullName}
+            setFullName={setFullName}
+            selectedTrainerId={selectedTrainerId}
+            setSelectedTrainerId={onTrainerSelect}
+            intensityLevel={intensityLevel}
+            setIntensityLevel={setIntensityLevel}
+            context={context}
+            setContext={setContext}
+            setSupportOpen={setSupportOpen}
+            isGuest={false}
+          />
 
-            <input
-              id="fullName"
-              type="text"
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              placeholder={t('settings.fullNamePlaceholder')}
-              className="mt-3 w-full rounded-2xl border border-(--brand-border-field) bg-(--brand-control) px-4 py-3.5 text-[length:var(--text-base)] font-semibold text-(--brand-ink) transition outline-none placeholder:text-(--brand-muted) focus:border-(--brand-border-strong)"
-            />
-
-            <p className="mt-2 text-[length:var(--text-xs)] leading-snug font-semibold text-(--brand-body-ink)">
-              {fullName.trim()
-                ? t('settings.fullNameFound')
-                : t('settings.noFullNameFound')}
-            </p>
-          </section>
-
-          <section className="py-6">
-            <TrainerSelectionModal
-              selectedTrainerId={selectedTrainerId}
-              onTrainerSelect={onTrainerSelect}
-            />
-          </section>
-
-          <section className="py-6">
-            <IntensitySlider
-              value={intensityLevel}
-              onChange={setIntensityLevel}
-            />
-          </section>
-
-          <section className="py-6">
-            <ContextModel value={context} onChange={setContext} />
-          </section>
-
-          <section className="py-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-(--brand-surface) text-(--brand-primary-deep)">
-                  <Globe size={20} />
-                </div>
-                <AppSheetSectionTitle>
-                  {t('settings.language')}
-                </AppSheetSectionTitle>
-              </div>
-              <LanguageSwitcher
-                value={i18n.language}
-                onChange={(lng: string) => i18n.changeLanguage(lng)}
-              />
-            </div>
-          </section>
-
-          <section className="py-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-(--brand-surface) text-(--brand-primary-deep)">
-                  <CircleHelp size={20} />
-                </div>
-                <AppSheetSectionTitle>
-                  {t('settings.getHelp')}
-                </AppSheetSectionTitle>
-              </div>
-              <button
-                className="rounded-full bg-(--brand-primary) px-4 py-2 text-[length:var(--text-sm)] font-extrabold text-white transition hover:opacity-95"
-                onClick={() => setSupportOpen(true)}
-              >
-                {t('settings.getHelpButton')}
-              </button>
-            </div>
-          </section>
-
-          <section className="space-y-2 pt-6 pb-4">
+          <section className="space-y-2 border-t border-(--brand-border)/60 pt-6 pb-4">
             {profile.isAdmin && (
               <button
                 className={appSheetSecondaryButtonClass}

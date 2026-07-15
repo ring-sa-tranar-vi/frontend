@@ -70,8 +70,57 @@
   },
   "home": {
     "callTrainer": "Ring tränaren",
-    "settings": "Inställningar",
+    "settings": "Meny",
     "logoAlt": "Ring så tränar vi"
+  },
+  "menu": {
+    "title": "Meny",
+    "subtitle": "Allt samlat på ett ställe",
+    "activity": {
+      "title": "Din aktivitet",
+      "description": "Följ din träningssvit utan att varje dag behöver en egen cirkel.",
+      "streakAriaLabel": "{{count}} dagar i rad",
+      "daysInRow": "dagar i rad",
+      "encouragement": "Bra jobbat!",
+      "weekSummary": "Du har tränat {{count}} dagar den här veckan.",
+      "personalRecord": "Personligt rekord: {{count}} dagar"
+    },
+    "events": {
+      "title": "Fysiska event",
+      "eyebrow": "Nära dig",
+      "headline": "Träna tillsammans på plats",
+      "description": "Hitta trygga aktiviteter och lokala arrangörer som passar dig.",
+      "cta": "Hitta ett fysiskt event",
+      "notConnected": "Eventsökningen är inte tillgänglig ännu."
+    },
+    "calendar": {
+      "title": "Kalender",
+      "description": "Se dina träningspass, bokade event och uppringningar på samma plats.",
+      "previousMonth": "Föregående månad",
+      "nextMonth": "Nästa månad",
+      "workout": "Träningspass",
+      "callback": "Uppringning",
+      "nextActivity": "Nästa aktivitet",
+      "withTrainer": "med {{name}}",
+      "calmWorkout": "Lugnt träningspass",
+      "completedWorkout": "Genomfört träningspass"
+    },
+    "callback": {
+      "title": "Be om att bli uppringd",
+      "description": "Välj valfri veckodag och tid så ringer tränaren upp dig.",
+      "chooseDay": "Välj veckodag",
+      "hour": "Timme",
+      "minute": "Minut",
+      "repeat": "Upprepa",
+      "repeatNever": "Aldrig",
+      "repeatWeekly": "Varje vecka",
+      "repeatEveryOtherWeek": "Varannan vecka",
+      "confirm": "Bekräfta uppringning",
+      "confirming": "Bekräftar…",
+      "confirmed": "Uppringningen är bekräftad.",
+      "confirmError": "Uppringningen kunde inte bekräftas.",
+      "notConnected": "Uppringningen är inte tillgänglig ännu."
+    }
   },
   "settings": {
     "title": "Inställningar",

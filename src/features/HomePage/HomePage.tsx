@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { LogIn, Phone, Settings } from 'lucide-react'
+import { LogIn, Menu, Phone } from 'lucide-react'
 import { SessionPage } from '../session/SessionPage'
 import { primeSessionAudio } from '../ai-conversation/audio/sessionAudio'
 import {
@@ -221,35 +221,33 @@ export default function HomePage() {
               {t('home.callTrainer')}
             </button>
 
-            {isLoaded ? (
-              isSignedIn ? (
-                <button
-                  type="button"
-                  onClick={() => setOpen(true)}
-                  className="flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold text-(--brand-muted) transition hover:text-(--brand-primary) active:scale-[0.98]"
-                >
-                  <Settings size={16} strokeWidth={2.2} />
-                  {t('home.settings')}
-                </button>
-              ) : (
+            <div className="flex items-center justify-center gap-2">
+              <button
+                type="button"
+                onClick={() => setOpen(true)}
+                className="flex items-center gap-2 rounded-xl px-3 py-1.5 text-sm font-semibold text-(--brand-muted) transition hover:text-(--brand-primary) active:scale-[0.98]"
+              >
+                <Menu size={16} strokeWidth={2.2} />
+                {t('home.settings')}
+              </button>
+
+              {isLoaded && !isSignedIn ? (
                 <SignInButton>
                   <button
                     type="button"
-                    className="flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold text-(--brand-muted) transition hover:text-(--brand-primary) active:scale-[0.98]"
+                    className="flex items-center gap-2 rounded-xl px-3 py-1.5 text-sm font-semibold text-(--brand-muted) transition hover:text-(--brand-primary) active:scale-[0.98]"
                   >
                     <LogIn size={16} strokeWidth={2.2} />
                     {t('auth.login')}
                   </button>
                 </SignInButton>
-              )
-            ) : null}
+              ) : null}
+            </div>
           </div>
         </div>
       </footer>
 
-      {isLoaded && isSignedIn ? (
-        <SettingsModalSheet open={open} setOpen={setOpen} />
-      ) : null}
+      <SettingsModalSheet open={open} setOpen={setOpen} />
     </div>
   )
 }

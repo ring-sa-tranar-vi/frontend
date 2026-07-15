@@ -70,8 +70,57 @@
   },
   "home": {
     "callTrainer": "ٹرینر کو کال کریں",
-    "settings": "سیٹنگز",
+    "settings": "مینو",
     "logoAlt": "کال اور ٹرین"
+  },
+  "menu": {
+    "title": "مینو",
+    "subtitle": "سب کچھ ایک جگہ",
+    "activity": {
+      "title": "آپ کی سرگرمی",
+      "description": "ہر دن کے لیے الگ دائرے کے بغیر اپنی ٹریننگ کا تسلسل دیکھیں۔",
+      "streakAriaLabel": "مسلسل {{count}} دن",
+      "daysInRow": "مسلسل دن",
+      "encouragement": "بہت خوب!",
+      "weekSummary": "آپ نے اس ہفتے {{count}} دن ٹریننگ کی۔",
+      "personalRecord": "ذاتی ریکارڈ: {{count}} دن"
+    },
+    "events": {
+      "title": "مقامی تقریبات",
+      "eyebrow": "آپ کے قریب",
+      "headline": "ایک جگہ مل کر ٹریننگ کریں",
+      "description": "اپنے لیے محفوظ مقامی سرگرمیاں اور منتظمین تلاش کریں۔",
+      "cta": "مقامی تقریب تلاش کریں",
+      "notConnected": "تقریب کی تلاش ابھی دستیاب نہیں ہے۔"
+    },
+    "calendar": {
+      "title": "کیلنڈر",
+      "description": "ٹریننگ، بک شدہ تقریبات اور کالز ایک جگہ دیکھیں۔",
+      "previousMonth": "پچھلا مہینہ",
+      "nextMonth": "اگلا مہینہ",
+      "workout": "ٹریننگ",
+      "callback": "واپسی کال",
+      "nextActivity": "اگلی سرگرمی",
+      "withTrainer": "{{name}} کے ساتھ",
+      "calmWorkout": "ہلکی ٹریننگ",
+      "completedWorkout": "مکمل ٹریننگ"
+    },
+    "callback": {
+      "title": "واپسی کال کی درخواست کریں",
+      "description": "دن اور وقت منتخب کریں تاکہ ٹرینر آپ کو کال کرے۔",
+      "chooseDay": "ہفتے کا دن منتخب کریں",
+      "hour": "گھنٹہ",
+      "minute": "منٹ",
+      "repeat": "دہرائیں",
+      "repeatNever": "کبھی نہیں",
+      "repeatWeekly": "ہر ہفتے",
+      "repeatEveryOtherWeek": "ہر دوسرے ہفتے",
+      "confirm": "کال کی تصدیق کریں",
+      "confirming": "تصدیق ہو رہی ہے…",
+      "confirmed": "کال کی تصدیق ہو گئی۔",
+      "confirmError": "کال کی تصدیق نہیں ہو سکی۔",
+      "notConnected": "واپسی کالز ابھی دستیاب نہیں ہیں۔"
+    }
   },
   "settings": {
     "title": "سیٹنگز",

@@ -24,7 +24,7 @@ import {
   setStoredLanguageFilter,
 } from '../trainerPreference'
 
-type Trainer = {
+export type TrainerSelectionItem = {
   id: number
   name: string
   imageSelect?: string | null
@@ -40,18 +40,20 @@ function wrap(index: number, length: number): number {
 export default function TrainerSelectionModal({
   onTrainerSelect,
   selectedTrainerId,
+  trainersOverride,
 }: {
   onTrainerSelect?: (trainerId: number) => void
   selectedTrainerId?: number | null
+  trainersOverride?: readonly TrainerSelectionItem[]
 }) {
   const { getToken, isSignedIn } = useAuth()
   const { play, stop, loadingId, playingId } = useVoicePlayer()
   const { t } = useTranslation()
 
   const {
-    data: trainers = [],
-    isLoading,
-    isError,
+    data: fetchedTrainers = [],
+    isLoading: isFetchingTrainers,
+    isError: didTrainerFetchFail,
   } = useQuery({
     queryKey: ['trainers'],
     queryFn: async () => {
@@ -59,9 +61,12 @@ export default function TrainerSelectionModal({
       if (!token) throw new Error('Not authenticated')
       return fetchTrainersWithToken(token)
     },
-    enabled: isSignedIn === true,
+    enabled: trainersOverride === undefined && isSignedIn === true,
     refetchOnWindowFocus: false,
   })
+  const trainers = trainersOverride ?? fetchedTrainers
+  const isLoading = trainersOverride === undefined && isFetchingTrainers
+  const isError = trainersOverride === undefined && didTrainerFetchFail
 
   const [activeLanguages, setActiveLanguages] = useState<string[]>(
     () => getStoredLanguageFilter() ?? [],
@@ -85,7 +90,7 @@ export default function TrainerSelectionModal({
   const hasInitialisedFilter = useRef(false)
 
   const allLanguages = useMemo(() => {
-    const langs = (trainers as Trainer[])
+    const langs = (trainers as TrainerSelectionItem[])
       .map((t) => t.language)
       .filter((l): l is string => typeof l === 'string' && l.trim() !== '')
     return Array.from(new Set(langs))
@@ -118,8 +123,8 @@ export default function TrainerSelectionModal({
   }, [filterOpen])
 
   const filteredTrainers = useMemo(() => {
-    if (activeLanguages.length === 0) return trainers as Trainer[]
-    return (trainers as Trainer[]).filter(
+    if (activeLanguages.length === 0) return trainers as TrainerSelectionItem[]
+    return (trainers as TrainerSelectionItem[]).filter(
       (t) =>
         typeof t.language === 'string' && activeLanguages.includes(t.language),
     )
@@ -224,7 +229,7 @@ export default function TrainerSelectionModal({
     }
   }
 
-  if (isSignedIn === false) {
+  if (isSignedIn === false && trainersOverride === undefined) {
     return (
       <section aria-labelledby="trainer-selection-title">
         <AppSheetNotice>{t('trainerSelection.notLoggedIn')}</AppSheetNotice>
@@ -363,6 +368,7 @@ export default function TrainerSelectionModal({
                           onPlay={() => play(String(trainer.id), trainer.intro)}
                           onStop={stop}
                           onSelect={() => onTrainerSelect?.(trainer.id)}
+                          showAudioPreview={trainersOverride === undefined}
                           t={t}
                         />
                       ) : (
@@ -413,15 +419,17 @@ function TrainerCard({
   onPlay,
   onStop,
   onSelect,
+  showAudioPreview,
   t,
 }: {
-  trainer: Trainer
+  trainer: TrainerSelectionItem
   isSelected: boolean
   playingId: string | null
   loadingId: string | null
   onPlay: () => void
   onStop: () => void
   onSelect: () => void
+  showAudioPreview: boolean
   t: (key: string) => string
 }) {
   const id = String(trainer.id)
@@ -470,33 +478,35 @@ function TrainerCard({
       {/* Bottom-right: buttons — 65% card width */}
       <div className="absolute right-0 bottom-0 w-[65%] space-y-1.5 px-4 pb-4">
         {/* Preview audio */}
-        <button
-          type="button"
-          onClick={isPlaying ? onStop : onPlay}
-          disabled={isLoading}
-          className={`flex w-full items-center justify-center gap-1.5 ${appSheetFieldClass} px-2 py-2 text-[13px] font-extrabold transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-60 ${
-            isPlaying
-              ? 'border-rose-300 bg-rose-50 text-rose-800'
-              : 'text-(--brand-title-ink)'
-          }`}
-        >
-          {isLoading ? (
-            <>
-              <Loader size={14} className="animate-spin" />
-              {t('trainerSelection.loadingAudio')}
-            </>
-          ) : isPlaying ? (
-            <>
-              <Square size={13} className="fill-current" />
-              {t('trainerSelection.stopAudio')}
-            </>
-          ) : (
-            <>
-              <Volume2 size={14} />
-              {t('trainerSelection.listenAudio')}
-            </>
-          )}
-        </button>
+        {showAudioPreview ? (
+          <button
+            type="button"
+            onClick={isPlaying ? onStop : onPlay}
+            disabled={isLoading}
+            className={`flex w-full items-center justify-center gap-1.5 ${appSheetFieldClass} px-2 py-2 text-[13px] font-extrabold transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-60 ${
+              isPlaying
+                ? 'border-rose-300 bg-rose-50 text-rose-800'
+                : 'text-(--brand-title-ink)'
+            }`}
+          >
+            {isLoading ? (
+              <>
+                <Loader size={14} className="animate-spin" />
+                {t('trainerSelection.loadingAudio')}
+              </>
+            ) : isPlaying ? (
+              <>
+                <Square size={13} className="fill-current" />
+                {t('trainerSelection.stopAudio')}
+              </>
+            ) : (
+              <>
+                <Volume2 size={14} />
+                {t('trainerSelection.listenAudio')}
+              </>
+            )}
+          </button>
+        ) : null}
 
         {/* Select / selected */}
         {isSelected ? (
