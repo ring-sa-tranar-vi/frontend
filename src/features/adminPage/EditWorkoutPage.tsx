@@ -189,7 +189,7 @@ export default function EditWorkoutPage({
     return () => {
       isMounted = false
     }
-  }, [getToken, onStatusChange, workoutId])
+  }, [getToken, onStatusChange, workoutId, t])
 
   const handleChange = (
     e: React.ChangeEvent<

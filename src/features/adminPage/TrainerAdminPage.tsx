@@ -196,7 +196,7 @@ export default function TrainerAdminPage({ searchTerm = '' }: Props) {
     return () => {
       active = false
     }
-  }, [mode, selectedId, getToken, showToast])
+  }, [mode, selectedId, getToken, showToast, t])
 
   // (no pending delete timer needed — deletion is immediate after confirm modal)
 

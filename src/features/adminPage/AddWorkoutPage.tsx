@@ -125,7 +125,7 @@ export default function AddWorkoutPage({ onBack, onStatusChange }: Props) {
     return () => {
       isMounted = false
     }
-  }, [getToken, onStatusChange])
+  }, [getToken, onStatusChange, t])
 
   const handleChange = (
     e: React.ChangeEvent<
