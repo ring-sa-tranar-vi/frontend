@@ -222,16 +222,16 @@ export default function HomePage() {
             </button>
 
             <div className="flex items-center justify-center gap-2">
-              <button
-                type="button"
-                onClick={() => setOpen(true)}
-                className="flex items-center gap-2 rounded-xl px-3 py-1.5 text-sm font-semibold text-(--brand-muted) transition hover:text-(--brand-primary) active:scale-[0.98]"
-              >
-                <Menu size={16} strokeWidth={2.2} />
-                {t('home.settings')}
-              </button>
-
-              {isLoaded && !isSignedIn ? (
+              {isLoaded && isSignedIn ? (
+                <button
+                  type="button"
+                  onClick={() => setOpen(true)}
+                  className="flex items-center gap-2 rounded-xl px-3 py-1.5 text-sm font-semibold text-(--brand-muted) transition hover:text-(--brand-primary) active:scale-[0.98]"
+                >
+                  <Menu size={16} strokeWidth={2.2} />
+                  {t('home.settings')}
+                </button>
+              ) : isLoaded ? (
                 <SignInButton>
                   <button
                     type="button"
