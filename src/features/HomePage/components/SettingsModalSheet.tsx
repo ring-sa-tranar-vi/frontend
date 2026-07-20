@@ -21,7 +21,6 @@ import {
 } from '../../../components/AppSheet'
 import LanguageSwitcher from '../../../components/LanguageSwitcher'
 import SupportSheet from './SupportSheet'
-import { guestTrainerOptions } from './menu/guestTrainerData'
 import MenuPlaceholderSections from './menu/MenuPlaceholderSections'
 
 type ProfileSettings = {
@@ -99,7 +98,6 @@ function ProfilePreferenceSections({
   context,
   setContext,
   setSupportOpen,
-  isGuest,
 }: {
   fullName: string
   setFullName: (value: string) => void
@@ -110,7 +108,6 @@ function ProfilePreferenceSections({
   context: string
   setContext: (value: string) => void
   setSupportOpen: (value: boolean) => void
-  isGuest: boolean
 }) {
   const { t, i18n } = useTranslation()
 
@@ -143,20 +140,17 @@ function ProfilePreferenceSections({
           className="mt-3 w-full rounded-2xl border border-(--brand-border-field) bg-(--brand-control) px-4 py-3.5 text-[length:var(--text-base)] font-semibold text-(--brand-ink) transition placeholder:text-(--brand-muted) focus-visible:border-(--brand-border-strong) focus-visible:ring-2 focus-visible:ring-(--brand-border-strong) focus-visible:ring-offset-2 focus-visible:outline-none"
         />
 
-        {!isGuest ? (
-          <p className="mt-2 text-[length:var(--text-xs)] leading-snug font-semibold text-(--brand-body-ink)">
-            {fullName.trim()
-              ? t('settings.fullNameFound')
-              : t('settings.noFullNameFound')}
-          </p>
-        ) : null}
+        <p className="mt-2 text-[length:var(--text-xs)] leading-snug font-semibold text-(--brand-body-ink)">
+          {fullName.trim()
+            ? t('settings.fullNameFound')
+            : t('settings.noFullNameFound')}
+        </p>
       </section>
 
       <section className="py-6">
         <TrainerSelectionModal
           selectedTrainerId={selectedTrainerId}
           onTrainerSelect={setSelectedTrainerId}
-          trainersOverride={isGuest ? guestTrainerOptions : undefined}
         />
       </section>
 
@@ -205,53 +199,6 @@ function ProfilePreferenceSections({
   )
 }
 
-function GuestMenuSheet({
-  open,
-  setOpen,
-}: {
-  open: boolean
-  setOpen: (v: boolean) => void
-}) {
-  const { t } = useTranslation()
-  const [fullName, setFullName] = useState('')
-  const [selectedTrainerId, setSelectedTrainerId] = useState<number | null>(
-    DEFAULT_TRAINER_ID,
-  )
-  const [intensityLevel, setIntensityLevel] = useState(DEFAULT_INTENSITY_LEVEL)
-  const [context, setContext] = useState('')
-  const [supportOpen, setSupportOpen] = useState(false)
-
-  return (
-    <>
-      <AppSheet
-        open={open}
-        title={t('menu.title')}
-        subtitle={t('menu.subtitle')}
-        icon={<Menu size={20} strokeWidth={2.4} />}
-        onClose={() => setOpen(false)}
-        height="large"
-      >
-        <div className="pb-2">
-          <MenuPlaceholderSections />
-          <ProfilePreferenceSections
-            fullName={fullName}
-            setFullName={setFullName}
-            selectedTrainerId={selectedTrainerId}
-            setSelectedTrainerId={setSelectedTrainerId}
-            intensityLevel={intensityLevel}
-            setIntensityLevel={setIntensityLevel}
-            context={context}
-            setContext={setContext}
-            setSupportOpen={setSupportOpen}
-            isGuest
-          />
-        </div>
-      </AppSheet>
-      <SupportSheet open={supportOpen} setOpen={setSupportOpen} />
-    </>
-  )
-}
-
 export default function SettingsModalSheet({
   open,
   setOpen,
@@ -281,7 +228,7 @@ export default function SettingsModalSheet({
   }
 
   if (!isLoaded || !isSignedIn) {
-    return <GuestMenuSheet open={open} setOpen={setOpen} />
+    return null
   }
 
   if (isLoading) {
@@ -436,7 +383,6 @@ function SettingsModalBody({
             context={context}
             setContext={setContext}
             setSupportOpen={setSupportOpen}
-            isGuest={false}
           />
 
           <section className="space-y-2 border-t border-(--brand-border)/60 pt-6 pb-4">
@@ -452,7 +398,10 @@ function SettingsModalBody({
               </button>
             )}
             <SignOutButton>
-              <button className={appSheetSecondaryButtonClass}>
+              <button
+                className={appSheetSecondaryButtonClass}
+                onClick={() => setOpen(false)}
+              >
                 {t('auth.logout')}
               </button>
             </SignOutButton>
