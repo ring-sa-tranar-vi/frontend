@@ -1,8 +1,9 @@
-import { CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react'
+import { CalendarDays, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import MenuSectionHeader from './MenuSectionHeader'
 import type { CalendarActivity } from './types'
+import { useCalendarEvents } from '../../../../hooks/useCalendarEvents.ts'
 
 const WEEKDAY_START = new Date(Date.UTC(2026, 6, 13))
 
@@ -13,12 +14,12 @@ type CalendarCell = {
   isCurrentMonth: boolean
 }
 
-function parseDateKey(dateKey: string) {
+function parseDateKey(dateKey: string): Date {
   const [year, month, day] = dateKey.split('-').map(Number)
   return new Date(year, month - 1, day)
 }
 
-function toDateKey(date: Date) {
+function toDateKey(date: Date): string {
   const year = date.getFullYear()
   const month = String(date.getMonth() + 1).padStart(2, '0')
   const day = String(date.getDate()).padStart(2, '0')
@@ -50,7 +51,7 @@ function getCalendarCells(viewMonth: Date): CalendarCell[] {
   })
 }
 
-function getWeekdayLabels(locale: string) {
+function getWeekdayLabels(locale: string): string[] {
   const formatter = new Intl.DateTimeFormat(locale, {
     weekday: 'short',
     timeZone: 'UTC',
@@ -67,36 +68,63 @@ function getWeekdayLabels(locale: string) {
   })
 }
 
+type MenuCalendarSectionProps = {
+  initialMonth?: string
+  initialSelectedDate?: string
+}
+
 export default function MenuCalendarSection({
   initialMonth,
   initialSelectedDate,
-  activities,
-  nextActivityId,
-}: {
-  initialMonth: string
-  initialSelectedDate: string
-  activities: readonly CalendarActivity[]
-  nextActivityId: string
-}) {
+}: MenuCalendarSectionProps = {}) {
   const { t, i18n } = useTranslation()
-  const [viewMonth, setViewMonth] = useState(() => {
-    const parsed = parseDateKey(initialMonth)
-    return new Date(parsed.getFullYear(), parsed.getMonth(), 1)
+  const todayKey = useMemo(() => toDateKey(new Date()), [])
+
+  const [viewMonth, setViewMonth] = useState<Date>(() => {
+    if (initialMonth) {
+      const parsed = parseDateKey(initialMonth)
+      return new Date(parsed.getFullYear(), parsed.getMonth(), 1)
+    }
+    const today = new Date()
+    return new Date(today.getFullYear(), today.getMonth(), 1)
   })
-  const [selectedDateKey, setSelectedDateKey] = useState(initialSelectedDate)
+
+  const [selectedDateKey, setSelectedDateKey] = useState<string>(
+    () => initialSelectedDate ?? todayKey,
+  )
+
+  const { activities, nextActivityId, isLoading } = useCalendarEvents(
+    viewMonth.getFullYear(),
+    viewMonth.getMonth() + 1,
+  )
+
   const locale = i18n.resolvedLanguage ?? i18n.language
   const cells = useMemo(() => getCalendarCells(viewMonth), [viewMonth])
+
   const activitiesByDate = useMemo(
-    () => new Map(activities.map((activity) => [activity.date, activity])),
+    () =>
+      new Map<string, CalendarActivity>(
+        activities.map((activity: CalendarActivity) => [
+          activity.date,
+          activity,
+        ]),
+      ),
     [activities],
   )
-  const nextActivity = activities.find(
-    (activity) => activity.id === nextActivityId,
+
+  const nextActivity = useMemo(
+    () =>
+      activities.find(
+        (activity: CalendarActivity) => activity.id === nextActivityId,
+      ),
+    [activities, nextActivityId],
   )
+
   const monthLabel = new Intl.DateTimeFormat(locale, {
     month: 'long',
     year: 'numeric',
   }).format(viewMonth)
+
   const weekdayLabels = getWeekdayLabels(locale)
   const nextActivityDate = nextActivity
     ? parseDateKey(nextActivity.date)
@@ -120,6 +148,7 @@ export default function MenuCalendarSection({
       </div>
 
       <div className="mt-4 rounded-2xl border border-(--brand-border-light) bg-white/55 p-4">
+        {/* Calendar Header / Month Controls */}
         <div className="flex items-center justify-between">
           <button
             type="button"
@@ -129,10 +158,17 @@ export default function MenuCalendarSection({
           >
             <ChevronLeft size={18} strokeWidth={2.5} aria-hidden="true" />
           </button>
-          <h4 className="text-[length:var(--text-base)] font-extrabold text-(--brand-ink)">
-            {monthLabel.charAt(0).toLocaleUpperCase(locale) +
-              monthLabel.slice(1)}
-          </h4>
+
+          <div className="flex items-center gap-2">
+            <h4 className="text-[length:var(--text-base)] font-extrabold text-(--brand-ink)">
+              {monthLabel.charAt(0).toLocaleUpperCase(locale) +
+                monthLabel.slice(1)}
+            </h4>
+            {isLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin text-(--brand-primary)" />
+            ) : null}
+          </div>
+
           <button
             type="button"
             onClick={() => changeMonth(1)}
@@ -143,6 +179,7 @@ export default function MenuCalendarSection({
           </button>
         </div>
 
+        {/* Days Grid */}
         <div className="mt-4 grid grid-cols-7 gap-y-1 text-center">
           {weekdayLabels.map((label, index) => (
             <span
@@ -155,9 +192,9 @@ export default function MenuCalendarSection({
 
           {cells.map((cell) => {
             const activity = activitiesByDate.get(cell.dateKey)
+            const isToday = cell.dateKey === todayKey
             const isSelected = selectedDateKey === cell.dateKey
             const isWorkout = activity?.kind === 'workout'
-            const isCallback = activity?.kind === 'callback'
 
             return (
               <button
@@ -171,22 +208,24 @@ export default function MenuCalendarSection({
                 className={`relative mx-auto flex h-9 w-9 items-center justify-center rounded-xl text-[length:var(--text-xs)] font-extrabold transition focus-visible:ring-2 focus-visible:ring-(--brand-border-strong) focus-visible:ring-offset-1 focus-visible:outline-none active:scale-95 ${
                   isSelected
                     ? 'bg-(--brand-primary) text-white'
-                    : isWorkout
-                      ? 'bg-emerald-50 text-emerald-900'
-                      : isCallback
-                        ? 'border border-amber-300 bg-orange-50 text-amber-950'
-                        : cell.isCurrentMonth
-                          ? 'text-(--brand-ink) hover:bg-(--brand-soft)'
-                          : 'text-(--brand-muted)/45'
+                    : isToday
+                      ? 'text-(--brand-primary) ring-2 ring-(--brand-primary)'
+                      : cell.isCurrentMonth
+                        ? 'text-(--brand-ink) hover:bg-(--brand-soft)'
+                        : 'text-(--brand-muted)/45'
                 }`}
               >
-                {cell.day}
-                {activity && !isSelected ? (
+                <span>{cell.day}</span>
+
+                {/* Centered activity dot */}
+                {activity ? (
                   <span
-                    className={`absolute right-1.5 bottom-1 h-1 w-1 rounded-full ${
-                      activity.kind === 'workout'
-                        ? 'bg-emerald-600'
-                        : 'bg-amber-700'
+                    className={`absolute bottom-1 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full transition-colors ${
+                      isSelected
+                        ? 'bg-white'
+                        : isWorkout
+                          ? 'bg-emerald-600'
+                          : 'bg-amber-700'
                     }`}
                   />
                 ) : null}
@@ -195,6 +234,7 @@ export default function MenuCalendarSection({
           })}
         </div>
 
+        {/* Legend */}
         <div className="mt-4 flex flex-wrap gap-x-4 gap-y-2 border-b border-(--brand-border-light) pb-4">
           <span className="flex items-center gap-2 text-[length:var(--text-xs)] font-bold text-(--brand-body-ink)">
             <span className="h-2.5 w-2.5 rounded-full bg-emerald-600" />
@@ -206,6 +246,7 @@ export default function MenuCalendarSection({
           </span>
         </div>
 
+        {/* Next Activity Section */}
         {nextActivity && nextActivityDate ? (
           <div className="pt-4">
             <p className="text-[length:var(--text-xs)] font-extrabold text-(--brand-muted)">
