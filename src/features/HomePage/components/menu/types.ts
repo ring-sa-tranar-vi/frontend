@@ -35,6 +35,15 @@ export type CalendarActivity = {
   trainerName?: string
 }
 
+export type CalendarEventDto = {
+  id: string
+  type: string
+  title: string
+  description?: string
+  time: string
+  completed: boolean
+}
+
 export type MenuPlaceholderData = {
   activity: ActivitySummary
   calendar: {

@@ -6,71 +6,71 @@ import useCurrentUser from './useCurrentUser'
 import type {
   CalendarActivity,
   CalendarActivityKind,
+  CalendarEventDto,
 } from '../features/HomePage/components/menu/types.ts'
+import { getApiBaseUrl } from '../lib/apiBaseUrl.ts'
 
-export type CalendarEventDto = {
-  id: string
-  type: string
-  title: string
-  description?: string
-  time: string
-  completed: boolean
-}
+const API_URL = getApiBaseUrl()
 
 function mapDtoToActivity(dto: CalendarEventDto): CalendarActivity {
-  const [datePart, timePart] = dto.time.split('T')
-  const timeFormatted = timePart ? timePart.slice(0, 5) : undefined
+  const [datePart, timePart] = dto.time ? dto.time.split('T') : ['', '']
+  const formattedTime = timePart ? timePart.slice(0, 5) : undefined
 
-  const rawKind = dto.type.toLowerCase()
+  const rawKind = dto.type ? dto.type.toLowerCase() : ''
   const kind: CalendarActivityKind =
     rawKind === 'callback' ? 'callback' : 'workout'
 
   return {
-    id: dto.id,
+    id: String(dto.id),
     date: datePart,
     kind,
     title: dto.title,
-    time: timeFormatted,
-    trainerName: dto.description,
+    time: formattedTime,
+    trainerName: dto.description || undefined,
   }
 }
 
 export function useCalendarEvents(year: number, month: number) {
-  const { getToken, isSignedIn } = useAuth()
-  const { userId, isProfileLoading } = useCurrentUser()
+  const { getToken } = useAuth()
+  const { userId, isSignedIn, isProfileLoading } = useCurrentUser()
 
   const query = useQuery<CalendarEventDto[]>({
     queryKey: ['calendar', userId, year, month],
     queryFn: async () => {
       if (!userId || !isSignedIn) return []
       const rawToken = await getToken()
-      const token: string | undefined = rawToken ?? undefined
+      const token = rawToken ?? undefined
 
       return await getJson<CalendarEventDto[]>(
-        `/api/v1/calendar?userId=${userId}&year=${year}&month=${month}`,
+        `${API_URL}/api/v1/calendar?userId=${userId}&year=${year}&month=${month}`,
         { token },
       )
     },
     enabled: Boolean(userId) && isSignedIn && !isProfileLoading,
-    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+    staleTime: 1000 * 60 * 5,
   })
 
-  const activities = useMemo(() => {
-    return (query.data ?? []).map(mapDtoToActivity)
-  }, [query.data])
+  const activities: CalendarActivity[] = useMemo(
+    () => (query.data ?? []).map(mapDtoToActivity),
+    [query.data],
+  )
 
   const nextActivityId = useMemo(() => {
     const now = new Date()
     const upcoming = activities
       .filter((activity) => {
-        const activityDate = new Date(
-          `${activity.date}T${activity.time ?? '00:00:00'}`,
-        )
-        return activityDate >= now
+        const fullDate = activity.time
+          ? new Date(`${activity.date}T${activity.time}:00`)
+          : new Date(activity.date)
+        return fullDate >= now
       })
       .sort((a, b) => {
-        const dateA = new Date(`${a.date}T${a.time ?? '00:00:00'}`)
-        const dateB = new Date(`${b.date}T${b.time ?? '00:00:00'}`)
+        const dateA = a.time
+          ? new Date(`${a.date}T${a.time}:00`)
+          : new Date(a.date)
+        const dateB = b.time
+          ? new Date(`${b.date}T${b.time}:00`)
+          : new Date(b.date)
         return dateA.getTime() - dateB.getTime()
       })
 
