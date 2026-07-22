@@ -132,7 +132,6 @@
         "upcomingCount": "{{count}} upcoming events",
         "eventsError": "Events could not be loaded right now.",
         "organisationsError": "Organisations could not be loaded right now.",
-        "membershipError": "Your saved selections could not be loaded. Try again before making a new choice.",
         "retry": "Try again",
         "noUpcomingEvents": "There are no upcoming events right now.",
         "noMatchingEvents": "No events match your search or filter.",

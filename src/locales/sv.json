@@ -132,7 +132,6 @@
         "upcomingCount": "{{count}} kommande event",
         "eventsError": "Kunde inte hämta event just nu.",
         "organisationsError": "Kunde inte hämta organisationer just nu.",
-        "membershipError": "Kunde inte hämta dina sparade val. Försök igen innan du gör ett nytt val.",
         "retry": "Försök igen",
         "noUpcomingEvents": "Det finns inga kommande event just nu.",
         "noMatchingEvents": "Inga event matchar din sökning eller ditt filter.",
