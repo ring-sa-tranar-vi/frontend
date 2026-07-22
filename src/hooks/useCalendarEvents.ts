@@ -8,79 +8,143 @@ import type {
   CalendarActivityKind,
   CalendarEventDto,
 } from '../features/HomePage/components/menu/types.ts'
-import { getApiBaseUrl } from '../lib/apiBaseUrl.ts'
 
-const API_URL = getApiBaseUrl()
+const CALENDAR_KIND_BY_API_TYPE: Record<string, CalendarActivityKind> = {
+  WORKOUT: 'workout',
+  EVENT: 'event',
+  CALL: 'callback',
+}
 
-function mapDtoToActivity(dto: CalendarEventDto): CalendarActivity {
-  const [datePart, timePart] = dto.time ? dto.time.split('T') : ['', '']
-  const formattedTime = timePart ? timePart.slice(0, 5) : undefined
+function isValidDateKey(dateKey: string): boolean {
+  const [year, month, day] = dateKey.split('-').map(Number)
 
-  const rawKind = dto.type ? dto.type.toLowerCase() : ''
-  const kind: CalendarActivityKind =
-    rawKind === 'callback' ? 'callback' : 'workout'
+  if (!year || !month || !day) return false
+
+  const date = new Date(year, month - 1, day)
+  return (
+    date.getFullYear() === year &&
+    date.getMonth() === month - 1 &&
+    date.getDate() === day
+  )
+}
+
+function getClockTime(timePart: string): string | null {
+  const match = /^(\d{2}):(\d{2})(?::(\d{2})(?:\.\d+)?)?$/.exec(timePart)
+  if (!match) return null
+
+  const hour = Number(match[1])
+  const minute = Number(match[2])
+  const second = match[3] ? Number(match[3]) : 0
+
+  if (hour > 23 || minute > 59 || second > 59) return null
+  return `${match[1]}:${match[2]}`
+}
+
+function mapDtoToActivity(dto: CalendarEventDto): CalendarActivity | null {
+  if (
+    !dto ||
+    typeof dto.id !== 'string' ||
+    typeof dto.type !== 'string' ||
+    typeof dto.title !== 'string' ||
+    typeof dto.time !== 'string'
+  ) {
+    return null
+  }
+
+  const [datePart, timePart] = dto.time.split('T')
+  const kind = CALENDAR_KIND_BY_API_TYPE[dto.type.toUpperCase()]
+  const time = timePart ? getClockTime(timePart) : null
+
+  if (!kind || !isValidDateKey(datePart) || !time) {
+    return null
+  }
+
+  const description =
+    typeof dto.description === 'string' && dto.description.trim()
+      ? dto.description.trim()
+      : undefined
 
   return {
-    id: String(dto.id),
+    id: dto.id,
     date: datePart,
     kind,
-    title: dto.title,
-    time: formattedTime,
-    trainerName: dto.description || undefined,
+    title: dto.title.trim(),
+    time,
+    description: kind === 'callback' ? undefined : description,
+    completed: Boolean(dto.completed),
   }
 }
 
-export function useCalendarEvents(year: number, month: number) {
+export function useCalendarEvents(year: number, month: number, enabled = true) {
   const { getToken } = useAuth()
-  const { userId, isSignedIn, isProfileLoading } = useCurrentUser()
+  const {
+    userId,
+    isSignedIn,
+    isProfileLoading,
+    isProfileError,
+    refetchProfile,
+  } = useCurrentUser()
 
   const query = useQuery<CalendarEventDto[]>({
     queryKey: ['calendar', userId, year, month],
     queryFn: async () => {
       if (!userId || !isSignedIn) return []
       const rawToken = await getToken()
-      const token = rawToken ?? undefined
+      if (!rawToken) throw new Error('Missing Clerk token')
 
-      return await getJson<CalendarEventDto[]>(
-        `${API_URL}/api/v1/calendar?userId=${userId}&year=${year}&month=${month}`,
-        { token },
+      const search = new URLSearchParams({
+        userId,
+        year: String(year),
+        month: String(month),
+      })
+      const response = await getJson<unknown>(
+        `/api/v1/calendar?${search.toString()}`,
+        { token: rawToken },
       )
+
+      if (!Array.isArray(response)) {
+        throw new Error('Invalid calendar response')
+      }
+
+      return response as CalendarEventDto[]
     },
-    enabled: Boolean(userId) && isSignedIn && !isProfileLoading,
-    staleTime: 1000 * 60 * 5,
+    enabled: enabled && Boolean(userId) && isSignedIn && !isProfileLoading,
+    retry: 1,
+    staleTime: 60_000,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: false,
   })
 
   const activities: CalendarActivity[] = useMemo(
-    () => (query.data ?? []).map(mapDtoToActivity),
+    () =>
+      (query.data ?? [])
+        .map(mapDtoToActivity)
+        .filter((activity): activity is CalendarActivity => activity !== null)
+        .sort((first, second) => {
+          const firstTime = `${first.date}T${first.time ?? ''}`
+          const secondTime = `${second.date}T${second.time ?? ''}`
+          return (
+            firstTime.localeCompare(secondTime) ||
+            first.id.localeCompare(second.id)
+          )
+        }),
     [query.data],
   )
 
-  const nextActivityId = useMemo(() => {
-    const now = new Date()
-    const upcoming = activities
-      .filter((activity) => {
-        const fullDate = activity.time
-          ? new Date(`${activity.date}T${activity.time}:00`)
-          : new Date(activity.date)
-        return fullDate >= now
-      })
-      .sort((a, b) => {
-        const dateA = a.time
-          ? new Date(`${a.date}T${a.time}:00`)
-          : new Date(a.date)
-        const dateB = b.time
-          ? new Date(`${b.date}T${b.time}:00`)
-          : new Date(b.date)
-        return dateA.getTime() - dateB.getTime()
-      })
+  async function refetchCalendar() {
+    if (isProfileError) {
+      return refetchProfile()
+    }
 
-    return upcoming[0]?.id
-  }, [activities])
+    return query.refetch()
+  }
 
   return {
     ...query,
     activities,
-    nextActivityId,
-    isLoading: query.isLoading || isProfileLoading,
+    hasData: query.data !== undefined,
+    isError: isProfileError || query.isError,
+    isLoading: enabled && (query.isLoading || isProfileLoading),
+    refetch: refetchCalendar,
   }
 }

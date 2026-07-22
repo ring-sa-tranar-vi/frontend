@@ -11,6 +11,7 @@ type ProfileData = {
   intensityLevel: number
   context: string
   trainerId?: number | null
+  city?: string | null
 }
 
 type ProfileResponse = ProfileData

@@ -14,6 +14,7 @@ type CurrentUserProfile = {
   name?: string | null
   context?: string | null
   isAdmin?: boolean
+  city?: string | null
 }
 
 export default function useCurrentUser() {
@@ -76,6 +77,7 @@ export default function useCurrentUser() {
           data.trainerId !== undefined
             ? data.trainerId
             : (profile?.trainerId ?? null),
+        city: data.city !== undefined ? data.city : (profile?.city ?? null),
       }
 
       await updateProfileMutation.mutateAsync(payload)
