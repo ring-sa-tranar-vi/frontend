@@ -26,8 +26,8 @@ export default function MenuPlaceholderSections({
         <MenuCalendarSection
           initialMonth={data.calendar.initialMonth}
           initialSelectedDate={data.calendar.initialSelectedDate}
-          activities={data.calendar.activities}
-          nextActivityId={data.calendar.nextActivityId}
+          // activities={data.calendar.activities}
+          // nextActivityId={data.calendar.nextActivityId}
         />
       </div>
       <div className="py-7">
