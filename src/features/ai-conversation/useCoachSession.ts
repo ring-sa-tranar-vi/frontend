@@ -22,6 +22,7 @@ import {
   COACH_PROMPTS,
   buildUserContext,
   liveSystemInstruction,
+  ONBOARDING_SYSTEM_INSTRUCTION,
   SESSION_CONTROL_TOOLS,
 } from './prompts'
 import type { CoachCallSession } from '../session/types'
