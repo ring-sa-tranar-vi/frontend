@@ -82,16 +82,63 @@
       "streakAriaLabel": "مسلسل {{count}} دن",
       "daysInRow": "مسلسل دن",
       "encouragement": "بہت خوب!",
-      "weekSummary": "آپ نے اس ہفتے {{count}} دن ٹریننگ کی۔",
-      "personalRecord": "ذاتی ریکارڈ: {{count}} دن"
+      "encouragementEmpty": "اپنی پہلی ٹریننگ کے لیے تیار ہیں؟",
+      "weekSummary_one": "آپ نے اس ہفتے {{count}} دن ٹریننگ کی۔",
+      "weekSummary_other": "آپ نے اس ہفتے {{count}} دن ٹریننگ کی۔",
+      "personalRecord_one": "ذاتی ریکارڈ: {{count}} دن",
+      "personalRecord_other": "ذاتی ریکارڈ: {{count}} دن",
+      "loading": "آپ کی سرگرمی لوڈ ہو رہی ہے…",
+      "loadError": "آپ کی سرگرمی ابھی لوڈ نہیں ہو سکی۔",
+      "retry": "دوبارہ کوشش کریں"
     },
     "events": {
       "title": "مقامی تقریبات",
       "eyebrow": "آپ کے قریب",
       "headline": "ایک جگہ مل کر ٹریننگ کریں",
-      "description": "اپنے لیے محفوظ مقامی سرگرمیاں اور منتظمین تلاش کریں۔",
-      "cta": "مقامی تقریب تلاش کریں",
-      "notConnected": "تقریب کی تلاش ابھی دستیاب نہیں ہے۔"
+      "description": "اپنے قریب آنے والی تقریبات اور تنظیمیں تلاش کریں۔",
+      "cta": "تقریبات اور تنظیمیں دیکھیں",
+      "notConnected": "تقریب کی تلاش ابھی دستیاب نہیں ہے۔",
+      "directory": {
+        "title": "تقریبات اور تنظیمیں",
+        "subtitle": "آپ کے قریب سرگرمیاں اور منتظمین",
+        "back": "مینو پر واپس جائیں",
+        "tabsLabel": "تقریبات اور تنظیمیں",
+        "tabs": {
+          "events": "تقریبات",
+          "organisations": "تنظیمیں"
+        },
+        "searchEvents": "تقریبات تلاش کریں",
+        "searchOrganisations": "تنظیمیں تلاش کریں",
+        "filtersLabel": "تقریبات فلٹر کریں",
+        "filters": {
+          "all": "سب",
+          "nearby": "میرے قریب",
+          "week": "اس ہفتے"
+        },
+        "upcomingEvents": "آنے والی تقریبات",
+        "resultCount": "{{count}} تقریبات",
+        "organisationsIntro": "ان تنظیموں کو فالو کریں جو Ring så tränar vi کے ساتھ سرگرمیاں پیش کرتی ہیں۔",
+        "allOrganisations": "تمام تنظیمیں",
+        "partnerCount": "{{count}} شراکت دار",
+        "register": "رجسٹر کریں",
+        "registered": "رجسٹرڈ",
+        "registerFor": "{{name}} کے لیے رجسٹر کریں",
+        "cancelRegistrationFor": "{{name}} کی رجسٹریشن منسوخ کریں",
+        "follow": "فالو کریں",
+        "following": "فالو کر رہے ہیں",
+        "followOrganisation": "{{name}} کو فالو کریں",
+        "unfollowOrganisation": "{{name}} کو اَن فالو کریں",
+        "saving": "محفوظ ہو رہا ہے…",
+        "upcomingCount": "{{count}} آنے والی تقریبات",
+        "eventsError": "تقریبات ابھی لوڈ نہیں ہو سکیں۔",
+        "organisationsError": "تنظیمیں ابھی لوڈ نہیں ہو سکیں۔",
+        "membershipError": "آپ کے محفوظ کردہ انتخاب لوڈ نہیں ہو سکے۔ نیا انتخاب کرنے سے پہلے دوبارہ کوشش کریں۔",
+        "retry": "دوبارہ کوشش کریں",
+        "noUpcomingEvents": "اس وقت کوئی آنے والی تقریب نہیں ہے۔",
+        "noMatchingEvents": "آپ کی تلاش یا فلٹر سے کوئی تقریب مطابقت نہیں رکھتی۔",
+        "noOrganisations": "اس وقت دکھانے کے لیے کوئی تنظیم نہیں ہے۔",
+        "noMatchingOrganisations": "آپ کی تلاش سے کوئی تنظیم مطابقت نہیں رکھتی۔"
+      }
     },
     "calendar": {
       "title": "کیلنڈر",
@@ -99,11 +146,13 @@
       "previousMonth": "پچھلا مہینہ",
       "nextMonth": "اگلا مہینہ",
       "workout": "ٹریننگ",
+      "event": "تقریب",
       "callback": "واپسی کال",
-      "nextActivity": "اگلی سرگرمی",
-      "withTrainer": "{{name}} کے ساتھ",
-      "calmWorkout": "ہلکی ٹریننگ",
-      "completedWorkout": "مکمل ٹریننگ"
+      "loading": "کیلنڈر لوڈ ہو رہا ہے…",
+      "loadError": "کیلنڈر ابھی لوڈ نہیں ہو سکا۔",
+      "retry": "دوبارہ کوشش کریں",
+      "noEventsForDay": "اس دن کوئی سرگرمی نہیں ہے",
+      "untitledActivity": "سرگرمی"
     },
     "callback": {
       "title": "واپسی کال کی درخواست کریں",

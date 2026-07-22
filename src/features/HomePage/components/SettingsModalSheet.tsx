@@ -21,6 +21,7 @@ import {
 } from '../../../components/AppSheet'
 import LanguageSwitcher from '../../../components/LanguageSwitcher'
 import SupportSheet from './SupportSheet'
+import EventsOrganisationsSheet from './menu/EventsOrganisationsSheet'
 import MenuPlaceholderSections from './menu/MenuPlaceholderSections'
 
 type ProfileSettings = {
@@ -29,6 +30,7 @@ type ProfileSettings = {
   context?: string | null
   trainerId?: number | null
   isAdmin?: boolean
+  city?: string | null
 }
 
 const INTENSITY_MIN = 1
@@ -41,6 +43,7 @@ const EMPTY_PROFILE: ProfileSettings = {
   context: '',
   trainerId: DEFAULT_TRAINER_ID,
   isAdmin: false,
+  city: '',
 }
 
 function normalizeIntensityLevel(value?: number | null) {
@@ -287,6 +290,7 @@ function SettingsModalBody({
   )
   const [saveFeedback, setSaveFeedback] = useState<string | null>(null)
   const [supportOpen, setSupportOpen] = useState(false)
+  const [eventsOpen, setEventsOpen] = useState(false)
 
   const feedbackTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const isInitialMount = useRef(true)
@@ -319,6 +323,7 @@ function SettingsModalBody({
         intensityLevel: normalizeIntensityLevel(profile.intensityLevel),
         context: profile.context ?? '',
         trainerId: selectedTrainerId,
+        city: profile.city ?? null,
       })
       .catch(console.error)
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -345,6 +350,7 @@ function SettingsModalBody({
         intensityLevel: normalizeIntensityLevel(intensityLevel),
         context,
         trainerId: Number(selectedTrainerId),
+        city: profile.city ?? null,
       })
 
       setOpen(false)
@@ -357,7 +363,7 @@ function SettingsModalBody({
   return (
     <>
       <AppSheet
-        open={open}
+        open={open && !eventsOpen}
         title={t('menu.title')}
         subtitle={t('menu.subtitle')}
         icon={<Menu size={20} strokeWidth={2.4} />}
@@ -389,7 +395,10 @@ function SettingsModalBody({
             </div>
           ) : null}
 
-          <MenuPlaceholderSections />
+          <MenuPlaceholderSections
+            dataEnabled={open && !eventsOpen}
+            onFindEvents={() => setEventsOpen(true)}
+          />
 
           {profileAvailable ? (
             <ProfilePreferenceSections
@@ -429,6 +438,15 @@ function SettingsModalBody({
         </div>
       </AppSheet>
       <SupportSheet open={supportOpen} setOpen={setSupportOpen} />
+      <EventsOrganisationsSheet
+        open={open && eventsOpen}
+        onBack={() => setEventsOpen(false)}
+        onClose={() => {
+          setEventsOpen(false)
+          setOpen(false)
+        }}
+        userCity={profile.city}
+      />
     </>
   )
 }
