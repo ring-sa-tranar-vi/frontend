@@ -218,5 +218,6 @@ export async function getCoachCallSession(
 
     currentStreak: progress?.currentStreak,
     completedWorkouts: progress?.completedWorkouts,
+    onboarding: true,
   }
 }
