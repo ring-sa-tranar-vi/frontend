@@ -1,4 +1,11 @@
-import { ArrowLeft, Clock3, MapPin, Search, UsersRound } from 'lucide-react'
+import {
+  ArrowLeft,
+  Check,
+  Clock3,
+  MapPin,
+  Search,
+  UsersRound,
+} from 'lucide-react'
 import { type KeyboardEvent, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { AppSheet, AppSheetNotice } from '../../../../components/AppSheet'
@@ -134,7 +141,7 @@ function EventCard({
   const buttonLabel = isPending
     ? t('menu.events.directory.saving')
     : isAttending
-      ? t('menu.events.directory.registered')
+      ? t('menu.events.directory.unregister')
       : t('menu.events.directory.register')
 
   return (
@@ -152,9 +159,17 @@ function EventCard({
       </time>
 
       <div className="min-w-0">
-        <h3 className="text-[length:var(--text-base)] leading-tight font-extrabold text-(--brand-ink)">
-          {event.name}
-        </h3>
+        <div className="flex flex-wrap items-center gap-2">
+          <h3 className="text-[length:var(--text-base)] leading-tight font-extrabold text-(--brand-ink)">
+            {event.name}
+          </h3>
+          {isAttending ? (
+            <span className="inline-flex items-center gap-1 rounded-full bg-(--brand-soft) px-2 py-1 text-[0.62rem] leading-none font-extrabold text-(--brand-primary-deep)">
+              <Check size={12} strokeWidth={2.8} aria-hidden="true" />
+              {t('menu.events.directory.registered')}
+            </span>
+          ) : null}
+        </div>
         <p className="mt-1 flex items-center gap-1.5 text-[length:var(--text-xs)] font-semibold text-(--brand-body-ink)">
           <Clock3 size={13} className="shrink-0" aria-hidden="true" />
           <span>{time}</span>
@@ -224,7 +239,7 @@ function OrganisationCard({
   const buttonLabel = isPending
     ? t('menu.events.directory.saving')
     : isFollowing
-      ? t('menu.events.directory.following')
+      ? t('menu.events.directory.unfollow')
       : t('menu.events.directory.follow')
 
   return (
@@ -237,9 +252,17 @@ function OrganisationCard({
       </div>
 
       <div className="min-w-0">
-        <h3 className="text-[length:var(--text-base)] leading-tight font-extrabold text-(--brand-ink)">
-          {organisation.name}
-        </h3>
+        <div className="flex flex-wrap items-center gap-2">
+          <h3 className="text-[length:var(--text-base)] leading-tight font-extrabold text-(--brand-ink)">
+            {organisation.name}
+          </h3>
+          {isFollowing ? (
+            <span className="inline-flex items-center gap-1 rounded-full bg-(--brand-soft) px-2 py-1 text-[0.62rem] leading-none font-extrabold text-(--brand-primary-deep)">
+              <Check size={12} strokeWidth={2.8} aria-hidden="true" />
+              {t('menu.events.directory.following')}
+            </span>
+          ) : null}
+        </div>
         {organisation.description ? (
           <p className="mt-1 line-clamp-2 text-[length:var(--text-xs)] leading-snug font-semibold text-(--brand-body-ink)">
             {organisation.description}
@@ -392,11 +415,6 @@ export default function EventsOrganisationsSheet({
     [locale, normalizedSearch, organisations],
   )
 
-  const membershipError =
-    activeTab === 'events'
-      ? attendingQuery.isError || attendanceMutation.isError
-      : followingQuery.isError || followingMutation.isError
-
   function switchTab(tab: DirectoryTab) {
     setActiveTab(tab)
     setSearch('')
@@ -491,29 +509,6 @@ export default function EventsOrganisationsSheet({
             className="min-h-12 w-full rounded-2xl border border-(--brand-border-field) bg-white/65 py-3 pr-4 pl-11 text-[length:var(--text-sm)] font-semibold text-(--brand-ink) placeholder:text-(--brand-muted) focus-visible:border-(--brand-border-strong) focus-visible:ring-2 focus-visible:ring-(--brand-border-strong) focus-visible:ring-offset-2 focus-visible:outline-none"
           />
         </label>
-
-        {membershipError ? (
-          <div className="mt-3 space-y-2">
-            <AppSheetNotice tone="danger">
-              {t('menu.events.directory.membershipError')}
-            </AppSheetNotice>
-            <button
-              type="button"
-              onClick={() => {
-                if (activeTab === 'events') {
-                  attendanceMutation.reset()
-                  void attendingQuery.refetch()
-                } else {
-                  followingMutation.reset()
-                  void followingQuery.refetch()
-                }
-              }}
-              className="min-h-10 w-full rounded-xl text-[length:var(--text-sm)] font-extrabold text-(--brand-primary-deep) transition hover:bg-(--brand-soft) focus-visible:ring-2 focus-visible:ring-(--brand-border-strong) focus-visible:outline-none active:scale-[0.985]"
-            >
-              {t('menu.events.directory.retry')}
-            </button>
-          </div>
-        ) : null}
 
         {activeTab === 'events' ? (
           <section
