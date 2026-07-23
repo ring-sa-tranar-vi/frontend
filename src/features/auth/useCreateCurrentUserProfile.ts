@@ -72,7 +72,7 @@ export function useCreateCurrentUserProfile() {
 
       await createUserMutation.mutateAsync({ token, displayName })
     })().catch(() => {
-      lastSyncedUserIdRef.current = null
+      console.error('Failed to sync user profile with backend')
     })
   }, [
     clerkUserId,

@@ -82,16 +82,64 @@
       "streakAriaLabel": "{{count}} days in a row",
       "daysInRow": "days in a row",
       "encouragement": "Great job!",
-      "weekSummary": "You trained {{count}} days this week.",
-      "personalRecord": "Personal record: {{count}} days"
+      "encouragementEmpty": "Ready for your first workout?",
+      "weekSummary_one": "You trained {{count}} day this week.",
+      "weekSummary_other": "You trained {{count}} days this week.",
+      "personalRecord_one": "Personal record: {{count}} day",
+      "personalRecord_other": "Personal record: {{count}} days",
+      "loading": "Loading your activity…",
+      "loadError": "Your activity could not be loaded right now.",
+      "retry": "Try again"
     },
     "events": {
       "title": "In-person events",
       "eyebrow": "Near you",
       "headline": "Train together in person",
-      "description": "Find welcoming activities and local organizers that suit you.",
-      "cta": "Find an in-person event",
-      "notConnected": "Event search is not available yet."
+      "description": "Find upcoming events and organisations near you.",
+      "cta": "See events and organisations",
+      "notConnected": "Event search is not available yet.",
+      "directory": {
+        "title": "Events & organisations",
+        "subtitle": "Activities and organisers near you",
+        "back": "Back to the menu",
+        "tabsLabel": "Events and organisations",
+        "tabs": {
+          "events": "Events",
+          "organisations": "Organisations"
+        },
+        "searchEvents": "Search events",
+        "searchOrganisations": "Search organisations",
+        "filtersLabel": "Filter events",
+        "filters": {
+          "all": "All",
+          "nearby": "Near me",
+          "week": "This week"
+        },
+        "upcomingEvents": "Upcoming events",
+        "resultCount": "{{count}} events",
+        "organisationsIntro": "Follow organisations that offer activities together with Ring så tränar vi.",
+        "allOrganisations": "All organisations",
+        "partnerCount": "{{count}} partners",
+        "register": "Register",
+        "registered": "Registered",
+        "unregister": "Cancel",
+        "registerFor": "Register for {{name}}",
+        "cancelRegistrationFor": "Cancel your registration for {{name}}",
+        "follow": "Follow",
+        "following": "Following",
+        "unfollow": "Unfollow",
+        "followOrganisation": "Follow {{name}}",
+        "unfollowOrganisation": "Unfollow {{name}}",
+        "saving": "Saving…",
+        "upcomingCount": "{{count}} upcoming events",
+        "eventsError": "Events could not be loaded right now.",
+        "organisationsError": "Organisations could not be loaded right now.",
+        "retry": "Try again",
+        "noUpcomingEvents": "There are no upcoming events right now.",
+        "noMatchingEvents": "No events match your search or filter.",
+        "noOrganisations": "There are no organisations to show right now.",
+        "noMatchingOrganisations": "No organisations match your search."
+      }
     },
     "calendar": {
       "title": "Calendar",
@@ -99,11 +147,13 @@
       "previousMonth": "Previous month",
       "nextMonth": "Next month",
       "workout": "Workout",
+      "event": "Event",
       "callback": "Callback",
-      "nextActivity": "Next activity",
-      "withTrainer": "with {{name}}",
-      "calmWorkout": "Gentle workout",
-      "completedWorkout": "Completed workout"
+      "loading": "Loading calendar…",
+      "loadError": "The calendar could not be loaded right now.",
+      "retry": "Try again",
+      "noEventsForDay": "No activities on this day",
+      "untitledActivity": "Activity"
     },
     "callback": {
       "title": "Request a callback",

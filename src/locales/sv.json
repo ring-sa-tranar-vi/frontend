@@ -82,16 +82,64 @@
       "streakAriaLabel": "{{count}} dagar i rad",
       "daysInRow": "dagar i rad",
       "encouragement": "Bra jobbat!",
-      "weekSummary": "Du har tränat {{count}} dagar den här veckan.",
-      "personalRecord": "Personligt rekord: {{count}} dagar"
+      "encouragementEmpty": "Redo för ditt första pass?",
+      "weekSummary_one": "Du har tränat {{count}} dag den här veckan.",
+      "weekSummary_other": "Du har tränat {{count}} dagar den här veckan.",
+      "personalRecord_one": "Personligt rekord: {{count}} dag",
+      "personalRecord_other": "Personligt rekord: {{count}} dagar",
+      "loading": "Hämtar din aktivitet…",
+      "loadError": "Kunde inte hämta din aktivitet just nu.",
+      "retry": "Försök igen"
     },
     "events": {
       "title": "Fysiska event",
       "eyebrow": "Nära dig",
       "headline": "Träna tillsammans på plats",
-      "description": "Hitta trygga aktiviteter och lokala arrangörer som passar dig.",
-      "cta": "Hitta ett fysiskt event",
-      "notConnected": "Eventsökningen är inte tillgänglig ännu."
+      "description": "Hitta kommande event och organisationer nära dig.",
+      "cta": "Se event och organisationer",
+      "notConnected": "Eventsökningen är inte tillgänglig ännu.",
+      "directory": {
+        "title": "Event & organisationer",
+        "subtitle": "Aktiviteter och arrangörer nära dig",
+        "back": "Tillbaka till menyn",
+        "tabsLabel": "Event och organisationer",
+        "tabs": {
+          "events": "Event",
+          "organisations": "Organisationer"
+        },
+        "searchEvents": "Sök event",
+        "searchOrganisations": "Sök organisation",
+        "filtersLabel": "Filtrera event",
+        "filters": {
+          "all": "Alla",
+          "nearby": "Nära mig",
+          "week": "Den här veckan"
+        },
+        "upcomingEvents": "Kommande event",
+        "resultCount": "{{count}} event",
+        "organisationsIntro": "Följ organisationer som erbjuder aktiviteter tillsammans med Ring så tränar vi.",
+        "allOrganisations": "Alla organisationer",
+        "partnerCount": "{{count}} partners",
+        "register": "Anmäl dig",
+        "registered": "Anmäld",
+        "unregister": "Avanmäl",
+        "registerFor": "Anmäl dig till {{name}}",
+        "cancelRegistrationFor": "Avanmäl dig från {{name}}",
+        "follow": "Följ",
+        "following": "Följer",
+        "unfollow": "Sluta följ",
+        "followOrganisation": "Följ {{name}}",
+        "unfollowOrganisation": "Sluta följa {{name}}",
+        "saving": "Sparar…",
+        "upcomingCount": "{{count}} kommande event",
+        "eventsError": "Kunde inte hämta event just nu.",
+        "organisationsError": "Kunde inte hämta organisationer just nu.",
+        "retry": "Försök igen",
+        "noUpcomingEvents": "Det finns inga kommande event just nu.",
+        "noMatchingEvents": "Inga event matchar din sökning eller ditt filter.",
+        "noOrganisations": "Det finns inga organisationer att visa just nu.",
+        "noMatchingOrganisations": "Inga organisationer matchar din sökning."
+      }
     },
     "calendar": {
       "title": "Kalender",
@@ -99,11 +147,13 @@
       "previousMonth": "Föregående månad",
       "nextMonth": "Nästa månad",
       "workout": "Träningspass",
+      "event": "Event",
       "callback": "Uppringning",
-      "nextActivity": "Nästa aktivitet",
-      "withTrainer": "med {{name}}",
-      "calmWorkout": "Lugnt träningspass",
-      "completedWorkout": "Genomfört träningspass"
+      "loading": "Hämtar kalendern…",
+      "loadError": "Kunde inte hämta kalendern just nu.",
+      "retry": "Försök igen",
+      "noEventsForDay": "Inga aktiviteter denna dag",
+      "untitledActivity": "Aktivitet"
     },
     "callback": {
       "title": "Be om att bli uppringd",

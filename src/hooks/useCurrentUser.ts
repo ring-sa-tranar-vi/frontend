@@ -14,6 +14,7 @@ type CurrentUserProfile = {
   name?: string | null
   context?: string | null
   isAdmin?: boolean
+  city?: string | null
   onboarding?: boolean
 }
 
@@ -77,6 +78,7 @@ export default function useCurrentUser() {
           data.trainerId !== undefined
             ? data.trainerId
             : (profile?.trainerId ?? null),
+        city: data.city !== undefined ? data.city : (profile?.city ?? null),
         onboarding: data.onboarding ? true : false,
       }
 

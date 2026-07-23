@@ -27,13 +27,22 @@ type AppSheetProps = {
   children: ReactNode
   footer?: ReactNode
   onClose: () => void
+  onBack?: () => void
+  backLabel?: string
   height?: 'compact' | 'default' | 'large'
+  fillHeight?: boolean
 }
 
 const maxHeightClass = {
   compact: 'max-h-[58%]',
   default: 'max-h-[76%]',
   large: 'max-h-[92%]',
+}
+
+const fixedHeightClass = {
+  compact: 'h-[58%]',
+  default: 'h-[76%]',
+  large: 'h-[92%]',
 }
 
 export function AppSheet({
@@ -44,7 +53,10 @@ export function AppSheet({
   children,
   footer,
   onClose,
+  onBack,
+  backLabel,
   height = 'default',
+  fillHeight = false,
 }: AppSheetProps) {
   const sectionRef = useRef<HTMLElement>(null)
   const backdropRef = useRef<HTMLDivElement>(null)
@@ -269,6 +281,8 @@ export function AppSheet({
 
       <section
         ref={sectionRef}
+        aria-hidden={!open}
+        inert={!open}
         onWheel={handleWheel}
         onTouchStart={onTouchStart}
         onTouchEnd={onTouchEnd}
@@ -277,8 +291,9 @@ export function AppSheet({
           'absolute inset-x-0 bottom-0 z-50 flex w-full flex-col',
           'app-sheet-surface overflow-hidden rounded-t-4xl',
           'will-change-transform',
-          maxHeightClass[height],
+          fillHeight ? fixedHeightClass[height] : maxHeightClass[height],
           open ? '' : 'pointer-events-none',
+          !open && !backdropVisible ? 'invisible' : '',
         ].join(' ')}
         // No transform style prop – position is controlled entirely via
         // el.style.transform so CSS transitions always have a reliable from-state.
@@ -290,8 +305,23 @@ export function AppSheet({
             <div className="min-w-0">
               <div className="flex items-center gap-2 text-(--brand-primary)">
                 {icon ? (
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-(--brand-soft)">
-                    {icon}
+                  <div
+                    className={`flex shrink-0 items-center justify-center rounded-2xl bg-(--brand-soft) ${
+                      onBack ? 'h-11 w-11' : 'h-9 w-9'
+                    }`}
+                  >
+                    {onBack ? (
+                      <button
+                        type="button"
+                        onClick={onBack}
+                        aria-label={backLabel}
+                        className="flex h-full w-full items-center justify-center rounded-2xl transition focus-visible:ring-2 focus-visible:ring-(--brand-border-strong) focus-visible:ring-offset-2 focus-visible:outline-none active:scale-95"
+                      >
+                        {icon}
+                      </button>
+                    ) : (
+                      icon
+                    )}
                   </div>
                 ) : null}
 
@@ -310,7 +340,7 @@ export function AppSheet({
             <button
               type="button"
               onClick={onClose}
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-(--brand-soft) text-(--brand-primary) transition active:scale-95"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-(--brand-soft) text-(--brand-primary) transition focus-visible:ring-2 focus-visible:ring-(--brand-border-strong) focus-visible:ring-offset-2 focus-visible:outline-none active:scale-95"
               aria-label="Stäng"
             >
               <X size={21} strokeWidth={2.4} />

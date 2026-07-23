@@ -82,16 +82,64 @@
       "streakAriaLabel": "{{count}} maalmood oo xiriir ah",
       "daysInRow": "maalmood oo xiriir ah",
       "encouragement": "Shaqo fiican!",
-      "weekSummary": "Toddobaadkan waxaad tababartay {{count}} maalmood.",
-      "personalRecord": "Rikoorkaaga: {{count}} maalmood"
+      "encouragementEmpty": "Ma diyaar u tahay tababarkaaga ugu horreeya?",
+      "weekSummary_one": "Toddobaadkan waxaad tababartay {{count}} maalin.",
+      "weekSummary_other": "Toddobaadkan waxaad tababartay {{count}} maalmood.",
+      "personalRecord_one": "Rikoorkaaga: {{count}} maalin",
+      "personalRecord_other": "Rikoorkaaga: {{count}} maalmood",
+      "loading": "Dhaqdhaqaaqaaga waa la soo dejinayaa…",
+      "loadError": "Hadda lama soo dejin karo dhaqdhaqaaqaaga.",
+      "retry": "Mar kale isku day"
     },
     "events": {
       "title": "Dhacdooyin goobta ah",
       "eyebrow": "Kuu dhow",
       "headline": "Si wadajir ah goobta ugu tababar",
-      "description": "Hel dhaqdhaqaaqyo ammaan ah iyo qabanqaabiyeyaal deegaanka ah.",
-      "cta": "Hel dhacdo goobta ah",
-      "notConnected": "Raadinta dhacdooyinka weli lama heli karo."
+      "description": "Hel dhacdooyinka soo socda iyo ururrada kuu dhow.",
+      "cta": "Arag dhacdooyinka iyo ururrada",
+      "notConnected": "Raadinta dhacdooyinka weli lama heli karo.",
+      "directory": {
+        "title": "Dhacdooyin & ururro",
+        "subtitle": "Dhaqdhaqaaqyo iyo qabanqaabiyeyaal kuu dhow",
+        "back": "Ku noqo liiska",
+        "tabsLabel": "Dhacdooyin iyo ururro",
+        "tabs": {
+          "events": "Dhacdooyin",
+          "organisations": "Ururro"
+        },
+        "searchEvents": "Raadi dhacdo",
+        "searchOrganisations": "Raadi urur",
+        "filtersLabel": "Kala saar dhacdooyinka",
+        "filters": {
+          "all": "Dhammaan",
+          "nearby": "Ii dhow",
+          "week": "Toddobaadkan"
+        },
+        "upcomingEvents": "Dhacdooyinka soo socda",
+        "resultCount": "{{count}} dhacdo",
+        "organisationsIntro": "Raac ururrada bixiya dhaqdhaqaaqyo ay la sameeyaan Ring så tränar vi.",
+        "allOrganisations": "Dhammaan ururrada",
+        "partnerCount": "{{count}} bah-wadaag",
+        "register": "Isdiiwaangeli",
+        "registered": "Waad diiwaangashan tahay",
+        "unregister": "Ka noqo",
+        "registerFor": "Iska diiwaangeli {{name}}",
+        "cancelRegistrationFor": "Ka noqo diiwaangelinta {{name}}",
+        "follow": "Raac",
+        "following": "Waad raacdaa",
+        "unfollow": "Jooji raacista",
+        "followOrganisation": "Raac {{name}}",
+        "unfollowOrganisation": "Jooji raacista {{name}}",
+        "saving": "Waa la kaydinayaa…",
+        "upcomingCount": "{{count}} dhacdo oo soo socota",
+        "eventsError": "Dhacdooyinka hadda lama soo dejin karo.",
+        "organisationsError": "Ururrada hadda lama soo dejin karo.",
+        "retry": "Mar kale isku day",
+        "noUpcomingEvents": "Hadda ma jiraan dhacdooyin soo socda.",
+        "noMatchingEvents": "Ma jiraan dhacdooyin ku habboon raadinta ama kala soociddaada.",
+        "noOrganisations": "Hadda ma jiraan ururro la soo bandhigo.",
+        "noMatchingOrganisations": "Ma jiraan ururro ku habboon raadintaada."
+      }
     },
     "calendar": {
       "title": "Kalandar",
@@ -99,11 +147,13 @@
       "previousMonth": "Bishii hore",
       "nextMonth": "Bisha xigta",
       "workout": "Tababar",
+      "event": "Dhacdo",
       "callback": "Wicitaan",
-      "nextActivity": "Dhaqdhaqaaqa xiga",
-      "withTrainer": "la socda {{name}}",
-      "calmWorkout": "Tababar deggan",
-      "completedWorkout": "Tababar la dhammeeyay"
+      "loading": "Kalandarka waa la soo dejinayaa…",
+      "loadError": "Hadda kalandarka lama soo dejin karo.",
+      "retry": "Mar kale isku day",
+      "noEventsForDay": "Maalintan wax dhaqdhaqaaq ah ma jiraan",
+      "untitledActivity": "Dhaqdhaqaaq"
     },
     "callback": {
       "title": "Codso in lagu soo waco",

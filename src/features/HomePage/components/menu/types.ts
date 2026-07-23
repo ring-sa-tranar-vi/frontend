@@ -24,7 +24,7 @@ export type ActivitySummary = {
   activeWeekdays: readonly CallbackWeekday[]
 }
 
-export type CalendarActivityKind = 'workout' | 'callback'
+export type CalendarActivityKind = 'workout' | 'event' | 'callback'
 
 export type CalendarActivity = {
   id: string
@@ -32,16 +32,19 @@ export type CalendarActivity = {
   kind: CalendarActivityKind
   title: string
   time?: string
-  trainerName?: string
+  description?: string
+  completed: boolean
+}
+
+export type CalendarEventDto = {
+  id: string
+  type: string
+  title: string
+  description?: string | null
+  time: string
+  completed: boolean
 }
 
 export type MenuPlaceholderData = {
-  activity: ActivitySummary
-  calendar: {
-    initialMonth: string
-    initialSelectedDate: string
-    activities: readonly CalendarActivity[]
-    nextActivityId: string
-  }
   callback: CallbackRequest
 }
