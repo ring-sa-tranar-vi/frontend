@@ -107,7 +107,7 @@ export default function useCurrentWorkout() {
       const rawToken = isSignedIn ? await getToken() : undefined
       const token: string | undefined = rawToken ?? undefined
       return await getJson<RecommendedWorkoutResponse>(
-        `/api/trainers/trainer/${trainerId}/recommend-for/${userId}`,
+        `/api/trainers/${trainerId}/recommend-for/${userId}`,
         { token },
       )
     },

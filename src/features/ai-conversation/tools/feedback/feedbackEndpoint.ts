@@ -1,8 +1,7 @@
 import type { EndpointResult } from '../shared/liveToolTypes'
+import { getApiBaseUrl } from '../../../../lib/apiBaseUrl'
 
-const API_URL = (
-  import.meta.env.VITE_API_URL ?? 'https://backend-training.up.railway.app'
-).replace(/\/$/, '')
+const API_URL = getApiBaseUrl()
 
 export async function postFeedbackEndpoint(body: Record<string, unknown>) {
   const path = `/api/feedbacks`
