@@ -12,9 +12,8 @@ const ISO_DATE_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/
 
 export type ProgressResponse = {
   currentStreak: number
-  personalBestStreak: number
-  completedThisWeek: number
-  completedDates: string[]
+  personalBestStreak?: number
+  completedDates?: string[]
   completedWorkouts: Array<{
     dateLabel: string
     workoutName: string
@@ -71,7 +70,13 @@ export function buildActivitySummary(
   const today = toDayNumber(todayKey)
 
   if (today === null || !Array.isArray(completedDates)) {
-    return { currentStreak: 0, personalRecord: 0, activeWeekdays: [] }
+    return {
+      currentStreak: 0,
+      personalRecord: 0,
+      activeWeekdays: [],
+      hasCompletedWorkouts: false,
+      hasDetailedHistory: true,
+    }
   }
 
   const days = Array.from(
@@ -121,7 +126,31 @@ export function buildActivitySummary(
     activeWeekdaySet.has(weekday),
   )
 
-  return { currentStreak, personalRecord, activeWeekdays }
+  return {
+    currentStreak,
+    personalRecord,
+    activeWeekdays,
+    hasCompletedWorkouts: days.length > 0,
+    hasDetailedHistory: true,
+  }
+}
+
+function buildCurrentProgressSummary(
+  response: ProgressResponse,
+): ActivitySummary {
+  const currentStreak = Number.isFinite(response.currentStreak)
+    ? Math.max(0, Math.floor(response.currentStreak))
+    : 0
+  const hasCompletedWorkouts =
+    currentStreak > 0 || response.completedWorkouts.length > 0
+
+  return {
+    currentStreak,
+    personalRecord: 0,
+    activeWeekdays: [],
+    hasCompletedWorkouts,
+    hasDetailedHistory: !hasCompletedWorkouts,
+  }
 }
 
 export function useActivitySummary(enabled: boolean) {
@@ -141,13 +170,20 @@ export function useActivitySummary(enabled: boolean) {
         { token },
       )
 
-      if (!response || !Array.isArray(response.completedDates)) {
+      if (
+        !response ||
+        typeof response.currentStreak !== 'number' ||
+        !Array.isArray(response.completedWorkouts)
+      ) {
         throw new Error('Backend returned invalid progress data')
       }
 
       return response
     },
-    select: (response) => buildActivitySummary(response.completedDates),
+    select: (response) =>
+      Array.isArray(response.completedDates)
+        ? buildActivitySummary(response.completedDates)
+        : buildCurrentProgressSummary(response),
     enabled: enabled && isLoaded && Boolean(isSignedIn) && Boolean(userId),
     staleTime: 60_000,
     retry: 1,

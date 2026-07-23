@@ -23,6 +23,7 @@ import {
   getStoredLanguageFilter,
   setStoredLanguageFilter,
 } from '../trainerPreference'
+import { guestTrainerOptions } from './menu/guestTrainerData'
 
 export type TrainerSelectionItem = {
   id: number
@@ -35,6 +36,25 @@ export type TrainerSelectionItem = {
 
 function wrap(index: number, length: number): number {
   return ((index % length) + length) % length
+}
+
+function getLocalTrainerImage(trainerId: number) {
+  return guestTrainerOptions.find((trainer) => trainer.id === trainerId)
+    ?.imageSelect
+}
+
+function withLocalImageFallback(
+  trainer: TrainerSelectionItem,
+): TrainerSelectionItem {
+  const image = trainer.imageSelect?.trim()
+
+  if (image && /^(?:https?:|data:|blob:|\/)/i.test(image)) {
+    return trainer
+  }
+
+  const fallbackImage = getLocalTrainerImage(trainer.id)
+
+  return fallbackImage ? { ...trainer, imageSelect: fallbackImage } : trainer
 }
 
 export default function TrainerSelectionModal({
@@ -64,7 +84,13 @@ export default function TrainerSelectionModal({
     enabled: trainersOverride === undefined && isSignedIn === true,
     refetchOnWindowFocus: false,
   })
-  const trainers = trainersOverride ?? fetchedTrainers
+  const trainers = useMemo(
+    () =>
+      (trainersOverride ?? fetchedTrainers).map(
+        (trainer: TrainerSelectionItem) => withLocalImageFallback(trainer),
+      ),
+    [fetchedTrainers, trainersOverride],
+  )
   const isLoading = trainersOverride === undefined && isFetchingTrainers
   const isError = trainersOverride === undefined && didTrainerFetchFail
 
@@ -445,6 +471,16 @@ function TrainerCard({
           alt={trainer.name}
           loading="lazy"
           draggable={false}
+          onError={(event) => {
+            const fallbackImage = getLocalTrainerImage(trainer.id)
+
+            if (
+              fallbackImage &&
+              event.currentTarget.getAttribute('src') !== fallbackImage
+            ) {
+              event.currentTarget.src = fallbackImage
+            }
+          }}
           className="absolute bottom-0 left-0 h-full w-1/2 object-contain object-bottom select-none"
         />
       ) : (
