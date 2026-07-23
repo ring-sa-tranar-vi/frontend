@@ -370,22 +370,41 @@ function SettingsModalBody({
         onClose={() => setOpen(false)}
         height="large"
         footer={
-          profileAvailable ? (
-            <section className="space-y-2.5 pb-1">
-              {saveFeedback ? (
-                <AppSheetNotice tone="danger">{saveFeedback}</AppSheetNotice>
-              ) : null}
+          <section className="space-y-2.5 pb-1">
+            {profileAvailable ? (
+              <>
+                {saveFeedback ? (
+                  <AppSheetNotice tone="danger">{saveFeedback}</AppSheetNotice>
+                ) : null}
+                <button
+                  className={appSheetPrimaryButtonClass}
+                  disabled={updateProfile.isPending}
+                  onClick={handleSave}
+                >
+                  {updateProfile.isPending
+                    ? t('settings.saving')
+                    : t('settings.saveAndClose')}
+                </button>
+              </>
+            ) : null}
+
+            <nav
+              aria-label={`${t('settings.privacyComingSoon')}, ${t('settings.getHelp')}`}
+              className="flex min-h-9 flex-wrap items-center justify-center gap-x-2 text-[length:var(--text-xs)] font-bold text-(--brand-muted)"
+            >
+              <span className="px-1.5 py-2">
+                {t('settings.privacyComingSoon')}
+              </span>
+              <span aria-hidden="true">·</span>
               <button
-                className={appSheetPrimaryButtonClass}
-                disabled={updateProfile.isPending}
-                onClick={handleSave}
+                type="button"
+                onClick={() => setSupportOpen(true)}
+                className="rounded-lg px-1.5 py-2 underline decoration-(--brand-border-strong) underline-offset-3 transition hover:text-(--brand-primary) focus-visible:ring-2 focus-visible:ring-(--brand-border-strong) focus-visible:ring-offset-1 focus-visible:outline-none"
               >
-                {updateProfile.isPending
-                  ? t('settings.saving')
-                  : t('settings.saveAndClose')}
+                {t('settings.getHelp')}
               </button>
-            </section>
-          ) : undefined
+            </nav>
+          </section>
         }
       >
         <div className="pb-2">
