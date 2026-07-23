@@ -24,6 +24,7 @@ import {
   liveSystemInstruction,
   ONBOARDING_SYSTEM_INSTRUCTION,
   SESSION_CONTROL_TOOLS,
+  ONBOARDING_TOOLS,
 } from './prompts'
 import type { CoachCallSession } from '../session/types'
 import {
@@ -67,8 +68,11 @@ function buildSessionInstruction(
     return `${userContext} ${ALREADY_COMPLETED_TODAY_INSTRUCTION}${trainerIdentity}`
   }
 
-  const base = `${userContext} ${liveSystemInstruction}`
-  return `${base}${trainerIdentity}`
+  if (session.onboarding) {
+    return `${userContext} ${ONBOARDING_SYSTEM_INSTRUCTION}${trainerIdentity}`
+  }
+
+  return `${userContext}${liveSystemInstruction}${trainerIdentity}`
 }
 
 function normalizeCaptionText(text?: string | null) {
@@ -134,10 +138,6 @@ export function useCoachSession(
     [session, sessionCoachPrompt, options.alreadyCompletedToday],
   )
 
-  useEffect(() => {
-    console.log('Coach prompt:', sessionCoachPrompt)
-  }, [sessionCoachPrompt])
-
   const [step, setStep] = useState<CoachSessionStep>('idle')
   const [error, setError] = useState<string | null>(null)
   const [audioCapturing, setAudioCapturing] = useState(false)
@@ -159,6 +159,9 @@ export function useCoachSession(
   const hasStartedRef = useRef(false)
   const videoTimersRef = useRef<number[]>([])
   const workoutCompletedRef = useRef(false)
+  const onboardingStageRef = useRef<
+    'confirm_name' | 'intensity' | 'context' | 'done'
+  >('confirm_name')
 
   const aiTurnStateRef = useRef<AITurnState>({
     started: false,
@@ -169,6 +172,16 @@ export function useCoachSession(
   // Stable callback refs
   //──────────────────────
   const disconnectRef = useRef<() => void>(() => {})
+  const updateUserNameRef = useRef<(userName: string) => Promise<void>>(
+    async () => {},
+  )
+  const updateIntensityLevelRef = useRef<
+    (intensityLevel: number) => Promise<void>
+  >(async () => {})
+  const updateUserContextRef = useRef<(context: string) => Promise<void>>(
+    async () => {},
+  )
+  const endOnboardingRef = useRef<() => Promise<void>>(async () => {})
   const startInstructionsRef = useRef<() => Promise<void>>(async () => {})
   const startWorkoutRef = useRef<() => Promise<void>>(async () => {})
   const finishSessionRef = useRef<
@@ -220,9 +233,15 @@ export function useCoachSession(
     setDebugEvents((current) => [event, ...current].slice(0, 12))
   }, [])
 
-  const sessionTools = options.alreadyCompletedToday
-    ? [...coachLiveTools, ...ALREADY_COMPLETED_TOOLS]
-    : [...coachLiveTools, ...SESSION_CONTROL_TOOLS]
+  const sessionTools = useMemo(() => {
+    if (options.alreadyCompletedToday) {
+      return [...coachLiveTools, ...ALREADY_COMPLETED_TOOLS]
+    }
+    if (session.onboarding) {
+      return [...coachLiveTools, ...SESSION_CONTROL_TOOLS, ...ONBOARDING_TOOLS]
+    }
+    return coachLiveTools
+  }, [options.alreadyCompletedToday, session.onboarding])
 
   const addCaptionParagraph = useCallback((text?: string | null) => {
     const paragraphs = splitCaptionParagraphs(text)
@@ -297,6 +316,80 @@ export function useCoachSession(
     onToolCall: async (functionCall): Promise<FunctionResponse> => {
       const name = functionCall.name ?? 'unknown_tool'
       addDebugEvent('tool call', `${name}, step=${stepRef.current}`)
+
+      //──────────────────────
+      // Start onboarding
+      //──────────────────────
+      if (
+        name === 'confirm_user_name' ||
+        name === 'set_workout_intensity_level' ||
+        name === 'set_workout_context' ||
+        name === 'end_onboarding'
+      ) {
+        const args = (functionCall.args ?? {}) as Record<string, unknown>
+
+        if (name === 'confirm_user_name') {
+          onboardingStageRef.current = 'intensity'
+          addDebugEvent('onboarding-name', String(args.name ?? ''))
+          await updateUserNameRef.current(String(args.name ?? ''))
+          return {
+            id: functionCall.id,
+            name,
+            response: {
+              output: { ok: true },
+            },
+          }
+        }
+
+        if (name === 'set_workout_intensity_level') {
+          onboardingStageRef.current = 'context'
+          addDebugEvent(
+            'onboarding-intensity',
+            String(args.level ?? 'undefined'),
+          )
+          if (typeof args.level !== 'number') {
+            return {
+              id: functionCall.id,
+              name,
+              response: {
+                output: { ok: false, error: 'Invalid intensity level' },
+              },
+            }
+          }
+          await updateIntensityLevelRef.current(Number(args.level))
+          return {
+            id: functionCall.id,
+            name,
+            response: { output: { ok: true } },
+          }
+        }
+
+        if (name === 'set_workout_context') {
+          onboardingStageRef.current = 'done'
+          addDebugEvent('onboarding-context', JSON.stringify(args))
+          await updateUserContextRef.current(String(args.context ?? ''))
+          return {
+            id: functionCall.id,
+            name,
+            response: { output: { ok: true } },
+          }
+        }
+
+        if (name === 'end_onboarding') {
+          onboardingStageRef.current = 'done'
+
+          addDebugEvent('onboarding-complete', JSON.stringify(args))
+          setSessionStep('waiting_instruction_approval')
+          await endOnboardingRef.current()
+          return {
+            id: functionCall.id,
+            name,
+            response: {
+              output: { ok: true },
+            },
+          }
+        }
+      }
 
       //──────────────────────
       // Start instructions
@@ -449,7 +542,6 @@ export function useCoachSession(
   // Pause live audio capture
   //──────────────────────
   const pauseLive = useCallback(() => {
-    console.log('Pausing during ', currentTurn + "'s turn")
     addDebugEvent('pauseAI-called', stepRef.current)
     // Halt sending audio data to Gemini without closing the AudioContext or
     // stopping media tracks — avoids OS audio session reconfiguration that
@@ -629,7 +721,7 @@ export function useCoachSession(
     hasStartedRef.current = true
     workoutCompletedRef.current = false
     setError(null)
-    setSessionStep('live_intro')
+    setSessionStep(session.onboarding ? 'onboarding' : 'live_intro')
 
     const freshToken = await loadToken()
     if (!freshToken) {
@@ -660,7 +752,9 @@ export function useCoachSession(
 
     stopRingback()
     startGymAmbience(session.trainer?.ambience)
-    setSessionStep('waiting_instruction_approval')
+    setSessionStep(
+      session.onboarding ? 'onboarding' : 'waiting_instruction_approval',
+    )
     sendCoachPrompt('Starta samtalet.')
   }, [
     addDebugEvent,
@@ -675,6 +769,88 @@ export function useCoachSession(
     setSessionStep,
     startAudioCapture,
   ])
+
+  //──────────────────────
+  // Update user name during onboarding
+  //──────────────────────
+  const updateUserName = useCallback(
+    async (name: string) => {
+      if (stepRef.current !== 'onboarding') {
+        addDebugEvent('skip onboarding', `step=${stepRef.current}`)
+        return
+      }
+
+      if (name === '') {
+        addDebugEvent('skip onboarding', `step=${stepRef.current} - empty name`)
+        return
+      }
+      if (name.length > 30) {
+        addDebugEvent(
+          'skip onboarding',
+          `step=${stepRef.current} - name too long`,
+        )
+        return
+      }
+
+      await updateProfile({ name: name })
+      addDebugEvent('onboarding-name', name)
+      sendCoachPrompt(`Mitt namn är ${name}.`)
+    },
+    [addDebugEvent, sendCoachPrompt, updateProfile],
+  )
+
+  //──────────────────────
+  // Update intensity level during onboarding
+  //──────────────────────
+  const updateIntensityLevel = useCallback(
+    async (intensityLevel: number) => {
+      if (stepRef.current !== 'onboarding') {
+        addDebugEvent('skip onboarding', `step=${stepRef.current}`)
+        return
+      }
+      if (intensityLevel < 1 || intensityLevel > 5) {
+        addDebugEvent(
+          'skip onboarding',
+          `step=${stepRef.current} - invalid intensity level`,
+        )
+        return
+      }
+      await updateProfile({ intensityLevel })
+      addDebugEvent('onboarding-intensity', intensityLevel)
+      sendCoachPrompt(`Jag vill träna på nivå ${intensityLevel}.`)
+    },
+    [addDebugEvent, sendCoachPrompt, updateProfile],
+  )
+
+  //──────────────────────
+  // Update user context during onboarding
+  //──────────────────────
+
+  const updateUserContext = useCallback(
+    async (context: string) => {
+      if (stepRef.current !== 'onboarding') {
+        addDebugEvent('skip onboarding', `step=${stepRef.current}`)
+        return
+      }
+      await updateProfile({ context })
+      addDebugEvent('onboarding-context', context)
+      sendCoachPrompt(`Jag vill träna i kontexten: ${context}.`)
+    },
+    [addDebugEvent, sendCoachPrompt, updateProfile],
+  )
+
+  //──────────────────────
+  // End onboarding
+  //──────────────────────
+  const endOnboarding = useCallback(async () => {
+    if (stepRef.current !== 'onboarding') {
+      addDebugEvent('skip end-onboarding', `step=${stepRef.current}`)
+      return
+    }
+    await updateProfile({ onboarding: false })
+    addDebugEvent('onboarding-complete')
+    sendCoachPrompt('Jag är redo att börja träna.')
+  }, [addDebugEvent, sendCoachPrompt, updateProfile])
 
   //──────────────────────
   // Start workout
@@ -866,10 +1042,22 @@ export function useCoachSession(
   // Sync latest callbacks into refs
   //──────────────────────
   useEffect(() => {
+    updateUserNameRef.current = updateUserName
+    updateIntensityLevelRef.current = updateIntensityLevel
+    updateUserContextRef.current = updateUserContext
+    endOnboardingRef.current = endOnboarding
     startInstructionsRef.current = playInstructions
     startWorkoutRef.current = startWorkout
     finishSessionRef.current = finishSessionWithSummary
-  }, [finishSessionWithSummary, playInstructions, startWorkout])
+  }, [
+    finishSessionWithSummary,
+    playInstructions,
+    startWorkout,
+    updateIntensityLevel,
+    updateUserContext,
+    updateUserName,
+    endOnboarding,
+  ])
 
   //──────────────────────
   // Manual end session
@@ -920,10 +1108,6 @@ export function useCoachSession(
       videoTimersRef.current = []
     }
   }, [])
-
-  useEffect(() => {
-    console.log('Current turn:', currentTurn, 'coach step:', stepRef.current)
-  }, [currentTurn])
 
   useEffect(() => {
     setMicrophoneEnabled(!isMicrophoneMuted)
