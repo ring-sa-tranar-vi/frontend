@@ -14,6 +14,7 @@ type CurrentUserProfile = {
   name?: string | null
   context?: string | null
   isAdmin?: boolean
+  onboarding?: boolean
 }
 
 export default function useCurrentUser() {
@@ -76,6 +77,7 @@ export default function useCurrentUser() {
           data.trainerId !== undefined
             ? data.trainerId
             : (profile?.trainerId ?? null),
+        onboarding: data.onboarding ? true : false,
       }
 
       await updateProfileMutation.mutateAsync(payload)
