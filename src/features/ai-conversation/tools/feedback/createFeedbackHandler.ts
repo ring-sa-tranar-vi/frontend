@@ -5,35 +5,35 @@ import { postFeedbackEndpoint } from './feedbackEndpoint'
 export async function createFeedbackHandler(args: LiveToolArgs) {
   const userId = readNumberArg(args, 'userId', 1)
   const workoutId = readNumberArg(args, 'workoutId', 1)
+  const activityLogId = readNumberArg(args, 'activityLogId', 0)
   const comment = typeof args.comment === 'string' ? args.comment : ''
 
-  const body = { userId, workoutId, comment } as Record<string, unknown>
-
-  let result = await postFeedbackEndpoint(body)
-
-  // Backend requires at least one of difficulty, liked or rating. If the request
-  // fails with a validation error, retry with a neutral rating to satisfy validation.
-  if (!result.ok) {
-    const err = result.error ?? ''
-    if (
-      typeof err === 'string' &&
-      err.toLowerCase().includes('at least one of difficulty')
-    ) {
-      const fallback = { ...body, rating: 3 }
-      result = await postFeedbackEndpoint(fallback)
-      return {
-        userId,
-        workoutId,
-        attempted: body,
-        fallbackUsed: true,
-        response: result,
-      }
+  if (activityLogId <= 0) {
+    return {
+      userId,
+      workoutId,
+      activityLogId: null,
+      response: {
+        ok: false,
+        path: '/api/feedbacks',
+        error: 'Missing activity log id',
+      },
     }
   }
+
+  const body = {
+    userId,
+    workoutId,
+    activityLogId,
+    comment,
+    rating: 3,
+  } as Record<string, unknown>
+  const result = await postFeedbackEndpoint(body)
 
   return {
     userId,
     workoutId,
+    activityLogId,
     attempted: body,
     fallbackUsed: false,
     response: result,

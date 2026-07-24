@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { getApiBaseUrl } from '../../../lib/apiBaseUrl'
 
 interface AuthTokenResponse {
   name?: string
@@ -6,9 +7,7 @@ interface AuthTokenResponse {
   expireTime?: string
 }
 
-const API_URL = (
-  import.meta.env.VITE_API_URL ?? 'https://backend-training.up.railway.app'
-).replace(/\/$/, '')
+const API_URL = getApiBaseUrl()
 
 export function useLiveToken() {
   const [token, setToken] = useState('')
@@ -31,7 +30,7 @@ export function useLiveToken() {
     setTokenError(null)
 
     try {
-      const res = await fetch(`${API_URL}/api/live-token`, {
+      const res = await fetch(`${API_URL}/api/live-tokens`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ uses: 10 }),
