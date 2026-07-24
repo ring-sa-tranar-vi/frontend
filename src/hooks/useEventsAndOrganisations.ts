@@ -143,7 +143,7 @@ export function useEventsAndOrganisations(enabled: boolean) {
     queryFn: async () => {
       const token = await getRequiredToken()
       const organisations = await requestJson<unknown>(
-        '/api/users/me/followedOrg',
+        '/api/users/me/followed-orgs',
         token,
       )
 
@@ -162,7 +162,7 @@ export function useEventsAndOrganisations(enabled: boolean) {
     mutationFn: async ({ event, isAttending }: ToggleEventVariables) => {
       const token = await getRequiredToken()
       await requestJson<unknown>(
-        `/api/users/me/attendingEvent/${event.id}`,
+        `/api/users/me/attending-events/${event.id}`,
         token,
         isAttending ? 'DELETE' : 'POST',
       )
