@@ -31,7 +31,7 @@ export function useLiveToken() {
     setTokenError(null)
 
     try {
-      const res = await fetch(`${API_URL}/api/live-token`, {
+      const res = await fetch(`${API_URL}/api/live-tokens`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ uses: 10 }),

@@ -123,7 +123,7 @@ export function useEventsAndOrganisations(enabled: boolean) {
     queryFn: async () => {
       const token = await getRequiredToken()
       const events = await requestJson<unknown>(
-        '/api/users/me/attendingEvent',
+        '/api/users/me/attending-events',
         token,
       )
 
