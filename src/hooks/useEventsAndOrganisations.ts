@@ -185,7 +185,7 @@ export function useEventsAndOrganisations(enabled: boolean) {
     }: ToggleOrganisationVariables) => {
       const token = await getRequiredToken()
       await requestJson<unknown>(
-        `/api/users/me/followedOrg/${organisation.id}`,
+        `/api/users/me/followed-orgs/${organisation.id}`,
         token,
         isFollowing ? 'DELETE' : 'POST',
       )

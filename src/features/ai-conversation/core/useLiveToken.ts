@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { getApiBaseUrl } from '../../../lib/apiBaseUrl'
 
 interface AuthTokenResponse {
   name?: string
@@ -6,9 +7,7 @@ interface AuthTokenResponse {
   expireTime?: string
 }
 
-const API_URL = (
-  import.meta.env.VITE_API_URL ?? 'https://backend-training.up.railway.app'
-).replace(/\/$/, '')
+const API_URL = getApiBaseUrl()
 
 export function useLiveToken() {
   const [token, setToken] = useState('')

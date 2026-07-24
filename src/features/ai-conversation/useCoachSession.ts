@@ -9,7 +9,6 @@ import {
   setCallAudioMuted,
   stopGymAmbience,
 } from './audio/ringback'
-import { fixedLiveUserId } from './tools/shared/liveIntroDefaults'
 import {
   preloadSessionAudio,
   setSessionAudioMuted,
@@ -100,6 +99,21 @@ function splitCaptionParagraphs(text?: string | null) {
     .filter(Boolean)
 }
 
+function getCreatedActivityLogId(response: FunctionResponse) {
+  const responseBody = response.response
+
+  if (!responseBody || typeof responseBody !== 'object') return null
+
+  const output = (responseBody as Record<string, unknown>).output
+
+  if (!output || typeof output !== 'object') return null
+
+  const activityLogId = (output as Record<string, unknown>).activityLogId
+  return typeof activityLogId === 'number' && Number.isFinite(activityLogId)
+    ? activityLogId
+    : null
+}
+
 export function useCoachSession(
   options: UseCoachSessionOptions & {
     trainerId?: string
@@ -159,6 +173,7 @@ export function useCoachSession(
   const hasStartedRef = useRef(false)
   const videoTimersRef = useRef<number[]>([])
   const workoutCompletedRef = useRef(false)
+  const activityLogIdRef = useRef<number | null>(null)
   const onboardingStageRef = useRef<
     'confirm_name' | 'intensity' | 'context' | 'done'
   >('confirm_name')
@@ -720,6 +735,7 @@ export function useCoachSession(
     addDebugEvent('session start')
     hasStartedRef.current = true
     workoutCompletedRef.current = false
+    activityLogIdRef.current = null
     setError(null)
     setSessionStep(session.onboarding ? 'onboarding' : 'live_intro')
 
@@ -886,17 +902,39 @@ export function useCoachSession(
           setSessionStep('collecting_feedback')
 
           try {
-            const workoutId = typeof session.id === 'number' ? session.id : null
+            const backendUserId = Number(userId)
+            const workoutId = Number(session.id)
+
+            if (
+              !Number.isInteger(backendUserId) ||
+              backendUserId <= 0 ||
+              !Number.isInteger(workoutId) ||
+              workoutId <= 0
+            ) {
+              throw new Error('Missing backend user or workout id')
+            }
 
             const activityResult = await executeLiveToolCall({
               name: 'create_activity_log',
-              args: { userId: userId, workoutId },
+              args: {
+                userId: backendUserId,
+                workoutId,
+                durationSeconds: session.durationSeconds,
+              },
             })
+            activityLogIdRef.current = getCreatedActivityLogId(activityResult)
 
             addDebugEvent(
               'create_activity_log',
               JSON.stringify(activityResult?.response ?? {}),
             )
+
+            if (!activityLogIdRef.current) {
+              throw new Error('Backend did not create an activity log')
+            }
+
+            void queryClient.invalidateQueries({ queryKey: ['my-progress'] })
+            void queryClient.invalidateQueries({ queryKey: ['calendar'] })
 
             if (!getSession()) {
               addDebugEvent('session timed out — reconnecting')
@@ -935,6 +973,7 @@ export function useCoachSession(
     session.workoutAudio,
     session.workoutAudioUrl,
     session.id,
+    session.durationSeconds,
     addDebugEvent,
     addCaptionParagraph,
     allowAiOutput,
@@ -943,6 +982,7 @@ export function useCoachSession(
     getSession,
     startAudioCapture,
     connectFreshLive,
+    queryClient,
   ])
 
   //──────────────────────
@@ -963,17 +1003,37 @@ export function useCoachSession(
         const workoutPlayed = workoutCompletedRef.current
 
         if (workoutPlayed) {
-          const workoutId = typeof session.id === 'number' ? session.id : null
+          const backendUserId = Number(userId)
+          const workoutId = Number(session.id)
+          const activityLogId = activityLogIdRef.current
 
-          const feedbackResp = await executeLiveToolCall({
-            name: 'create_feedback',
-            args: { userId: fixedLiveUserId, workoutId, comment: summary },
-          })
+          if (
+            Number.isInteger(backendUserId) &&
+            backendUserId > 0 &&
+            Number.isInteger(workoutId) &&
+            workoutId > 0 &&
+            activityLogId
+          ) {
+            const feedbackResp = await executeLiveToolCall({
+              name: 'create_feedback',
+              args: {
+                userId: backendUserId,
+                workoutId,
+                activityLogId,
+                comment: summary,
+              },
+            })
 
-          addDebugEvent(
-            'create_feedback',
-            JSON.stringify(feedbackResp?.response ?? {}),
-          )
+            addDebugEvent(
+              'create_feedback',
+              JSON.stringify(feedbackResp?.response ?? {}),
+            )
+          } else {
+            addDebugEvent(
+              'skip_feedback',
+              'missing backend user, workout or activity log id',
+            )
+          }
 
           if (userId) {
             queryClient.setQueryData(['has-completed-today', userId], {

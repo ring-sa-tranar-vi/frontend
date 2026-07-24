@@ -22,6 +22,8 @@ export type ActivitySummary = {
   currentStreak: number
   personalRecord: number
   activeWeekdays: readonly CallbackWeekday[]
+  hasCompletedWorkouts: boolean
+  hasDetailedHistory: boolean
 }
 
 export type CalendarActivityKind = 'workout' | 'event' | 'callback'

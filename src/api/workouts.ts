@@ -61,7 +61,7 @@ export async function fetchRecommendedWorkoutId(
   userId: string,
 ) {
   const res = await fetch(
-    `/api/trainers/${trainerId}/recommend-for/${userId}`,
+    `${API_BASE}/api/trainers/${trainerId}/recommend-for/${userId}`,
     {
       headers: {
         Authorization: `Bearer ${token}`,

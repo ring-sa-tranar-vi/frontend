@@ -10,6 +10,8 @@ const EMPTY_ACTIVITY_SUMMARY: ActivitySummary = {
   currentStreak: 0,
   personalRecord: 0,
   activeWeekdays: [],
+  hasCompletedWorkouts: false,
+  hasDetailedHistory: true,
 }
 
 function getWeekdayLabels(locale: string) {
@@ -42,7 +44,9 @@ export default function ActivitySummarySection({
   const resolvedSummary = summary ?? EMPTY_ACTIVITY_SUMMARY
   const activeWeekdays = new Set(resolvedSummary.activeWeekdays)
   const activeCount = resolvedSummary.activeWeekdays.length
-  const progress = Math.min(1, activeCount / callbackWeekdays.length)
+  const progress = resolvedSummary.hasDetailedHistory
+    ? Math.min(1, activeCount / callbackWeekdays.length)
+    : 0
   const circumference = 2 * Math.PI * 48
 
   return (
@@ -138,39 +142,46 @@ export default function ActivitySummarySection({
             <div className="min-w-0 flex-1">
               <p className="text-[length:var(--text-lg)] leading-tight font-extrabold text-(--brand-title-ink)">
                 {t(
-                  resolvedSummary.personalRecord > 0
+                  resolvedSummary.hasCompletedWorkouts
                     ? 'menu.activity.encouragement'
                     : 'menu.activity.encouragementEmpty',
                 )}
               </p>
-              <p className="mt-1 text-[length:var(--text-sm)] leading-snug font-semibold text-(--brand-body-ink)">
-                {t('menu.activity.weekSummary', { count: activeCount })}
-              </p>
+              {resolvedSummary.hasDetailedHistory ? (
+                <>
+                  <p className="mt-1 text-[length:var(--text-sm)] leading-snug font-semibold text-(--brand-body-ink)">
+                    {t('menu.activity.weekSummary', { count: activeCount })}
+                  </p>
 
-              <div className="mt-3 grid grid-cols-7 gap-1.5" aria-hidden="true">
-                {callbackWeekdays.map((weekday, index) => {
-                  const isActive = activeWeekdays.has(weekday)
+                  <div
+                    className="mt-3 grid grid-cols-7 gap-1.5"
+                    aria-hidden="true"
+                  >
+                    {callbackWeekdays.map((weekday, index) => {
+                      const isActive = activeWeekdays.has(weekday)
 
-                  return (
-                    <span
-                      key={weekday}
-                      className={`flex aspect-square items-center justify-center rounded-[9px] text-[0.68rem] font-extrabold ${
-                        isActive
-                          ? 'bg-(--brand-primary) text-white'
-                          : 'bg-white/75 text-(--brand-muted)'
-                      }`}
-                    >
-                      {weekdayLabels[index]}
-                    </span>
-                  )
-                })}
-              </div>
+                      return (
+                        <span
+                          key={weekday}
+                          className={`flex aspect-square items-center justify-center rounded-[9px] text-[0.68rem] font-extrabold ${
+                            isActive
+                              ? 'bg-(--brand-primary) text-white'
+                              : 'bg-white/75 text-(--brand-muted)'
+                          }`}
+                        >
+                          {weekdayLabels[index]}
+                        </span>
+                      )
+                    })}
+                  </div>
 
-              <p className="mt-2 text-[length:var(--text-xs)] font-bold text-(--brand-muted)">
-                {t('menu.activity.personalRecord', {
-                  count: resolvedSummary.personalRecord,
-                })}
-              </p>
+                  <p className="mt-2 text-[length:var(--text-xs)] font-bold text-(--brand-muted)">
+                    {t('menu.activity.personalRecord', {
+                      count: resolvedSummary.personalRecord,
+                    })}
+                  </p>
+                </>
+              ) : null}
             </div>
           </div>
         </div>
