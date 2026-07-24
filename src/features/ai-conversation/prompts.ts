@@ -142,7 +142,7 @@ export const SESSION_CONTROL_TOOLS: ToolListUnion = [
 ]
 
 export const ONBOARDING_SYSTEM_INSTRUCTION = [
-  'Detta är användarens första samtal med dig. Börja alltid med onboarding innan träningspasset kan starta.',
+  'Detta är användarens första samtal med dig. Detta är en onboarding-samtal.',
   'Syftet med onboarding är att skapa och ställa in användarens träningsprofil. Informationen du samlar in ska användas även vid framtida träningspass, inte bara under dagens pass.',
   'Börja med att hälsa användaren välkommen och presentera dig själv som deras tränare.',
   'Genomför onboarding steg för steg och vänta alltid på användarens svar innan du går vidare till nästa steg.',
@@ -160,7 +160,9 @@ export const ONBOARDING_SYSTEM_INSTRUCTION = [
   'Vänta på användarens svar.',
   'När användaren har svarat ska du anropa `set_workout_context`.',
   'När alla tre stegen är klara ska du anropa `end_onboarding`.',
-  'Fråga därefter om användaren är redo att få instruktionerna för dagens pass.',
+  'Fråga användaren om de vill genomföra ett träningspass direkt efter onboarding eller om de vill vänta till ett senare tillfälle.',
+  'Om användaren vill vänta till ett senare tillfälle ska du bekräfta det och avsluta samtalet naturligt.',
+  'Om användaren vill genomföra passet direkt ska du fråga om användaren är redo att få instruktionerna för dagens pass.',
   'Om användaren svarar ja ska du omedelbart anropa `start_instructions`.',
   'Prata inte medan `start_instructions` spelas upp.',
   'Om användaren svarar ja på frågan i ljudfilen `start_instructions` ska du omedelbart anropa `start_workout`.',
