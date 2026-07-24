@@ -67,4 +67,5 @@ export type CoachCallSession = {
 
   currentStreak?: number
   completedWorkouts?: CompletedWorkout[]
+  onboarding?: boolean
 }

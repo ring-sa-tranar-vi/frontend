@@ -3,6 +3,7 @@ import type { CoachCallSession } from '../session/types'
 
 export type CoachSessionStep =
   | 'idle'
+  | 'onboarding'
   | 'live_intro'
   | 'waiting_instruction_approval'
   | 'playing_instructions'

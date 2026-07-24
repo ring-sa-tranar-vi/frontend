@@ -58,6 +58,7 @@ type BackendUserResponse = {
   intensityLevel: number
   context: string
   trainerId?: number | null
+  onboarding?: boolean | null
 }
 
 const DEFAULT_TRAINER_ID = 1
@@ -218,5 +219,6 @@ export async function getCoachCallSession(
 
     currentStreak: progress?.currentStreak,
     completedWorkouts: progress?.completedWorkouts,
+    onboarding: user?.onboarding ?? undefined,
   }
 }
