@@ -11,6 +11,7 @@ import { trainingContextTool } from './trainingContext/trainingContextTool'
 import { userTool } from './user/userTool'
 import { workoutCatalogTool } from './workout/workoutCatalogTool'
 import { workoutTool } from './workout/workoutTool'
+import type { LiveToolContext } from './shared/liveToolTypes'
 
 // Det här är den enda filen som kopplar ihop alla tools med Gemini Live.
 // För att lägga till ett nytt tool:
@@ -50,6 +51,7 @@ export const coachLiveTools: ToolListUnion = [
 
 export async function executeLiveToolCall(
   functionCall: FunctionCall,
+  context?: LiveToolContext,
 ): Promise<FunctionResponse> {
   const name = functionCall.name ?? 'unknown_tool'
   const handler = liveToolHandlers[name]
@@ -65,7 +67,7 @@ export async function executeLiveToolCall(
   }
 
   try {
-    const output = await handler(functionCall.args ?? {})
+    const output = await handler(functionCall.args ?? {}, context)
 
     return {
       id: functionCall.id,

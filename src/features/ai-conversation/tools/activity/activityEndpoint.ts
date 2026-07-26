@@ -18,12 +18,20 @@ export async function postActivityEndpoint(
   workoutId: number,
   durationSeconds = 0,
   feedback = '',
+  authToken?: string,
 ) {
   const path = `/api/activity-logs`
   try {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    }
+    if (authToken) {
+      headers.Authorization = `Bearer ${authToken}`
+    }
+
     const res = await fetch(`${API_URL}${path}`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify({
         userId,
         workoutId,

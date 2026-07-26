@@ -7,7 +7,11 @@ export function getApiBaseUrl(): string {
     typeof window !== 'undefined' &&
     ['localhost', '127.0.0.1', '::1'].includes(window.location.hostname)
 
+  const configuredUrl = import.meta.env.VITE_API_URL?.trim()
+  const safeConfiguredUrl =
+    configuredUrl && configuredUrl !== 'undefined' ? configuredUrl : undefined
+
   return (
-    import.meta.env.VITE_API_URL ?? (isLocalHost ? 'http://localhost:8080' : '')
+    safeConfiguredUrl ?? (isLocalHost ? 'http://localhost:8080' : '')
   ).replace(/\/$/, '')
 }

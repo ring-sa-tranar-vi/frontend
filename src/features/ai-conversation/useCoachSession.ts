@@ -1,4 +1,5 @@
-import { type FunctionResponse } from '@google/genai'
+import { type FunctionCall, type FunctionResponse } from '@google/genai'
+import { useAuth } from '@clerk/react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useGeminiLive } from './core/useGeminiLive'
 import { useLiveToken } from './core/useLiveToken'
@@ -122,6 +123,7 @@ export function useCoachSession(
   },
 ) {
   const queryClient = useQueryClient()
+  const { getToken } = useAuth()
   const { session, autoStart = true } = options
 
   const {
@@ -204,6 +206,23 @@ export function useCoachSession(
   >(() => {})
 
   const { token, loadToken, tokenLoading, tokenError } = useLiveToken()
+
+  const executeToolCallWithContext = useCallback(
+    async (functionCall: FunctionCall) => {
+      const authToken = await getToken()
+      const parsedUserId = Number(userId)
+      const currentUserId =
+        Number.isFinite(parsedUserId) && parsedUserId > 0
+          ? parsedUserId
+          : undefined
+
+      return executeLiveToolCall(functionCall, {
+        authToken: authToken ?? undefined,
+        currentUserId,
+      })
+    },
+    [getToken, userId],
+  )
 
   //──────────────────────
   // Add debug event
@@ -498,7 +517,7 @@ export function useCoachSession(
       //──────────────────────
       // Forward all other tool calls
       //──────────────────────
-      return executeLiveToolCall(functionCall)
+      return executeToolCallWithContext(functionCall)
     },
 
     //──────────────────────
@@ -914,7 +933,7 @@ export function useCoachSession(
               throw new Error('Missing backend user or workout id')
             }
 
-            const activityResult = await executeLiveToolCall({
+            const activityResult = await executeToolCallWithContext({
               name: 'create_activity_log',
               args: {
                 userId: backendUserId,
@@ -983,6 +1002,7 @@ export function useCoachSession(
     startAudioCapture,
     connectFreshLive,
     queryClient,
+    executeToolCallWithContext,
   ])
 
   //──────────────────────
@@ -1014,10 +1034,9 @@ export function useCoachSession(
             workoutId > 0 &&
             activityLogId
           ) {
-            const feedbackResp = await executeLiveToolCall({
+            const feedbackResp = await executeToolCallWithContext({
               name: 'create_feedback',
               args: {
-                userId: backendUserId,
                 workoutId,
                 activityLogId,
                 comment: summary,
@@ -1095,6 +1114,7 @@ export function useCoachSession(
       updateProfile,
       queryClient,
       userId,
+      executeToolCallWithContext,
     ],
   )
 

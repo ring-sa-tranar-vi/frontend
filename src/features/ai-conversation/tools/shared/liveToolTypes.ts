@@ -5,8 +5,14 @@ import type { FunctionDeclaration } from '@google/genai'
 // Handler = frontend-koden som körs när Gemini kallar toolen.
 export type LiveToolArgs = Record<string, unknown>
 
+export type LiveToolContext = {
+  authToken?: string
+  currentUserId?: number
+}
+
 export type LiveToolHandler = (
   args: LiveToolArgs,
+  context?: LiveToolContext,
 ) => Promise<Record<string, unknown>>
 
 export type LiveToolDefinition = {
