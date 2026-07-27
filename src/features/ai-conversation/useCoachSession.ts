@@ -42,6 +42,7 @@ import {
 import { useTrainer } from '../session/query'
 import useCurrentUser from '../../hooks/useCurrentUser'
 import { useQueryClient } from '@tanstack/react-query'
+import { useAuth } from '@clerk/react'
 
 //──────────────────────
 // Build system instruction
@@ -122,6 +123,7 @@ export function useCoachSession(
   },
 ) {
   const queryClient = useQueryClient()
+  const { getToken } = useAuth()
   const { session, autoStart = true } = options
 
   const {
@@ -914,14 +916,22 @@ export function useCoachSession(
               throw new Error('Missing backend user or workout id')
             }
 
-            const activityResult = await executeLiveToolCall({
-              name: 'create_activity_log',
-              args: {
-                userId: backendUserId,
-                workoutId,
-                durationSeconds: session.durationSeconds,
+            const activityToken = await getToken()
+            if (!activityToken) {
+              throw new Error('Missing Clerk token')
+            }
+
+            const activityResult = await executeLiveToolCall(
+              {
+                name: 'create_activity_log',
+                args: {
+                  userId: backendUserId,
+                  workoutId,
+                  durationSeconds: session.durationSeconds,
+                },
               },
-            })
+              { token: activityToken },
+            )
             activityLogIdRef.current = getCreatedActivityLogId(activityResult)
 
             addDebugEvent(
@@ -983,6 +993,7 @@ export function useCoachSession(
     startAudioCapture,
     connectFreshLive,
     queryClient,
+    getToken,
   ])
 
   //──────────────────────

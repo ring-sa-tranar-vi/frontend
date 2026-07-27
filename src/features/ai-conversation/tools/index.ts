@@ -7,6 +7,7 @@ import { progressTool } from './progress/progressTool'
 import { activityTool } from './activity/activityTool'
 import { feedbackTool } from './feedback/feedbackTool'
 import type { LiveToolDefinition } from './shared/liveToolTypes'
+import type { LiveToolContext } from './shared/liveToolTypes'
 import { trainingContextTool } from './trainingContext/trainingContextTool'
 import { userTool } from './user/userTool'
 import { workoutCatalogTool } from './workout/workoutCatalogTool'
@@ -50,6 +51,7 @@ export const coachLiveTools: ToolListUnion = [
 
 export async function executeLiveToolCall(
   functionCall: FunctionCall,
+  context?: LiveToolContext,
 ): Promise<FunctionResponse> {
   const name = functionCall.name ?? 'unknown_tool'
   const handler = liveToolHandlers[name]
@@ -65,7 +67,7 @@ export async function executeLiveToolCall(
   }
 
   try {
-    const output = await handler(functionCall.args ?? {})
+    const output = await handler(functionCall.args ?? {}, context)
 
     return {
       id: functionCall.id,
