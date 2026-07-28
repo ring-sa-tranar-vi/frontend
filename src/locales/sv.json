@@ -187,6 +187,7 @@
     "getHelp": "Hjälp & support",
     "getHelpButton": "Hjälp",
     "privacyComingSoon": "Integritetspolicy kommer snart",
+    "privacyPolicy": "Integritetspolicy",
     "fullName": "Namn",
     "fullNameDescription": "Namnet används av coachen under samtalet.",
     "fullNamePlaceholder": "Ditt förnamn",
@@ -195,6 +196,22 @@
     "saveAndClose": "Spara och stäng",
     "close": "Stäng",
     "cancel": "Avbryt"
+  },
+
+  "privacy": {
+    "title": "Integritetspolicy",
+    "subtitle": "Så hanterar vi dina uppgifter",
+    "draftNotice": "Det här är en tillfällig version. Innehållet uppdateras innan lansering.",
+    "dataTitle": "Uppgifter vi använder",
+    "dataText": "Vi använder de profiluppgifter och träningsval du lämnar i appen, till exempel namn, tränare, intensitet och träningshistorik.",
+    "useTitle": "Varför uppgifterna behövs",
+    "useText": "Uppgifterna hjälper oss att anpassa träningspassen, visa din aktivitet och hantera event som du anmäler dig till.",
+    "sharingTitle": "Hur uppgifter delas",
+    "sharingText": "Vi säljer inte dina personuppgifter. Uppgifter delas bara med tjänster som behövs för att appen ska fungera.",
+    "rightsTitle": "Dina val",
+    "rightsText": "Du kan ändra dina val i menyn och avanmäla dig från event. Kontakta oss om du vill få hjälp med dina uppgifter.",
+    "contactTitle": "Frågor om integritet",
+    "contactText": "Kontakta Ring så tränar vi om du har frågor om hur dina uppgifter hanteras."
   },
 
   "support": {
