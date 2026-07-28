@@ -510,6 +510,21 @@ export default function EventsOrganisationsSheet({
           />
         </label>
 
+        {activeTab === 'events' && attendanceMutation.isError ? (
+          <div className="mt-4">
+            <AppSheetNotice tone="danger">
+              {t('menu.events.directory.eventsError')}
+            </AppSheetNotice>
+          </div>
+        ) : null}
+        {activeTab === 'organisations' && followingMutation.isError ? (
+          <div className="mt-4">
+            <AppSheetNotice tone="danger">
+              {t('menu.events.directory.organisationsError')}
+            </AppSheetNotice>
+          </div>
+        ) : null}
+
         {activeTab === 'events' ? (
           <section
             id="events-panel"
