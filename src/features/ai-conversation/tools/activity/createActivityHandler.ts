@@ -1,17 +1,21 @@
-import type { LiveToolArgs } from '../shared/liveToolTypes'
+import type { LiveToolArgs, LiveToolContext } from '../shared/liveToolTypes'
 import { readNumberArg } from '../shared/readNumberArg'
 import { postActivityEndpoint } from './activityEndpoint'
 import { getProgressEndpoint } from '../progress/progressEndpoint'
 
-export async function createActivityHandler(args: LiveToolArgs) {
+export async function createActivityHandler(
+  args: LiveToolArgs,
+  context?: LiveToolContext,
+) {
   const userId = readNumberArg(args, 'userId', 1)
   const workoutId = readNumberArg(args, 'workoutId', 1)
   const durationSeconds = readNumberArg(args, 'durationSeconds', 0)
 
   const activity = await postActivityEndpoint(
-    userId,
     workoutId,
     durationSeconds,
+    '',
+    context?.token,
   )
 
   const progress = await getProgressEndpoint(userId)

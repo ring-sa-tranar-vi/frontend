@@ -20,6 +20,7 @@ import {
   appSheetSecondaryButtonClass,
 } from '../../../components/AppSheet'
 import LanguageSwitcher from '../../../components/LanguageSwitcher'
+import PrivacyPolicySheet from './PrivacyPolicySheet'
 import SupportSheet from './SupportSheet'
 import EventsOrganisationsSheet from './menu/EventsOrganisationsSheet'
 import MenuPlaceholderSections from './menu/MenuPlaceholderSections'
@@ -290,6 +291,7 @@ function SettingsModalBody({
   )
   const [saveFeedback, setSaveFeedback] = useState<string | null>(null)
   const [supportOpen, setSupportOpen] = useState(false)
+  const [privacyOpen, setPrivacyOpen] = useState(false)
   const [eventsOpen, setEventsOpen] = useState(false)
 
   const feedbackTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -389,12 +391,16 @@ function SettingsModalBody({
             ) : null}
 
             <nav
-              aria-label={`${t('settings.privacyComingSoon')}, ${t('settings.getHelp')}`}
+              aria-label={`${t('settings.privacyPolicy')}, ${t('settings.getHelp')}`}
               className="flex min-h-9 flex-wrap items-center justify-center gap-x-2 text-[length:var(--text-xs)] font-bold text-(--brand-muted)"
             >
-              <span className="px-1.5 py-2">
-                {t('settings.privacyComingSoon')}
-              </span>
+              <button
+                type="button"
+                onClick={() => setPrivacyOpen(true)}
+                className="rounded-lg px-1.5 py-2 underline decoration-(--brand-border-strong) underline-offset-3 transition hover:text-(--brand-primary) focus-visible:ring-2 focus-visible:ring-(--brand-border-strong) focus-visible:ring-offset-1 focus-visible:outline-none"
+              >
+                {t('settings.privacyPolicy')}
+              </button>
               <span aria-hidden="true">·</span>
               <button
                 type="button"
@@ -456,6 +462,7 @@ function SettingsModalBody({
           </section>
         </div>
       </AppSheet>
+      <PrivacyPolicySheet open={privacyOpen} setOpen={setPrivacyOpen} />
       <SupportSheet open={supportOpen} setOpen={setSupportOpen} />
       <EventsOrganisationsSheet
         open={open && eventsOpen}

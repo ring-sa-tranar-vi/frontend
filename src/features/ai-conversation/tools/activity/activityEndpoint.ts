@@ -14,18 +14,20 @@ export type ActivityLogResponse = {
 }
 
 export async function postActivityEndpoint(
-  userId: number,
   workoutId: number,
   durationSeconds = 0,
   feedback = '',
+  token?: string | null,
 ) {
   const path = `/api/activity-logs`
   try {
     const res = await fetch(`${API_URL}${path}`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
       body: JSON.stringify({
-        userId,
         workoutId,
         completedAt: new Date().toISOString().replace(/Z$/, ''),
         durationSeconds: Math.max(0, Math.round(durationSeconds)),
