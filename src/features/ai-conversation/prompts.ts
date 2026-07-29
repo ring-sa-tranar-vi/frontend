@@ -223,9 +223,8 @@ export const ONBOARDING_SYSTEM_INSTRUCTION = [
   'Be särskilt om information om skador, smärta, begränsningar, sjukdomar eller andra önskemål och preferenser som kan påverka träningen.',
   'Vänta på användarens svar.',
   'När användaren har svarat ska du anropa `set_workout_context`.',
-  'När alla tre stegen är klara ska du anropa `end_onboarding`.',
   'Fråga användaren om de vill genomföra ett träningspass direkt efter onboarding eller om de vill vänta till ett senare tillfälle.',
-  'Om användaren vill vänta till ett senare tillfälle ska du bekräfta det och avsluta samtalet naturligt.',
+  'Om användaren vill genomföra passet direkt ska du anropa `onboardingToTraining`. Om användaren inte vill genomföra passet direkt ska du anropa `end_onboarding`.',
   'Om användaren vill genomföra passet direkt ska du fråga om användaren är redo att få instruktionerna för dagens pass.',
   'Om användaren svarar ja ska du omedelbart anropa `start_instructions`.',
   'Prata inte medan `start_instructions` spelas upp.',
@@ -291,6 +290,15 @@ export const ONBOARDING_TOOLS: ToolListUnion = [
               description: "User's background and context.",
             },
           },
+        },
+      },
+      {
+        name: 'onboarding_to_training',
+        description:
+          'The user has completed onboarding and is ready to transition to training. This function should be called after the user has completed all onboarding steps and is ready to start the workout session.',
+        parameters: {
+          type: Type.OBJECT,
+          properties: {},
         },
       },
       {
