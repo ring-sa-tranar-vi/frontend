@@ -24,6 +24,8 @@ import {
   ONBOARDING_SYSTEM_INSTRUCTION,
   SESSION_CONTROL_TOOLS,
   ONBOARDING_TOOLS,
+  GUEST_SESSION_INSTRUCTION,
+  GUEST_SESSION_TOOLS,
 } from './prompts'
 import type { CoachCallSession } from '../session/types'
 import {
@@ -58,8 +60,12 @@ function buildSessionInstruction(
   session: CoachCallSession,
   trainerPrompt?: string | null,
   alreadyCompletedToday?: boolean,
+  isSignedIn?: boolean,
   calendarEvents?: CalendarActivity[] | null,
 ) {
+  if (!isSignedIn) {
+    return `${GUEST_SESSION_INSTRUCTION} ${trainerPrompt?.trim() ?? ''}`
+  }
   const userContext = buildUserContext(session, calendarEvents)
   const personaStability =
     'Detta gäller alla trainers: behåll exakt samma trainer-personlighet, språk, dialekt, röststil, energi och tonläge genom hela samtalet, inklusive instruktioner, feedback, avbrott och avslut. Om trainerprompten säger nervös, lugn, hetsig, elegant, varm eller något annat ska det märkas konsekvent hela tiden. Använd användarkontexten för vad du säger, men byt aldrig persona.'
@@ -135,6 +141,7 @@ export function useCoachSession(
     coachPrompt,
     updateProfile,
     isTrainerLoading: isCurrentUserTrainerLoading,
+    isSignedIn,
   } = useCurrentUser()
   const {
     data: trainer,
@@ -159,12 +166,14 @@ export function useCoachSession(
         session,
         sessionCoachPrompt,
         options.alreadyCompletedToday,
+        isSignedIn,
         calendarEvents,
       ),
     [
       session,
       sessionCoachPrompt,
       options.alreadyCompletedToday,
+      isSignedIn,
       calendarEvents,
     ],
   )
@@ -266,6 +275,9 @@ export function useCoachSession(
   }, [])
 
   const sessionTools = useMemo(() => {
+    if (!isSignedIn) {
+      return [...GUEST_SESSION_TOOLS]
+    }
     if (options.alreadyCompletedToday) {
       return [...coachLiveTools, ...ALREADY_COMPLETED_TOOLS]
     }
@@ -348,6 +360,22 @@ export function useCoachSession(
     onToolCall: async (functionCall): Promise<FunctionResponse> => {
       const name = functionCall.name ?? 'unknown_tool'
       addDebugEvent('tool call', `${name}, step=${stepRef.current}`)
+
+      //────────────────────
+      // End guest session
+      //────────────────────
+
+      if (name === 'end_guest_session') {
+        addDebugEvent('end_guest_session')
+        finishSessionRef.current()
+        return {
+          id: functionCall.id,
+          name,
+          response: {
+            output: { ok: true },
+          },
+        }
+      }
 
       //──────────────────────
       // Start onboarding
@@ -1024,6 +1052,13 @@ export function useCoachSession(
   const finishSessionWithSummary = useCallback(
     async (summary = '', suggestions?: ProfileSuggestions) => {
       stopSessionAudio()
+
+      if (!isSignedIn) {
+        addDebugEvent('finish_session', 'guest session - no feedback saved')
+        disconnectLive()
+        setSessionStep('completed')
+        return
+      }
 
       try {
         const workoutPlayed = workoutCompletedRef.current
