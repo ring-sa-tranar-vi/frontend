@@ -45,6 +45,8 @@ import { useTrainer } from '../session/query'
 import useCurrentUser from '../../hooks/useCurrentUser'
 import { useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '@clerk/react'
+import type { CalendarActivity } from '../HomePage/components/menu/types'
+import { useCalendarEvents } from '../../hooks/useCalendarEvents'
 
 //──────────────────────
 // Build system instruction
@@ -59,11 +61,12 @@ function buildSessionInstruction(
   trainerPrompt?: string | null,
   alreadyCompletedToday?: boolean,
   isSignedIn?: boolean,
+  calendarEvents?: CalendarActivity[] | null,
 ) {
   if (!isSignedIn) {
     return `${GUEST_SESSION_INSTRUCTION} ${trainerPrompt?.trim() ?? ''}`
   }
-  const userContext = buildUserContext(session)
+  const userContext = buildUserContext(session, calendarEvents)
   const personaStability =
     'Detta gäller alla trainers: behåll exakt samma trainer-personlighet, språk, dialekt, röststil, energi och tonläge genom hela samtalet, inklusive instruktioner, feedback, avbrott och avslut. Om trainerprompten säger nervös, lugn, hetsig, elegant, varm eller något annat ska det märkas konsekvent hela tiden. Använd användarkontexten för vad du säger, men byt aldrig persona.'
   const trainerIdentity = trainerPrompt?.trim()
@@ -150,6 +153,12 @@ export function useCoachSession(
   const sessionVoice = normalizeLiveVoice(
     trainer?.voice ?? session.trainer?.voice ?? voice,
   )
+  const currentDate = new Date()
+  const { activities: calendarEvents } = useCalendarEvents(
+    currentDate.getFullYear(),
+    currentDate.getMonth() + 1,
+    Boolean(userId),
+  )
 
   const sessionInstruction = useMemo(
     () =>
@@ -158,8 +167,15 @@ export function useCoachSession(
         sessionCoachPrompt,
         options.alreadyCompletedToday,
         isSignedIn,
+        calendarEvents,
       ),
-    [session, sessionCoachPrompt, options.alreadyCompletedToday, isSignedIn],
+    [
+      session,
+      sessionCoachPrompt,
+      options.alreadyCompletedToday,
+      isSignedIn,
+      calendarEvents,
+    ],
   )
 
   const [step, setStep] = useState<CoachSessionStep>('idle')

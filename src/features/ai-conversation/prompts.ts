@@ -1,5 +1,6 @@
 import { Type, type ToolListUnion } from '@google/genai'
 import type { CoachCallSession } from '../session/types'
+import type { CalendarActivity } from '../HomePage/components/menu/types'
 
 export const liveSystemInstruction = [
   'Inled telefonsamtalet som att du just lyft luren och ge en kort personlig hälsning. Gör endast detta och fråga inte om instruktioner än.',
@@ -8,6 +9,7 @@ export const liveSystemInstruction = [
   'När användaren svarar ja på frågan i mp3-filen start_instructions om att starta passet ska du köra start_workout. Du ska INTE prata alls efter start_workout — varken under eller efter uppspelningen. Vänta tyst på användarens nästa yttrande.',
   'Tränings-mp3:n avslutas med en fråga om hur passet kändes. Ställ INTE den frågan — vänta tyst på användarens svar.',
   'När användaren svarat på hur passet kändes, ge en kort återkoppling med en kort summering av vad användaren sade.',
+  'Om användaren har kommande aktiviteter i kalendern, nämn dem kort och naturligt i samtalet.',
   'Om användaren vill höja eller sänka intensiteten, ändra bakgrund/context eller korrigera något om sig själv ska du lyssna, bekräfta naturligt utan att fråga ut i onödan och ta med ändringen i `suggested_intensity_level` eller `suggested_context` när du senare kallar på `finish_session`.',
   'Om användaren någon gång vill lägga på, avsluta, stoppa samtalet, säger hejdå eller säger att de inte vill fortsätta ska du prioritera det över alla andra steg, säga en naturlig avslutning som känns varm och passar situationen och sedan kalla på `finish_session`.',
   'Du får inte avsluta sessionen om inte användaren indikerat att de vill avsluta.',
@@ -18,7 +20,10 @@ export const liveSystemInstruction = [
   'Om samtalet avslöjar att användarens intensitetsnivå (1–5) eller bakgrundsbeskrivning (Bakgrund-fältet) borde uppdateras, ange det i `suggested_intensity_level` respektive `suggested_context` när du kallar på `finish_session`. `suggested_context` ska ENDAST innehålla Bakgrund-texten — inte namn, streak eller passhistorik. Slå ihop befintlig bakgrund med nytt som framkommit; ibland ska saker läggas till, ibland ersättas. Utelämna parametern om inget behöver ändras.',
 ].join(' ')
 
-export function buildUserContext(session: CoachCallSession): string {
+export function buildUserContext(
+  session: CoachCallSession,
+  calendarEvents?: CalendarActivity[] | null,
+): string {
   const parts: string[] = []
   if (session.userName) {
     parts.push(`Användarens namn är ${session.userName}.`)
@@ -36,6 +41,15 @@ export function buildUserContext(session: CoachCallSession): string {
   const workoutName = session.workoutName ?? session.name
   if (workoutName) {
     parts.push(`Dagens pass heter "${workoutName}".`)
+  }
+  const activities = calendarEvents?.filter((e) => !e.completed).map((e) => e)
+
+  if (activities && activities.length > 0) {
+    parts.push(
+      `Användaren har följande kommande aktiviteter: ${activities.join(', ')}.`,
+    )
+  } else {
+    parts.push('Användaren har inga kommande aktiviteter.')
   }
   return parts.join(' ')
 }
