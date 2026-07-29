@@ -198,6 +198,7 @@ export function useCoachSession(
   const updateUserContextRef = useRef<(context: string) => Promise<void>>(
     async () => {},
   )
+  const onboardingToTrainingRef = useRef<() => Promise<void>>(async () => {})
   const endOnboardingRef = useRef<() => Promise<void>>(async () => {})
   const startInstructionsRef = useRef<() => Promise<void>>(async () => {})
   const startWorkoutRef = useRef<() => Promise<void>>(async () => {})
@@ -341,6 +342,7 @@ export function useCoachSession(
         name === 'confirm_user_name' ||
         name === 'set_workout_intensity_level' ||
         name === 'set_workout_context' ||
+        name === 'onboarding_to_training' ||
         name === 'end_onboarding'
       ) {
         const args = (functionCall.args ?? {}) as Record<string, unknown>
@@ -348,7 +350,7 @@ export function useCoachSession(
         if (name === 'confirm_user_name') {
           onboardingStageRef.current = 'intensity'
           addDebugEvent('onboarding-name', String(args.name ?? ''))
-          await updateUserNameRef.current(String(args.name ?? ''))
+          void updateUserNameRef.current(String(args.name ?? ''))
           return {
             id: functionCall.id,
             name,
@@ -373,7 +375,7 @@ export function useCoachSession(
               },
             }
           }
-          await updateIntensityLevelRef.current(Number(args.level))
+          void updateIntensityLevelRef.current(Number(args.level))
           return {
             id: functionCall.id,
             name,
@@ -384,7 +386,7 @@ export function useCoachSession(
         if (name === 'set_workout_context') {
           onboardingStageRef.current = 'done'
           addDebugEvent('onboarding-context', JSON.stringify(args))
-          await updateUserContextRef.current(String(args.context ?? ''))
+          void updateUserContextRef.current(String(args.context ?? ''))
           return {
             id: functionCall.id,
             name,
@@ -392,12 +394,27 @@ export function useCoachSession(
           }
         }
 
+        if (name === 'onboarding_to_training') {
+          onboardingStageRef.current = 'done'
+
+          addDebugEvent('onboarding-to-training', JSON.stringify(args))
+          setSessionStep('waiting_instruction_approval')
+          void onboardingToTrainingRef.current()
+
+          return {
+            id: functionCall.id,
+            name,
+            response: {
+              output: { ok: true },
+            },
+          }
+        }
+
         if (name === 'end_onboarding') {
           onboardingStageRef.current = 'done'
 
           addDebugEvent('onboarding-complete', JSON.stringify(args))
-          setSessionStep('waiting_instruction_approval')
-          await endOnboardingRef.current()
+          void endOnboardingRef.current()
           return {
             id: functionCall.id,
             name,
@@ -860,6 +877,7 @@ export function useCoachSession(
   //──────────────────────
   // End onboarding
   //──────────────────────
+
   const endOnboarding = useCallback(async () => {
     if (stepRef.current !== 'onboarding') {
       addDebugEvent('skip end-onboarding', `step=${stepRef.current}`)
@@ -867,7 +885,18 @@ export function useCoachSession(
     }
     await updateProfile({ onboarding: false })
     addDebugEvent('onboarding-complete')
-    sendCoachPrompt('Jag är redo att börja träna.')
+    sendCoachPrompt('Jag är redo att avsluta samtalet.')
+  }, [addDebugEvent, sendCoachPrompt, updateProfile])
+
+  const onboardingToTraining = useCallback(async () => {
+    if (stepRef.current !== 'onboarding') {
+      addDebugEvent('skip end-onboarding', `step=${stepRef.current}`)
+      return
+    }
+    await updateProfile({ onboarding: false })
+    setSessionStep('waiting_instruction_approval')
+    addDebugEvent('onboarding-complete')
+    sendCoachPrompt('Jag är redo att höra instruktionerna.')
   }, [addDebugEvent, sendCoachPrompt, updateProfile])
 
   //──────────────────────
@@ -1116,6 +1145,7 @@ export function useCoachSession(
     updateUserNameRef.current = updateUserName
     updateIntensityLevelRef.current = updateIntensityLevel
     updateUserContextRef.current = updateUserContext
+    onboardingToTrainingRef.current = onboardingToTraining
     endOnboardingRef.current = endOnboarding
     startInstructionsRef.current = playInstructions
     startWorkoutRef.current = startWorkout
@@ -1128,6 +1158,7 @@ export function useCoachSession(
     updateUserContext,
     updateUserName,
     endOnboarding,
+    onboardingToTraining,
   ])
 
   //──────────────────────
