@@ -150,7 +150,7 @@ export const ONBOARDING_SYSTEM_INSTRUCTION = [
   'Om du har ett namn från systemet ska du fråga om det stämmer, till exempel: "Jag har att du heter [namn]. Stämmer det?"',
   'Om inget namn finns ska du fråga vad användaren heter.',
   'Om användaren rättar namnet eller anger ett nytt namn ska du använda det namnet.',
-  'När rätt namn har bekräftats eller angetts ska du omedelbart anropa `confirm_user_name`.',
+  'Om användaren anger ett nytt namn ska du omedelbart anropa `confirm_user_name`.',
   'Steg 2: Fråga vilken träningsintensitet användaren vill ha på en skala från 1 till 5.',
   'Förklara kort att 1 är lugnast och 5 är mest utmanande om det behövs.',
   'Vänta på användarens svar.',
