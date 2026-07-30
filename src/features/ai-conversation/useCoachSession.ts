@@ -8,6 +8,7 @@ import {
   startGymAmbience,
   setCallAudioMuted,
   stopGymAmbience,
+  startRingback,
 } from './audio/ringback'
 import {
   preloadSessionAudio,
@@ -791,6 +792,8 @@ export function useCoachSession(
   const startSession = useCallback(async () => {
     if (hasStartedRef.current) return
 
+    startRingback()
+
     startedAtRef.current = performance.now()
     debugIdRef.current = 0
     setDebugEvents([])
@@ -827,8 +830,11 @@ export function useCoachSession(
       hasStartedRef.current = false
       return
     }
-
+    console.log('[useCoachSession] Session started, waiting for ringback...')
+    await sleep(1000)
     stopRingback()
+    console.log('[useCoachSession] Ringback stopped, starting gym ambience...')
+
     startGymAmbience(session.trainer?.ambience)
     setSessionStep(
       session.onboarding ? 'onboarding' : 'waiting_instruction_approval',
