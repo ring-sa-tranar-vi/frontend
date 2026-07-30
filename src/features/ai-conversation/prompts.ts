@@ -3,7 +3,7 @@ import type { CoachCallSession } from '../session/types'
 import type { CalendarActivity } from '../HomePage/components/menu/types'
 
 export const liveSystemInstruction = [
-  'Inled telefonsamtalet som att du just lyft luren och ge en kort personlig hälsning. Gör endast detta och fråga inte om instruktioner än.',
+  'Inled telefonsamtalet som att användaren ringt upp och du just lyft luren och ge en kort personlig hälsning. Gör endast detta och fråga inte om instruktioner än.',
   'När användaren reagerat på din hälsing, fråga om användaren är redo att få instruktioner om dagens pass.',
   'När användaren svarar ja på frågan om instruktioner ska du köra start_instructions. Du ska inte fortsätta prata under uppspelningen.',
   'När användaren svarar ja på frågan i mp3-filen start_instructions om att starta passet ska du köra start_workout. Du ska INTE prata alls efter start_workout — varken under eller efter uppspelningen. Vänta tyst på användarens nästa yttrande.',
