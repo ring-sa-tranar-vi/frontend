@@ -3,15 +3,12 @@ import type {
   FunctionResponse,
   ToolListUnion,
 } from '@google/genai'
-import { progressTool } from './progress/progressTool'
 import { activityTool } from './activity/activityTool'
 import { feedbackTool } from './feedback/feedbackTool'
 import type { LiveToolDefinition } from './shared/liveToolTypes'
 import type { LiveToolContext } from './shared/liveToolTypes'
 import { trainingContextTool } from './trainingContext/trainingContextTool'
 import { userTool } from './user/userTool'
-import { workoutCatalogTool } from './workout/workoutCatalogTool'
-import { workoutTool } from './workout/workoutTool'
 
 // Det här är den enda filen som kopplar ihop alla tools med Gemini Live.
 // För att lägga till ett nytt tool:
@@ -19,13 +16,10 @@ import { workoutTool } from './workout/workoutTool'
 // 2. Skapa declaration + handler + *Tool.ts i den mappen
 // 3. Lägg till tool-objektet i liveToolDefinitions nedan
 const liveToolDefinitions: LiveToolDefinition[] = [
-  progressTool,
   activityTool,
   feedbackTool,
   trainingContextTool,
   userTool,
-  workoutCatalogTool,
-  workoutTool,
 ]
 
 const liveToolHandlers = Object.fromEntries(
@@ -43,7 +37,11 @@ export const coachLiveTools: ToolListUnion = [
     functionDeclarations: liveToolDefinitions
       .filter(
         (tool) =>
-          !['get_training_context', 'create_feedback'].includes(tool.name),
+          ![
+            'get_training_context',
+            'create_feedback',
+            'create_activity_log',
+          ].includes(tool.name),
       )
       .map((tool) => tool.declaration),
   },

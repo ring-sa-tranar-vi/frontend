@@ -285,7 +285,7 @@ export function useCoachSession(
     if (session.onboarding) {
       return [...coachLiveTools, ...SESSION_CONTROL_TOOLS, ...ONBOARDING_TOOLS]
     }
-    return coachLiveTools
+    return [...coachLiveTools, ...SESSION_CONTROL_TOOLS]
   }, [options.alreadyCompletedToday, session.onboarding])
 
   const addCaptionParagraph = useCallback((text?: string | null) => {
