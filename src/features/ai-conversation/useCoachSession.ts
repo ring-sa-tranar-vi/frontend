@@ -60,19 +60,23 @@ function normalizeLiveVoice(voiceName?: string | null) {
 function buildSessionInstruction(
   session: CoachCallSession,
   trainerPrompt?: string | null,
+  trainerName?: string | null,
   alreadyCompletedToday?: boolean,
   isSignedIn?: boolean,
   calendarEvents?: CalendarActivity[] | null,
 ) {
+  const trainerNameLine = trainerName?.trim()
+    ? `Ditt namn är ${trainerName.trim()}. `
+    : ''
   if (!isSignedIn) {
-    return `${GUEST_SESSION_INSTRUCTION} ${trainerPrompt?.trim() ?? ''}`
+    return `${GUEST_SESSION_INSTRUCTION} ${trainerNameLine}${trainerPrompt?.trim() ?? ''}`
   }
   const userContext = buildUserContext(session, calendarEvents)
   const personaStability =
     'Detta gäller alla trainers: behåll exakt samma trainer-personlighet, språk, dialekt, röststil, energi och tonläge genom hela samtalet, inklusive instruktioner, feedback, avbrott och avslut. Om trainerprompten säger nervös, lugn, hetsig, elegant, varm eller något annat ska det märkas konsekvent hela tiden. Använd användarkontexten för vad du säger, men byt aldrig persona.'
   const trainerIdentity = trainerPrompt?.trim()
-    ? `\n\nTrainer identity and style (apply this throughout the conversation):\n${trainerPrompt.trim()}\n${personaStability}`
-    : `\n\nTrainer identity and style (apply this throughout the conversation):\n${personaStability}`
+    ? `\n\nTrainer identity and style (apply this throughout the conversation):\n${trainerNameLine}${trainerPrompt.trim()}\n${personaStability}`
+    : `\n\nTrainer identity and style (apply this throughout the conversation):\n${trainerNameLine}${personaStability}`
 
   if (alreadyCompletedToday) {
     return `${userContext} ${ALREADY_COMPLETED_TODAY_INSTRUCTION}${trainerIdentity}`
@@ -151,6 +155,7 @@ export function useCoachSession(
   } = useTrainer(options.trainerId ?? '1')
   const sessionCoachPrompt =
     trainer?.prompt ?? session.trainer?.prompt ?? coachPrompt
+  const sessionTrainerName = trainer?.name ?? session.trainer?.name
   const sessionVoice = normalizeLiveVoice(
     trainer?.voice ?? session.trainer?.voice ?? voice,
   )
@@ -166,6 +171,7 @@ export function useCoachSession(
       buildSessionInstruction(
         session,
         sessionCoachPrompt,
+        sessionTrainerName,
         options.alreadyCompletedToday,
         isSignedIn,
         calendarEvents,
@@ -173,6 +179,7 @@ export function useCoachSession(
     [
       session,
       sessionCoachPrompt,
+      sessionTrainerName,
       options.alreadyCompletedToday,
       isSignedIn,
       calendarEvents,
