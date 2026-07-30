@@ -355,6 +355,7 @@ function SettingsModalBody({
         context,
         trainerId: Number(selectedTrainerId),
         city: profile.city ?? null,
+        onboarding: profile.onboarding ?? null,
       })
 
       setOpen(false)
