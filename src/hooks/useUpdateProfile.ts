@@ -12,6 +12,7 @@ type ProfileData = {
   context: string
   trainerId?: number | null
   city?: string | null
+  onboarding?: boolean | null
 }
 
 type ProfileResponse = ProfileData
