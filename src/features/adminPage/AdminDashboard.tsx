@@ -4,24 +4,7 @@ import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { fetchWorkouts } from '../../api/workouts'
 import { fetchWorkoutFeedbackSummaryWithToken } from '../../api/feedbacks'
-
-type FeedbackRow = {
-  workoutId: number
-  workoutName: string
-  feedbackCount: number
-  avgRating: number
-  dislikeRate: number
-  tooHardRate: number
-  status: 'GOOD' | 'NEEDS_REVIEW' | 'BAD'
-}
-
-type Workout = {
-  id: number
-  name: string
-  type?: string
-  level?: number
-  durationSeconds?: number
-}
+import type { FeedbackRow, Workout } from './types.ts'
 
 // ─── Sparkline (decorative) ────────────────────────────────────────────────
 function Sparkline({ color, points }: { color: string; points: string }) {

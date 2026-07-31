@@ -3,68 +3,12 @@ import { useAuth } from '@clerk/react'
 import { useTranslation } from 'react-i18next'
 import { fetchWorkoutById, updateWorkout } from '../../api/workouts'
 import { fetchTrainersWithToken } from '../../api/trainers'
-import type { ToastType } from '../../hooks/useToast'
+import type { StatusFn, WorkoutForm, WorkoutResponse } from './types.ts'
 
 type TrainerOption = {
   id: number
   name: string
 }
-
-type WorkoutForm = {
-  name: string
-  description: string
-  dashboardName: string
-  dashboardDescription: string
-  subtitleText: string
-  instructionsSubtitleText: string
-  level: number
-  type: string
-  durationSeconds: number
-  instructionsAudio: string
-  workoutAudio: string
-  instructionsImage: string
-  workoutImage: string
-  instructionsVideo: string
-  instructionsVideoStart: string
-  instructionsVideoStop: string
-  kneeFriendly: boolean
-  lowImpact: boolean
-  seated: boolean
-  beginnerFriendly: boolean
-  trainerId: string
-}
-
-type WorkoutResponse = {
-  id: number
-  name?: string
-  description?: string
-  dashboardName?: string | null
-  dashboardDescription?: string | null
-  subtitleText?: string | null
-  instructionsSubtitleText?: string | null
-  level?: number
-  type?: string
-  durationSeconds?: number
-  instructionsAudio?: string
-  workoutAudio?: string
-  instructionsImage?: string
-  workoutImage?: string
-  instructionsVideo?: string | null
-  instructionsVideoStart?: number | null
-  instructionsVideoStop?: number | null
-  kneeFriendly?: boolean
-  lowImpact?: boolean
-  seated?: boolean
-  beginnerFriendly?: boolean
-  trainer?: {
-    id?: number
-  } | null
-}
-
-type StatusFn = (
-  message: string,
-  options?: { type?: ToastType; duration?: number },
-) => void
 
 type Props = {
   workoutId: number

@@ -9,8 +9,11 @@ import {
   updateCompanyEvent,
   updateCompanyOrganisation,
   type CompanyEvent,
-} from '../../api/companyPortal'
-import { emptyEventForm, type EventForm } from './types'
+} from '../api/companyPortal.ts'
+import {
+  emptyEventForm,
+  type EventForm,
+} from '../features/companyPortal/types.ts'
 
 function toLocalDateTime(value: string) {
   const trimmed = value.trim()

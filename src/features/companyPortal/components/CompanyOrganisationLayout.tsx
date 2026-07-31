@@ -1,4 +1,4 @@
-import type { CompanyOrganisationViewModel } from '../useCompanyOrganisationPage'
+import type { CompanyOrganisationViewModel } from '../../../hooks/useCompanyOrganisationPage.ts'
 import CompanyOrganisationHeader from './CompanyOrganisationHeader'
 import EventListCard from './EventListCard'
 import OrganisationInfoCard from './OrganisationInfoCard'

@@ -13,6 +13,7 @@ import {
 import ConfirmModal from '../../components/ConfirmModal'
 import { useToast } from '../../hooks/useToast'
 import { fetchTrainersWithToken } from '../../api/trainers'
+import type { WorkoutForm } from './types.ts'
 
 type AdminTab = 'workouts' | 'trainers' | 'feedback'
 
@@ -47,29 +48,6 @@ type Workout = {
   trainer?: { id?: number; name?: string } | null
 }
 
-type WorkoutForm = {
-  name: string
-  description: string
-  dashboardName: string
-  dashboardDescription: string
-  subtitleText: string
-  instructionsSubtitleText: string
-  type: string
-  level: number
-  durationSeconds: number
-  instructionsAudio: string
-  workoutAudio: string
-  instructionsImage: string
-  workoutImage: string
-  instructionsVideo: string
-  instructionsVideoStart: string
-  instructionsVideoStop: string
-  kneeFriendly: boolean
-  lowImpact: boolean
-  seated: boolean
-  beginnerFriendly: boolean
-}
-
 type SortBy =
   'newest' | 'name-asc' | 'name-desc' | 'duration-asc' | 'duration-desc'
 
@@ -94,6 +72,7 @@ const emptyForm: WorkoutForm = {
   lowImpact: false,
   seated: false,
   beginnerFriendly: false,
+  trainerId: '',
 }
 
 function toForm(workout: Workout): WorkoutForm {
@@ -124,6 +103,7 @@ function toForm(workout: Workout): WorkoutForm {
     lowImpact: workout.lowImpact ?? false,
     seated: workout.seated ?? false,
     beginnerFriendly: workout.beginnerFriendly ?? false,
+    trainerId: workout.trainer?.name ?? '',
   }
 }
 
