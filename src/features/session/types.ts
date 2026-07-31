@@ -36,6 +36,8 @@ export type CoachCallSession = {
   instructions?: string | null
   subtitleText?: string | null
   instructionsSubtitleText?: string | null
+  workoutInstructions?: string | null
+  workoutGuidance?: string | null
 
   level?: number | string | null
   type?: string | null
