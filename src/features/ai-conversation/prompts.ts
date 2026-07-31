@@ -5,16 +5,15 @@ import type { CalendarActivity } from '../HomePage/components/menu/types'
 export const liveSystemInstruction = [
   'Inled telefonsamtalet som att användaren ringt upp och du just lyft luren och ge en kort personlig hälsning. Gör endast detta och fråga inte om instruktioner än.',
   'När användaren reagerat på din hälsing, fråga om användaren är redo att få instruktioner om dagens pass.',
-  'När användaren svarar ja på frågan om instruktioner ska du köra start_instructions. Du ska inte fortsätta prata under uppspelningen.',
-  'När användaren svarar ja på frågan i mp3-filen start_instructions om att starta passet ska du köra start_workout. Du ska INTE prata alls efter start_workout — varken under eller efter uppspelningen. Vänta tyst på användarens nästa yttrande.',
-  'Tränings-mp3:n avslutas med en fråga om hur passet kändes. Ställ INTE den frågan — vänta tyst på användarens svar.',
+  'När användaren svarar ja på frågan om instruktioner ska du ge passets INSTRUKTIONER, men med din personlighet. Kontrollera att användaren förstått instruktionerna.',
+  'När användaren bekräftat att den förstått instruktionerna ska du ge passets GUIDNING, men med din personlighet. Se till att göra rätt antal repetitioner. Efter passet ska du fråga hur passet kändes.',
   'När användaren svarat på hur passet kändes, ge en kort återkoppling med en kort summering av vad användaren sade.',
   'Om användaren har kommande aktiviteter i kalendern, nämn dem kort och naturligt i samtalet.',
   'Om användaren vill höja eller sänka intensiteten, ändra bakgrund/context eller korrigera något om sig själv ska du lyssna, bekräfta naturligt utan att fråga ut i onödan och ta med ändringen i `suggested_intensity_level` eller `suggested_context` när du senare kallar på `finish_session`.',
   'Om användaren någon gång vill lägga på, avsluta, stoppa samtalet, säger hejdå eller säger att de inte vill fortsätta ska du prioritera det över alla andra steg, säga en naturlig avslutning som känns varm och passar situationen och sedan kalla på `finish_session`.',
-  'Du får inte avsluta sessionen om inte användaren indikerat att de vill avsluta.',
+  'Du får inte avsluta sessionen om inte användaren indikerat att de vill avsluta genom att säga hejdå eller liknande.',
   'Innan du kallar på `finish_session` ska du säga en naturlig avslutning som passar anledningen till att samtalet avslutas, till exempel tacka för idag, bekräfta användaren, önska en fin dag eller säga att ni hörs snart.',
-  'När du upplever att användaren förväntar sig att du lägger på ska du kalla på `finish_session`.',
+  'Endast om du upplever att användaren förväntar sig att du lägger på får du kalla på `finish_session`.',
   'Kalla ALDRIG på `finish_session` medan du pratar.',
   'Undvik tekniska termer i talet.',
   'Om samtalet avslöjar att användarens intensitetsnivå (1–5) eller bakgrundsbeskrivning (Bakgrund-fältet) borde uppdateras, ange det i `suggested_intensity_level` respektive `suggested_context` när du kallar på `finish_session`. `suggested_context` ska ENDAST innehålla Bakgrund-texten — inte namn, streak eller passhistorik. Slå ihop befintlig bakgrund med nytt som framkommit; ibland ska saker läggas till, ibland ersättas. Utelämna parametern om inget behöver ändras.',
@@ -41,6 +40,11 @@ export function buildUserContext(
   const workoutName = session.workoutName ?? session.name
   if (workoutName) {
     parts.push(`Dagens pass heter "${workoutName}".`)
+  }
+  if (session.description?.trim()) {
+    parts.push(
+      `Passets INSTRUKTIONER och GUIDNING: ${session.description.trim()}`,
+    )
   }
   const activities = calendarEvents?.filter((e) => !e.completed).map((e) => e)
 
@@ -116,18 +120,6 @@ export const ALREADY_COMPLETED_TOOLS: ToolListUnion = [
 export const SESSION_CONTROL_TOOLS: ToolListUnion = [
   {
     functionDeclarations: [
-      {
-        name: 'start_instructions',
-        description:
-          "Queue instruction audio after the user says they are ready for the instructions, for example 'ja', 'okej', 'kör igång', or 'det blir bra'. Use this during the first ready question, before instruction audio has played.",
-        parameters: { type: Type.OBJECT, properties: {} },
-      },
-      {
-        name: 'start_workout',
-        description:
-          "Queue workout audio after instruction audio has finished and the user says they are ready to start the workout, for example 'ja', 'kör igång', 'jag är redo', or 'starta'. Do not use this before instruction audio has played.",
-        parameters: { type: Type.OBJECT, properties: {} },
-      },
       {
         name: 'finish_session',
         description:
