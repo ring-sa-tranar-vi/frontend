@@ -1,6 +1,6 @@
 import { useNavigate } from '@tanstack/react-router'
 import CompanyOrganisationLayout from './components/CompanyOrganisationLayout'
-import { useCompanyOrganisationPage } from './useCompanyOrganisationPage'
+import { useCompanyOrganisationPage } from '../../hooks/useCompanyOrganisationPage.ts'
 
 export default function CompanyOrganisationPage() {
   const vm = useCompanyOrganisationPage()
