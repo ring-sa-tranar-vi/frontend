@@ -11,31 +11,7 @@ import {
 } from '../../api/trainers'
 import { useToast } from '../../hooks/useToast'
 import ConfirmModal from '../../components/ConfirmModal'
-
-type Trainer = {
-  id: number
-  name: string
-  prompt: string
-  voice: string
-  intro: string
-  language: string
-  imageSelect?: string | null
-  imageCall?: string | null
-  imageStart?: string | null
-  ambience?: string | null
-}
-
-type TrainerForm = {
-  name: string
-  prompt: string
-  voice: string
-  intro: string
-  language: string
-  imageSelect: string
-  imageCall: string
-  imageStart: string
-  ambience: string
-}
+import type { Trainer, TrainerForm } from './types'
 
 type TrainerField = keyof TrainerForm
 type FieldErrors = Partial<Record<TrainerField, string>>
