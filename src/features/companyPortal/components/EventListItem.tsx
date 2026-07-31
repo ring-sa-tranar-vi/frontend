@@ -12,7 +12,7 @@ import {
   formatDayNumber,
   formatMonthShort,
   formatTime,
-} from '../useCompanyOrganisationPage'
+} from '../../../hooks/useCompanyOrganisationPage.ts'
 
 type Props = {
   event: CompanyEvent
