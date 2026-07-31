@@ -3,41 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useAuth } from '@clerk/react'
 import { useCreateWorkout } from '../../hooks/useCreateWorkoutHook'
 import { fetchTrainersWithToken } from '../../api/trainers'
-import type { ToastType } from '../../hooks/useToast'
-
-type TrainerOption = {
-  id: number
-  name: string
-}
-
-type WorkoutForm = {
-  name: string
-  description: string
-  dashboardName: string
-  dashboardDescription: string
-  subtitleText: string
-  instructionsSubtitleText: string
-  level: number
-  type: string
-  durationSeconds: number
-  instructionsAudio: string
-  workoutAudio: string
-  instructionsImage: string
-  workoutImage: string
-  instructionsVideo: string
-  instructionsVideoStart: string
-  instructionsVideoStop: string
-  kneeFriendly: boolean
-  lowImpact: boolean
-  seated: boolean
-  beginnerFriendly: boolean
-  trainerId: string
-}
-
-type StatusFn = (
-  message: string,
-  options?: { type?: ToastType; duration?: number },
-) => void
+import type { StatusFn, TrainerOption, WorkoutForm } from './types.ts'
 
 type Props = {
   onBack?: () => void
