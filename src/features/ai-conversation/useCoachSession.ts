@@ -21,6 +21,7 @@ import {
   ALREADY_COMPLETED_TOOLS,
   COACH_PROMPTS,
   buildUserContext,
+  buildGuestContext,
   liveSystemInstruction,
   ONBOARDING_SYSTEM_INSTRUCTION,
   SESSION_CONTROL_TOOLS,
@@ -69,7 +70,8 @@ function buildSessionInstruction(
     ? `Ditt namn är ${trainerName.trim()}. `
     : ''
   if (!isSignedIn) {
-    return `${GUEST_SESSION_INSTRUCTION} ${trainerNameLine}${trainerPrompt?.trim() ?? ''}`
+    const guestContext = buildGuestContext(session, calendarEvents)
+    return `${guestContext} ${GUEST_SESSION_INSTRUCTION} ${trainerNameLine}${trainerPrompt?.trim() ?? ''}`
   }
   const userContext = buildUserContext(session, calendarEvents)
   const personaStability =
@@ -479,6 +481,7 @@ export function useCoachSession(
       //──────────────────────
       // Start instructions
       //──────────────────────
+      /*
       if (name === 'start_instructions') {
         const queuedAction = getQueuedActionForStep(stepRef.current)
         addDebugEvent('waiting for AI to finish before starting instructions')
@@ -508,10 +511,13 @@ export function useCoachSession(
           },
         }
       }
+        */
 
       //──────────────────────
       // Start workout
       //──────────────────────
+
+      /*
       if (name === 'start_workout') {
         const queuedAction = getQueuedActionForStep(stepRef.current)
         addDebugEvent('tool-start-workout', String(queuedAction))
@@ -540,6 +546,7 @@ export function useCoachSession(
           },
         }
       }
+      */
 
       //──────────────────────
       // Finish session feedback
@@ -714,6 +721,48 @@ export function useCoachSession(
   ])
 
   //──────────────────────
+  // Play instructions video
+  //──────────────────────
+
+  const playInstructionsVideo = useCallback(() => {
+    const videoUrl = session.instructionsVideo
+    const videoStart = session.instructionsVideoStart
+    const videoStop = session.instructionsVideoStop
+
+    addDebugEvent(
+      'video-fields',
+      `url=${String(videoUrl)} start=${String(videoStart)} stop=${String(videoStop)}`,
+    )
+
+    if (videoUrl && videoStart != null && videoStop != null) {
+      const t1 = window.setTimeout(() => {
+        addDebugEvent('instructions video show')
+        setShowInstructionsVideo(true)
+      }, videoStart * 1000)
+      const t2 = window.setTimeout(() => {
+        addDebugEvent('instructions video hide')
+        setShowInstructionsVideo(false)
+      }, videoStop * 1000)
+      videoTimersRef.current = [t1, t2]
+    }
+  }, [
+    addDebugEvent,
+    session.instructionsVideo,
+    session.instructionsVideoStart,
+    session.instructionsVideoStop,
+  ])
+
+  //──────────────────────
+  // Workout completed
+  //──────────────────────
+
+  const workoutCompleted = useCallback(() => {
+    addDebugEvent('workout completed')
+    workoutCompletedRef.current = true
+  }, [])
+
+  /*  
+  //──────────────────────
   // Play instructions
   //──────────────────────
   const clearVideoTimers = useCallback(() => {
@@ -722,11 +771,6 @@ export function useCoachSession(
   }, [])
 
   const playInstructions = useCallback(async () => {
-    if (stepRef.current !== 'waiting_instruction_approval') {
-      addDebugEvent('skip instructions', `step=${stepRef.current}`)
-      return
-    }
-
     clearVideoTimers()
     setShowInstructionsVideo(false)
     pauseLive()
@@ -792,6 +836,7 @@ export function useCoachSession(
     session.instructionsVideoStop,
     setSessionStep,
   ])
+  */
 
   //──────────────────────
   // Start session
@@ -818,11 +863,12 @@ export function useCoachSession(
       hasStartedRef.current = false
       return
     }
-
+    /*
     preloadSessionAudio(
       session.instructionsAudio ?? session.instructionsAudioUrl,
     )
     preloadSessionAudio(session.workoutAudio ?? session.workoutAudioUrl)
+    */
 
     await geminiConnect(freshToken)
     addDebugEvent('initial live connected')
@@ -837,6 +883,7 @@ export function useCoachSession(
       hasStartedRef.current = false
       return
     }
+
     console.log('[useCoachSession] Session started, waiting for ringback...')
     await sleep(1000)
     stopRingback()
@@ -866,11 +913,6 @@ export function useCoachSession(
   //──────────────────────
   const updateUserName = useCallback(
     async (name: string) => {
-      if (stepRef.current !== 'onboarding') {
-        addDebugEvent('skip onboarding', `step=${stepRef.current}`)
-        return
-      }
-
       if (name === '') {
         addDebugEvent('skip onboarding', `step=${stepRef.current} - empty name`)
         return
@@ -895,10 +937,6 @@ export function useCoachSession(
   //──────────────────────
   const updateIntensityLevel = useCallback(
     async (intensityLevel: number) => {
-      if (stepRef.current !== 'onboarding') {
-        addDebugEvent('skip onboarding', `step=${stepRef.current}`)
-        return
-      }
       if (intensityLevel < 1 || intensityLevel > 5) {
         addDebugEvent(
           'skip onboarding',
@@ -919,10 +957,6 @@ export function useCoachSession(
 
   const updateUserContext = useCallback(
     async (context: string) => {
-      if (stepRef.current !== 'onboarding') {
-        addDebugEvent('skip onboarding', `step=${stepRef.current}`)
-        return
-      }
       await updateProfile({ context })
       addDebugEvent('onboarding-context', context)
       sendCoachPrompt(`Jag vill träna i kontexten: ${context}.`)
@@ -935,20 +969,12 @@ export function useCoachSession(
   //──────────────────────
 
   const endOnboarding = useCallback(async () => {
-    if (stepRef.current !== 'onboarding') {
-      addDebugEvent('skip end-onboarding', `step=${stepRef.current}`)
-      return
-    }
     await updateProfile({ onboarding: false })
     addDebugEvent('onboarding-complete')
     sendCoachPrompt('Jag är redo att avsluta samtalet.')
   }, [addDebugEvent, sendCoachPrompt, updateProfile])
 
   const onboardingToTraining = useCallback(async () => {
-    if (stepRef.current !== 'onboarding') {
-      addDebugEvent('skip end-onboarding', `step=${stepRef.current}`)
-      return
-    }
     await updateProfile({ onboarding: false })
     setSessionStep('waiting_instruction_approval')
     addDebugEvent('onboarding-complete')
@@ -959,11 +985,6 @@ export function useCoachSession(
   // Start workout
   //──────────────────────
   const startWorkout = useCallback(async () => {
-    if (stepRef.current !== 'asking_ready') {
-      addDebugEvent('skip workout', `step=${stepRef.current}`)
-      return
-    }
-
     pauseLive()
     setSessionStep('playing_workout')
 
@@ -1103,7 +1124,7 @@ export function useCoachSession(
       }
 
       try {
-        const workoutPlayed = workoutCompletedRef.current
+        const workoutCompleted = workoutCompletedRef.current
 
         if (workoutPlayed) {
           const backendUserId = Number(userId)
