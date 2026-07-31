@@ -41,10 +41,11 @@ export function buildUserContext(
   if (workoutName) {
     parts.push(`Dagens pass heter "${workoutName}".`)
   }
-  if (session.description?.trim()) {
-    parts.push(
-      `Passets INSTRUKTIONER och GUIDNING: ${session.description.trim()}`,
-    )
+  if (session.workoutInstructions?.trim()) {
+    parts.push(`Passets INSTRUKTIONER: ${session.workoutInstructions.trim()}`)
+  }
+  if (session.workoutGuidance?.trim()) {
+    parts.push(`Passets GUIDNING: ${session.workoutGuidance.trim()}`)
   }
   const activities = calendarEvents?.filter((e) => !e.completed).map((e) => e)
 
