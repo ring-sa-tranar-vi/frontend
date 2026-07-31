@@ -70,7 +70,7 @@ function buildSessionInstruction(
     ? `Ditt namn är ${trainerName.trim()}. `
     : ''
   if (!isSignedIn) {
-    const guestContext = buildGuestContext(session, calendarEvents)
+    const guestContext = buildGuestContext(session)
     return `${guestContext} ${GUEST_SESSION_INSTRUCTION} ${trainerNameLine}${trainerPrompt?.trim() ?? ''}`
   }
   const userContext = buildUserContext(session, calendarEvents)
@@ -1126,7 +1126,7 @@ export function useCoachSession(
       try {
         const workoutCompleted = workoutCompletedRef.current
 
-        if (workoutPlayed) {
+        if (workoutCompleted) {
           const backendUserId = Number(userId)
           const workoutId = Number(session.id)
           const activityLogId = activityLogIdRef.current
@@ -1231,12 +1231,11 @@ export function useCoachSession(
     updateUserContextRef.current = updateUserContext
     onboardingToTrainingRef.current = onboardingToTraining
     endOnboardingRef.current = endOnboarding
-    startInstructionsRef.current = playInstructions
     startWorkoutRef.current = startWorkout
     finishSessionRef.current = finishSessionWithSummary
   }, [
     finishSessionWithSummary,
-    playInstructions,
+    playInstructionsVideo,
     startWorkout,
     updateIntensityLevel,
     updateUserContext,
@@ -1256,30 +1255,22 @@ export function useCoachSession(
     )
     stopRingback()
     addDebugEvent('manual end')
-    clearVideoTimers()
     setShowInstructionsVideo(false)
     stopSessionAudio()
 
     disconnectLive()
     hasStartedRef.current = false
     setSessionStep('idle')
-  }, [
-    addDebugEvent,
-    clearVideoTimers,
-    disconnectLive,
-    getAiPlaybackRemainingMs,
-    setSessionStep,
-  ])
+  }, [addDebugEvent, disconnectLive, getAiPlaybackRemainingMs, setSessionStep])
 
   const hangUp = useCallback(() => {
     stopRingback()
     addDebugEvent('hang up')
-    clearVideoTimers()
     setShowInstructionsVideo(false)
     stopSessionAudio()
     disconnectLive()
     setSessionStep('idle')
-  }, [addDebugEvent, clearVideoTimers, disconnectLive, setSessionStep])
+  }, [addDebugEvent, disconnectLive, setSessionStep])
 
   //──────────────────────
   // Cleanup on unmount
