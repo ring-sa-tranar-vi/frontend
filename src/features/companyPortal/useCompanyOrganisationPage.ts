@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useAuth } from '@clerk/react'
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import {
   createCompanyEvent,
@@ -59,6 +60,7 @@ export function formatMonthShort(value: string) {
 }
 
 export function useCompanyOrganisationPage() {
+  const { getToken, isLoaded, isSignedIn } = useAuth()
   const queryClient = useQueryClient()
   const layoutRef = useRef<HTMLDivElement | null>(null)
   const [isWideLayout, setIsWideLayout] = useState(false)
@@ -76,18 +78,27 @@ export function useCompanyOrganisationPage() {
 
   const meQuery = useQuery({
     queryKey: ['company-me'],
-    queryFn: fetchCompanyMe,
+    queryFn: async () => fetchCompanyMe(await requireToken()),
+    enabled: isLoaded && isSignedIn,
   })
 
   const organisationQuery = useQuery({
     queryKey: ['company-organisation'],
-    queryFn: fetchCompanyOrganisation,
+    queryFn: async () => fetchCompanyOrganisation(await requireToken()),
+    enabled: isLoaded && isSignedIn,
   })
 
   const eventsQuery = useQuery({
     queryKey: ['company-events'],
-    queryFn: fetchCompanyEvents,
+    queryFn: async () => fetchCompanyEvents(await requireToken()),
+    enabled: isLoaded && isSignedIn,
   })
+
+  async function requireToken() {
+    const token = await getToken()
+    if (!token) throw new Error('Du måste vara inloggad som organisatör.')
+    return token
+  }
 
   const events = useMemo(() => {
     const list = eventsQuery.data ?? []
@@ -127,7 +138,7 @@ export function useCompanyOrganisationPage() {
         throw new Error('Organisation saknas.')
       }
 
-      return updateCompanyOrganisation(organisationId, {
+      return updateCompanyOrganisation(await requireToken(), {
         name: orgName.trim(),
         description: orgDescription.trim(),
         orgCity: orgCity.trim(),
@@ -146,13 +157,17 @@ export function useCompanyOrganisationPage() {
 
   const createEventMutation = useMutation({
     mutationFn: async () =>
-      createCompanyEvent({
-        name: eventForm.name.trim(),
-        description: eventForm.description.trim(),
-        time: toLocalDateTime(eventForm.time),
-        city: eventForm.city.trim(),
-        venue: eventForm.venue.trim(),
-      }),
+      createCompanyEvent(
+        await requireToken(),
+        organisationQuery.data?.id ?? 0,
+        {
+          name: eventForm.name.trim(),
+          description: eventForm.description.trim(),
+          time: toLocalDateTime(eventForm.time),
+          city: eventForm.city.trim(),
+          venue: eventForm.venue.trim(),
+        },
+      ),
     onSuccess: async () => {
       setEventForm(emptyEventForm)
       setStatusMessage('Event skapades.')
@@ -169,7 +184,7 @@ export function useCompanyOrganisationPage() {
         throw new Error('Välj ett event att redigera.')
       }
 
-      return updateCompanyEvent(editingEventId, {
+      return updateCompanyEvent(await requireToken(), editingEventId, {
         name: editingEventForm.name.trim(),
         description: editingEventForm.description.trim(),
         time: toLocalDateTime(editingEventForm.time),
@@ -189,7 +204,8 @@ export function useCompanyOrganisationPage() {
   })
 
   const deleteEventMutation = useMutation({
-    mutationFn: deleteCompanyEvent,
+    mutationFn: async (eventId: number) =>
+      deleteCompanyEvent(await requireToken(), eventId),
     onSuccess: async () => {
       setStatusMessage('Event togs bort.')
       await queryClient.invalidateQueries({ queryKey: ['company-events'] })
@@ -213,7 +229,10 @@ export function useCompanyOrganisationPage() {
     editingEventForm.venue.trim().length > 0
 
   const isLoading =
-    organisationQuery.isLoading || eventsQuery.isLoading || meQuery.isLoading
+    !isLoaded ||
+    organisationQuery.isLoading ||
+    eventsQuery.isLoading ||
+    meQuery.isLoading
   const isError =
     organisationQuery.isError || eventsQuery.isError || meQuery.isError
 

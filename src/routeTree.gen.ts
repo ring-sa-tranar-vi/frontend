@@ -16,6 +16,7 @@ import { Route as AdminOrganisationsRouteImport } from './routes/admin.organisat
 import { Route as AdminTrainersRouteImport } from './routes/admin.trainers'
 import { Route as AdminWorkoutsRouteImport } from './routes/admin.workouts'
 import { Route as CompanyOrganisationRouteImport } from './routes/company.organisation'
+import { Route as CompanyOrganisationsRouteImport } from './routes/company.organisations'
 import { Route as CompanyOrganisationMeRouteImport } from './routes/company.organisation.me'
 
 const IndexRoute = IndexRouteImport.update({
@@ -53,6 +54,11 @@ const CompanyOrganisationRoute = CompanyOrganisationRouteImport.update({
   path: '/company/organisation',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CompanyOrganisationsRoute = CompanyOrganisationsRouteImport.update({
+  id: '/company/organisations',
+  path: '/company/organisations',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CompanyOrganisationMeRoute = CompanyOrganisationMeRouteImport.update({
   id: '/me',
   path: '/me',
@@ -67,6 +73,7 @@ export interface FileRoutesByFullPath {
   '/admin/trainers': typeof AdminTrainersRoute
   '/admin/workouts': typeof AdminWorkoutsRoute
   '/company/organisation': typeof CompanyOrganisationRouteWithChildren
+  '/company/organisations': typeof CompanyOrganisationsRoute
   '/company/organisation/me': typeof CompanyOrganisationMeRoute
 }
 export interface FileRoutesByTo {
@@ -77,6 +84,7 @@ export interface FileRoutesByTo {
   '/admin/trainers': typeof AdminTrainersRoute
   '/admin/workouts': typeof AdminWorkoutsRoute
   '/company/organisation': typeof CompanyOrganisationRouteWithChildren
+  '/company/organisations': typeof CompanyOrganisationsRoute
   '/company/organisation/me': typeof CompanyOrganisationMeRoute
 }
 export interface FileRoutesById {
@@ -88,6 +96,7 @@ export interface FileRoutesById {
   '/admin/trainers': typeof AdminTrainersRoute
   '/admin/workouts': typeof AdminWorkoutsRoute
   '/company/organisation': typeof CompanyOrganisationRouteWithChildren
+  '/company/organisations': typeof CompanyOrganisationsRoute
   '/company/organisation/me': typeof CompanyOrganisationMeRoute
 }
 export interface FileRouteTypes {
@@ -100,6 +109,7 @@ export interface FileRouteTypes {
     | '/admin/trainers'
     | '/admin/workouts'
     | '/company/organisation'
+    | '/company/organisations'
     | '/company/organisation/me'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -110,6 +120,7 @@ export interface FileRouteTypes {
     | '/admin/trainers'
     | '/admin/workouts'
     | '/company/organisation'
+    | '/company/organisations'
     | '/company/organisation/me'
   id:
     | '__root__'
@@ -120,6 +131,7 @@ export interface FileRouteTypes {
     | '/admin/trainers'
     | '/admin/workouts'
     | '/company/organisation'
+    | '/company/organisations'
     | '/company/organisation/me'
   fileRoutesById: FileRoutesById
 }
@@ -127,6 +139,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRouteWithChildren
   CompanyOrganisationRoute: typeof CompanyOrganisationRouteWithChildren
+  CompanyOrganisationsRoute: typeof CompanyOrganisationsRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -180,6 +193,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CompanyOrganisationRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/company/organisations': {
+      id: '/company/organisations'
+      path: '/company/organisations'
+      fullPath: '/company/organisations'
+      preLoaderRoute: typeof CompanyOrganisationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/company/organisation/me': {
       id: '/company/organisation/me'
       path: '/me'
@@ -221,6 +241,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
   CompanyOrganisationRoute: CompanyOrganisationRouteWithChildren,
+  CompanyOrganisationsRoute: CompanyOrganisationsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
