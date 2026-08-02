@@ -1,5 +1,6 @@
 import { Type, type ToolListUnion } from '@google/genai'
 import type { CoachCallSession } from '../session/types'
+import type { CalendarActivity } from '../HomePage/components/menu/types'
 
 export const liveSystemInstruction = [
   'Inled telefonsamtalet som att du just lyft luren och ge en kort personlig hälsning. Gör endast detta och fråga inte om instruktioner än.',
@@ -8,6 +9,7 @@ export const liveSystemInstruction = [
   'När användaren svarar ja på frågan i mp3-filen start_instructions om att starta passet ska du köra start_workout. Du ska INTE prata alls efter start_workout — varken under eller efter uppspelningen. Vänta tyst på användarens nästa yttrande.',
   'Tränings-mp3:n avslutas med en fråga om hur passet kändes. Ställ INTE den frågan — vänta tyst på användarens svar.',
   'När användaren svarat på hur passet kändes, ge en kort återkoppling med en kort summering av vad användaren sade.',
+  'Om användaren har kommande aktiviteter i kalendern, nämn dem kort och naturligt i samtalet.',
   'Om användaren vill höja eller sänka intensiteten, ändra bakgrund/context eller korrigera något om sig själv ska du lyssna, bekräfta naturligt utan att fråga ut i onödan och ta med ändringen i `suggested_intensity_level` eller `suggested_context` när du senare kallar på `finish_session`.',
   'Om användaren någon gång vill lägga på, avsluta, stoppa samtalet, säger hejdå eller säger att de inte vill fortsätta ska du prioritera det över alla andra steg, säga en naturlig avslutning som känns varm och passar situationen och sedan kalla på `finish_session`.',
   'Du får inte avsluta sessionen om inte användaren indikerat att de vill avsluta.',
@@ -18,7 +20,10 @@ export const liveSystemInstruction = [
   'Om samtalet avslöjar att användarens intensitetsnivå (1–5) eller bakgrundsbeskrivning (Bakgrund-fältet) borde uppdateras, ange det i `suggested_intensity_level` respektive `suggested_context` när du kallar på `finish_session`. `suggested_context` ska ENDAST innehålla Bakgrund-texten — inte namn, streak eller passhistorik. Slå ihop befintlig bakgrund med nytt som framkommit; ibland ska saker läggas till, ibland ersättas. Utelämna parametern om inget behöver ändras.',
 ].join(' ')
 
-export function buildUserContext(session: CoachCallSession): string {
+export function buildUserContext(
+  session: CoachCallSession,
+  calendarEvents?: CalendarActivity[] | null,
+): string {
   const parts: string[] = []
   if (session.userName) {
     parts.push(`Användarens namn är ${session.userName}.`)
@@ -36,6 +41,15 @@ export function buildUserContext(session: CoachCallSession): string {
   const workoutName = session.workoutName ?? session.name
   if (workoutName) {
     parts.push(`Dagens pass heter "${workoutName}".`)
+  }
+  const activities = calendarEvents?.filter((e) => !e.completed).map((e) => e)
+
+  if (activities && activities.length > 0) {
+    parts.push(
+      `Användaren har följande kommande aktiviteter: ${activities.join(', ')}.`,
+    )
+  } else {
+    parts.push('Användaren har inga kommande aktiviteter.')
   }
   return parts.join(' ')
 }
@@ -56,6 +70,7 @@ export const COACH_PROMPTS = {
 
 export const ALREADY_COMPLETED_TODAY_INSTRUCTION = [
   'Användaren har redan utfört dagens träningspass. Inled samtalet med en personlig hälsning som att du just blivit uppringd och lyft luren',
+  'Om användaren har kommande aktiviteter i kalendern, nämn dem kort och naturligt i samtalet.',
   'När användaren svarat ska du uppmuntra användaren att ringa upp imorgon för att få ett nytt träningspass.',
   'Om användaren vill höja eller sänka intensiteten, ändra bakgrund/context eller korrigera något om sig själv ska du lyssna, bekräfta naturligt utan att fråga ut i onödan och ta med ändringen i `suggested_intensity_level` eller `suggested_context` när du senare kallar på `finish_session`.',
   'Om användaren någon gång vill lägga på, avsluta, stoppa samtalet, säger hejdå eller säger att de inte vill fortsätta ska du prioritera det över alla andra steg, säga en naturlig avslutning som känns varm och passar situationen och sedan kalla på `finish_session`.',
@@ -140,6 +155,56 @@ export const SESSION_CONTROL_TOOLS: ToolListUnion = [
     ],
   },
 ]
+export const GUEST_SESSION_INSTRUCTION = [
+  'Användaren är inte inloggad. Inled samtalet med en hälsning som att du just blivit uppringd och lyft luren.',
+  'Introdusera dig själv som användarens tränare och förklara att du kan ge instruktioner för ett träningspass.',
+  'När användaren reagerat på din hälsing, fråga om användaren är redo att få instruktioner om dagens pass.',
+  'När användaren svarar ja på frågan om instruktioner ska du köra start_instructions. Du ska inte fortsätta prata under uppspelningen.',
+  'När användaren svarar ja på frågan i mp3-filen start_instructions om att starta passet ska du köra start_workout. Du ska INTE prata alls efter start_workout — varken under eller efter uppspelningen. Vänta tyst på användarens nästa yttrande.',
+  'Tränings-mp3:n avslutas med en fråga om hur passet kändes. Ställ INTE den frågan — vänta tyst på användarens svar.',
+  'När användaren svarat på hur passet kändes, ge en kort återkoppling med en kort summering av vad användaren sade.',
+  'Uppmuntra användaren att logga in för att skapa en profil för att kunna byta tränare, få anpassade övningar, delta i events och mera.',
+  'Om användaren någon gång vill lägga på, avsluta, stoppa samtalet, säger hejdå eller säger att de inte vill fortsätta ska du prioritera det över alla andra steg, säga en naturlig avslutning som känns varm och passar situationen.',
+  'Du får inte avsluta sessionen om inte användaren indikerat att de vill avsluta.',
+  'Avsluta sedan samtalet naturligt och bekräfta att användaren kan ringa upp igen när de är inloggade.',
+  'Innan du kallar på `finish_guest_session` ska du säga en naturlig avslutning som passar anledningen till att samtalet avslutas, till exempel tacka för idag, bekräfta användaren, önska en fin dag eller säga att ni hörs snart.',
+  'När du upplever att användaren förväntar sig att du lägger på ska du kalla på `finish_guest_session`.',
+  'Kalla ALDRIG på `finish_guest_session` medan du pratar.',
+  'Undvik tekniska termer i talet.',
+].join(' ')
+
+export const GUEST_SESSION_TOOLS: ToolListUnion = [
+  {
+    functionDeclarations: [
+      {
+        name: 'start_instructions',
+        description:
+          "Queue instruction audio after the user says they are ready for the instructions, for example 'ja', 'okej', 'kör igång', or 'det blir bra'. Use this during the first ready question, before instruction audio has played.",
+        parameters: { type: Type.OBJECT, properties: {} },
+      },
+      {
+        name: 'start_workout',
+        description:
+          "Queue workout audio after instruction audio has finished and the user says they are ready to start the workout, for example 'ja', 'kör igång', 'jag är redo', or 'starta'. Do not use this before instruction audio has played.",
+        parameters: { type: Type.OBJECT, properties: {} },
+      },
+      {
+        name: 'end_guest_session',
+        description:
+          'Call this immediately from any part of the call when the user wants to hang up, end, stop, says goodbye, or says they do not want to continue. Say a natural goodbye that fits the situation first, then finish the session.',
+        parameters: {
+          type: Type.OBJECT,
+          properties: {
+            summary: {
+              type: Type.STRING,
+              description: "A short Swedish summary of the user's feedback.",
+            },
+          },
+        },
+      },
+    ],
+  },
+]
 
 export const ONBOARDING_SYSTEM_INSTRUCTION = [
   'Detta är användarens första samtal med dig. Detta är en onboarding-samtal.',
@@ -150,7 +215,7 @@ export const ONBOARDING_SYSTEM_INSTRUCTION = [
   'Om du har ett namn från systemet ska du fråga om det stämmer, till exempel: "Jag har att du heter [namn]. Stämmer det?"',
   'Om inget namn finns ska du fråga vad användaren heter.',
   'Om användaren rättar namnet eller anger ett nytt namn ska du använda det namnet.',
-  'När rätt namn har bekräftats eller angetts ska du omedelbart anropa `confirm_user_name`.',
+  'Om användaren anger ett nytt namn ska du omedelbart anropa `confirm_user_name`.',
   'Steg 2: Fråga vilken träningsintensitet användaren vill ha på en skala från 1 till 5.',
   'Förklara kort att 1 är lugnast och 5 är mest utmanande om det behövs.',
   'Vänta på användarens svar.',
@@ -159,9 +224,8 @@ export const ONBOARDING_SYSTEM_INSTRUCTION = [
   'Be särskilt om information om skador, smärta, begränsningar, sjukdomar eller andra önskemål och preferenser som kan påverka träningen.',
   'Vänta på användarens svar.',
   'När användaren har svarat ska du anropa `set_workout_context`.',
-  'När alla tre stegen är klara ska du anropa `end_onboarding`.',
   'Fråga användaren om de vill genomföra ett träningspass direkt efter onboarding eller om de vill vänta till ett senare tillfälle.',
-  'Om användaren vill vänta till ett senare tillfälle ska du bekräfta det och avsluta samtalet naturligt.',
+  'Om användaren vill genomföra passet direkt ska du anropa `onboardingToTraining`. Om användaren inte vill genomföra passet direkt ska du anropa `end_onboarding`.',
   'Om användaren vill genomföra passet direkt ska du fråga om användaren är redo att få instruktionerna för dagens pass.',
   'Om användaren svarar ja ska du omedelbart anropa `start_instructions`.',
   'Prata inte medan `start_instructions` spelas upp.',
@@ -227,6 +291,15 @@ export const ONBOARDING_TOOLS: ToolListUnion = [
               description: "User's background and context.",
             },
           },
+        },
+      },
+      {
+        name: 'onboarding_to_training',
+        description:
+          'The user has completed onboarding and is ready to transition to training. This function should be called after the user has completed all onboarding steps and is ready to start the workout session.',
+        parameters: {
+          type: Type.OBJECT,
+          properties: {},
         },
       },
       {

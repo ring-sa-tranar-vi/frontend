@@ -24,6 +24,8 @@ import {
   ONBOARDING_SYSTEM_INSTRUCTION,
   SESSION_CONTROL_TOOLS,
   ONBOARDING_TOOLS,
+  GUEST_SESSION_INSTRUCTION,
+  GUEST_SESSION_TOOLS,
 } from './prompts'
 import type { CoachCallSession } from '../session/types'
 import {
@@ -43,6 +45,8 @@ import { useTrainer } from '../session/query'
 import useCurrentUser from '../../hooks/useCurrentUser'
 import { useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '@clerk/react'
+import type { CalendarActivity } from '../HomePage/components/menu/types'
+import { useCalendarEvents } from '../../hooks/useCalendarEvents'
 
 //──────────────────────
 // Build system instruction
@@ -56,8 +60,13 @@ function buildSessionInstruction(
   session: CoachCallSession,
   trainerPrompt?: string | null,
   alreadyCompletedToday?: boolean,
+  isSignedIn?: boolean,
+  calendarEvents?: CalendarActivity[] | null,
 ) {
-  const userContext = buildUserContext(session)
+  if (!isSignedIn) {
+    return `${GUEST_SESSION_INSTRUCTION} ${trainerPrompt?.trim() ?? ''}`
+  }
+  const userContext = buildUserContext(session, calendarEvents)
   const personaStability =
     'Detta gäller alla trainers: behåll exakt samma trainer-personlighet, språk, dialekt, röststil, energi och tonläge genom hela samtalet, inklusive instruktioner, feedback, avbrott och avslut. Om trainerprompten säger nervös, lugn, hetsig, elegant, varm eller något annat ska det märkas konsekvent hela tiden. Använd användarkontexten för vad du säger, men byt aldrig persona.'
   const trainerIdentity = trainerPrompt?.trim()
@@ -132,6 +141,7 @@ export function useCoachSession(
     coachPrompt,
     updateProfile,
     isTrainerLoading: isCurrentUserTrainerLoading,
+    isSignedIn,
   } = useCurrentUser()
   const {
     data: trainer,
@@ -143,6 +153,12 @@ export function useCoachSession(
   const sessionVoice = normalizeLiveVoice(
     trainer?.voice ?? session.trainer?.voice ?? voice,
   )
+  const currentDate = new Date()
+  const { activities: calendarEvents } = useCalendarEvents(
+    currentDate.getFullYear(),
+    currentDate.getMonth() + 1,
+    Boolean(userId),
+  )
 
   const sessionInstruction = useMemo(
     () =>
@@ -150,8 +166,16 @@ export function useCoachSession(
         session,
         sessionCoachPrompt,
         options.alreadyCompletedToday,
+        isSignedIn,
+        calendarEvents,
       ),
-    [session, sessionCoachPrompt, options.alreadyCompletedToday],
+    [
+      session,
+      sessionCoachPrompt,
+      options.alreadyCompletedToday,
+      isSignedIn,
+      calendarEvents,
+    ],
   )
 
   const [step, setStep] = useState<CoachSessionStep>('idle')
@@ -198,6 +222,7 @@ export function useCoachSession(
   const updateUserContextRef = useRef<(context: string) => Promise<void>>(
     async () => {},
   )
+  const onboardingToTrainingRef = useRef<() => Promise<void>>(async () => {})
   const endOnboardingRef = useRef<() => Promise<void>>(async () => {})
   const startInstructionsRef = useRef<() => Promise<void>>(async () => {})
   const startWorkoutRef = useRef<() => Promise<void>>(async () => {})
@@ -251,6 +276,9 @@ export function useCoachSession(
   }, [])
 
   const sessionTools = useMemo(() => {
+    if (!isSignedIn) {
+      return [...GUEST_SESSION_TOOLS]
+    }
     if (options.alreadyCompletedToday) {
       return [...coachLiveTools, ...ALREADY_COMPLETED_TOOLS]
     }
@@ -334,6 +362,22 @@ export function useCoachSession(
       const name = functionCall.name ?? 'unknown_tool'
       addDebugEvent('tool call', `${name}, step=${stepRef.current}`)
 
+      //────────────────────
+      // End guest session
+      //────────────────────
+
+      if (name === 'end_guest_session') {
+        addDebugEvent('end_guest_session')
+        finishSessionRef.current()
+        return {
+          id: functionCall.id,
+          name,
+          response: {
+            output: { ok: true },
+          },
+        }
+      }
+
       //──────────────────────
       // Start onboarding
       //──────────────────────
@@ -341,6 +385,7 @@ export function useCoachSession(
         name === 'confirm_user_name' ||
         name === 'set_workout_intensity_level' ||
         name === 'set_workout_context' ||
+        name === 'onboarding_to_training' ||
         name === 'end_onboarding'
       ) {
         const args = (functionCall.args ?? {}) as Record<string, unknown>
@@ -348,7 +393,7 @@ export function useCoachSession(
         if (name === 'confirm_user_name') {
           onboardingStageRef.current = 'intensity'
           addDebugEvent('onboarding-name', String(args.name ?? ''))
-          await updateUserNameRef.current(String(args.name ?? ''))
+          void updateUserNameRef.current(String(args.name ?? ''))
           return {
             id: functionCall.id,
             name,
@@ -373,7 +418,7 @@ export function useCoachSession(
               },
             }
           }
-          await updateIntensityLevelRef.current(Number(args.level))
+          void updateIntensityLevelRef.current(Number(args.level))
           return {
             id: functionCall.id,
             name,
@@ -384,7 +429,7 @@ export function useCoachSession(
         if (name === 'set_workout_context') {
           onboardingStageRef.current = 'done'
           addDebugEvent('onboarding-context', JSON.stringify(args))
-          await updateUserContextRef.current(String(args.context ?? ''))
+          void updateUserContextRef.current(String(args.context ?? ''))
           return {
             id: functionCall.id,
             name,
@@ -392,12 +437,27 @@ export function useCoachSession(
           }
         }
 
+        if (name === 'onboarding_to_training') {
+          onboardingStageRef.current = 'done'
+
+          addDebugEvent('onboarding-to-training', JSON.stringify(args))
+          setSessionStep('waiting_instruction_approval')
+          void onboardingToTrainingRef.current()
+
+          return {
+            id: functionCall.id,
+            name,
+            response: {
+              output: { ok: true },
+            },
+          }
+        }
+
         if (name === 'end_onboarding') {
           onboardingStageRef.current = 'done'
 
           addDebugEvent('onboarding-complete', JSON.stringify(args))
-          setSessionStep('waiting_instruction_approval')
-          await endOnboardingRef.current()
+          void endOnboardingRef.current()
           return {
             id: functionCall.id,
             name,
@@ -860,6 +920,7 @@ export function useCoachSession(
   //──────────────────────
   // End onboarding
   //──────────────────────
+
   const endOnboarding = useCallback(async () => {
     if (stepRef.current !== 'onboarding') {
       addDebugEvent('skip end-onboarding', `step=${stepRef.current}`)
@@ -867,7 +928,18 @@ export function useCoachSession(
     }
     await updateProfile({ onboarding: false })
     addDebugEvent('onboarding-complete')
-    sendCoachPrompt('Jag är redo att börja träna.')
+    sendCoachPrompt('Jag är redo att avsluta samtalet.')
+  }, [addDebugEvent, sendCoachPrompt, updateProfile])
+
+  const onboardingToTraining = useCallback(async () => {
+    if (stepRef.current !== 'onboarding') {
+      addDebugEvent('skip end-onboarding', `step=${stepRef.current}`)
+      return
+    }
+    await updateProfile({ onboarding: false })
+    setSessionStep('waiting_instruction_approval')
+    addDebugEvent('onboarding-complete')
+    sendCoachPrompt('Jag är redo att höra instruktionerna.')
   }, [addDebugEvent, sendCoachPrompt, updateProfile])
 
   //──────────────────────
@@ -1010,6 +1082,13 @@ export function useCoachSession(
     async (summary = '', suggestions?: ProfileSuggestions) => {
       stopSessionAudio()
 
+      if (!isSignedIn) {
+        addDebugEvent('finish_session', 'guest session - no feedback saved')
+        disconnectLive()
+        setSessionStep('completed')
+        return
+      }
+
       try {
         const workoutPlayed = workoutCompletedRef.current
 
@@ -1116,6 +1195,7 @@ export function useCoachSession(
     updateUserNameRef.current = updateUserName
     updateIntensityLevelRef.current = updateIntensityLevel
     updateUserContextRef.current = updateUserContext
+    onboardingToTrainingRef.current = onboardingToTraining
     endOnboardingRef.current = endOnboarding
     startInstructionsRef.current = playInstructions
     startWorkoutRef.current = startWorkout
@@ -1128,6 +1208,7 @@ export function useCoachSession(
     updateUserContext,
     updateUserName,
     endOnboarding,
+    onboardingToTraining,
   ])
 
   //──────────────────────

@@ -32,6 +32,7 @@ type ProfileSettings = {
   trainerId?: number | null
   isAdmin?: boolean
   city?: string | null
+  onboarding?: boolean | null
 }
 
 const INTENSITY_MIN = 1
@@ -326,6 +327,7 @@ function SettingsModalBody({
         context: profile.context ?? '',
         trainerId: selectedTrainerId,
         city: profile.city ?? null,
+        onboarding: profile.onboarding ?? null,
       })
       .catch(console.error)
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -353,6 +355,7 @@ function SettingsModalBody({
         context,
         trainerId: Number(selectedTrainerId),
         city: profile.city ?? null,
+        onboarding: profile.onboarding ?? null,
       })
 
       setOpen(false)
