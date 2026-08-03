@@ -154,6 +154,7 @@ export function useCoachSession(
   const onboardingToTrainingRef = useRef<() => Promise<void>>(async () => {})
   const endOnboardingRef = useRef<() => Promise<void>>(async () => {})
   const startInstructionsRef = useRef<() => void>(() => {})
+  const changeWorkoutRef = useRef<(userInput: string) => void>(() => {})
   const finishedWorkoutRef = useRef<() => void>(() => {})
   //const startWorkoutRef = useRef<() => Promise<void>>(async () => {})
   const finishSessionRef = useRef<
@@ -253,19 +254,21 @@ export function useCoachSession(
     //──────────────────────
     onToolCall: (functionCall) =>
       dispatchToolCall(functionCall, {
-        stepRef,
-        onboardingStageRef,
-        aiTurnStateRef,
-        finishSessionRef,
-        startWorkoutVideoRef,
-        updateUserNameRef,
-        updateIntensityLevelRef,
-        updateUserContextRef,
-        onboardingToTrainingRef,
-        endOnboardingRef,
-        addDebugEvent,
-        setSessionStep,
-        getAiPlaybackRemainingMs,
+        changeWorkoutRef: changeWorkoutRef,
+        finishedWorkoutRef: finishedWorkoutRef,
+        stepRef: stepRef,
+        onboardingStageRef: onboardingStageRef,
+        aiTurnStateRef: aiTurnStateRef,
+        finishSessionRef: finishSessionRef,
+        startWorkoutVideoRef: startWorkoutVideoRef,
+        updateUserNameRef: updateUserNameRef,
+        updateIntensityLevelRef: updateIntensityLevelRef,
+        updateUserContextRef: updateUserContextRef,
+        onboardingToTrainingRef: onboardingToTrainingRef,
+        endOnboardingRef: endOnboardingRef,
+        addDebugEvent: addDebugEvent,
+        setSessionStep: setSessionStep,
+        getAiPlaybackRemainingMs: getAiPlaybackRemainingMs,
       }),
 
     //──────────────────────
@@ -404,6 +407,14 @@ export function useCoachSession(
     session.instructionsVideoStart,
     session.instructionsVideoStop,
   ])
+
+  const changeWorkout = useCallback((userInput: string) => {
+    addDebugEvent('change_workout', userInput)
+    console.log('changeWorkout called with userInput:', userInput)
+    console.log(
+      'TBD: Implement the logic to change the workout based on userInput',
+    )
+  }, [])
 
   //──────────────────────
   // Workout completed
@@ -639,6 +650,8 @@ export function useCoachSession(
   // Sync latest callbacks into refs
   //──────────────────────
   useEffect(() => {
+    disconnectRef.current = disconnectLive
+    changeWorkoutRef.current = changeWorkout
     startWorkoutVideoRef.current = playInstructionsVideo
     updateUserNameRef.current = updateUserName
     updateIntensityLevelRef.current = updateIntensityLevel
@@ -647,12 +660,10 @@ export function useCoachSession(
     endOnboardingRef.current = endOnboarding
     startInstructionsRef.current = playInstructionsVideo
     finishedWorkoutRef.current = workoutCompleted
-    //startWorkoutRef.current = startWorkout
     finishSessionRef.current = finishSessionWithSummary
   }, [
     finishSessionWithSummary,
     playInstructionsVideo,
-    //startWorkout,
     updateIntensityLevel,
     updateUserContext,
     updateUserName,
@@ -671,34 +682,22 @@ export function useCoachSession(
     )
     stopRingback()
     addDebugEvent('manual end')
-    // clearVideoTimers()
     setShowInstructionsVideo(false)
     stopSessionAudio()
 
     disconnectLive()
     hasStartedRef.current = false
     setSessionStep('idle')
-  }, [
-    addDebugEvent,
-    // clearVideoTimers,
-    disconnectLive,
-    getAiPlaybackRemainingMs,
-    setSessionStep,
-  ])
+  }, [addDebugEvent, disconnectLive, getAiPlaybackRemainingMs, setSessionStep])
 
   const hangUp = useCallback(() => {
     stopRingback()
     addDebugEvent('hang up')
-    // clearVideoTimers()
     setShowInstructionsVideo(false)
     stopSessionAudio()
     disconnectLive()
     setSessionStep('idle')
-  }, [
-    addDebugEvent, // clearVideoTimers,
-    disconnectLive,
-    setSessionStep,
-  ])
+  }, [addDebugEvent, disconnectLive, setSessionStep])
 
   //──────────────────────
   // Cleanup on unmount
@@ -756,7 +755,6 @@ export function useCoachSession(
     debugEvents,
     isLoadingToken: tokenLoading,
     startSession,
-    //startWorkout,
     finishSession,
     endSession,
     hangUp,

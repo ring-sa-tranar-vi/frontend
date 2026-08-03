@@ -4,28 +4,12 @@ import {
   readProfileSuggestions,
   sleep,
   waitForAIToFinishSpeaking,
+  type AITurnState,
+  type CoachSessionStep,
+  type ProfileSuggestions,
 } from '../helpers'
-import type { ToolExecutionContext, ToolHandlerFn } from '../../session/types'
-// Helpers to format standard success/error responses quickly
-const createSuccessResponse = (
-  id: string,
-  name: string,
-  output: Record<string, any> = { ok: true },
-): FunctionResponse => ({
-  id,
-  name,
-  response: { output },
-})
-
-const createErrorResponse = (
-  id: string,
-  name: string,
-  error: string,
-): FunctionResponse => ({
-  id,
-  name,
-  response: { output: { ok: false, error } },
-})
+import type { OnboardingStage } from '../../session/types'
+import type { RefObject } from 'react'
 
 // ─────────────────────────────────────────────────────────────
 // Tool Registry
@@ -38,6 +22,21 @@ const toolRegistry: Record<string, ToolHandlerFn> = {
     ctx.addDebugEvent('start_workout_video')
     ctx.startWorkoutVideoRef.current()
     return createSuccessResponse(id, 'start_workout_video')
+  },
+
+  change_workout: async (id, args, ctx) => {
+    ctx.addDebugEvent('change_workout')
+    ctx.changeWorkoutRef.current(args.userInput as string)
+    return createSuccessResponse(id, 'change_workout')
+  },
+
+  //──────────────────────
+  // Workout Completed
+  //──────────────────────
+  workout_completed: async (id, _args, ctx) => {
+    ctx.addDebugEvent('workout_completed')
+    ctx.finishedWorkoutRef.current()
+    return createSuccessResponse(id, 'workout_completed')
   },
 
   //──────────────────────
@@ -136,6 +135,36 @@ const toolRegistry: Record<string, ToolHandlerFn> = {
   },
 }
 
+interface ToolExecutionContext {
+  stepRef: RefObject<CoachSessionStep>
+  setSessionStep: (nextStep: CoachSessionStep) => void
+
+  onboardingStageRef: RefObject<OnboardingStage>
+  aiTurnStateRef: RefObject<AITurnState>
+  finishSessionRef: RefObject<
+    (summary?: string, suggestions?: ProfileSuggestions) => void
+  >
+  changeWorkoutRef: RefObject<(workoutId: string) => void>
+  finishedWorkoutRef: RefObject<() => void>
+  startWorkoutVideoRef: RefObject<() => void>
+  updateUserNameRef: RefObject<(userName: string) => Promise<void>>
+  updateIntensityLevelRef: RefObject<(intensityLevel: number) => Promise<void>>
+  updateUserContextRef: RefObject<(context: string) => Promise<void>>
+  onboardingToTrainingRef: RefObject<() => Promise<void>>
+  endOnboardingRef: RefObject<() => Promise<void>>
+  addDebugEvent: (
+    label: string,
+    detail?: string | number | boolean | null,
+  ) => void
+  getAiPlaybackRemainingMs: () => number
+}
+
+export type ToolHandlerFn<TArgs = Record<string, any>> = (
+  callId: string,
+  args: TArgs,
+  ctx: ToolExecutionContext,
+) => Promise<FunctionResponse>
+
 // ─────────────────────────────────────────────────────────────
 // Master Dispatcher
 // ─────────────────────────────────────────────────────────────
@@ -162,3 +191,23 @@ export async function dispatchToolCall(
     `Tool "${name}" not found in registry`,
   )
 }
+// Helpers to format standard success/error responses quickly
+const createSuccessResponse = (
+  id: string,
+  name: string,
+  output: Record<string, any> = { ok: true },
+): FunctionResponse => ({
+  id,
+  name,
+  response: { output },
+})
+
+const createErrorResponse = (
+  id: string,
+  name: string,
+  error: string,
+): FunctionResponse => ({
+  id,
+  name,
+  response: { output: { ok: false, error } },
+})
