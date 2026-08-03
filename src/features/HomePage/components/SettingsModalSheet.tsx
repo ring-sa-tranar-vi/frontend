@@ -1,6 +1,13 @@
-import { SignOutButton, useAuth } from '@clerk/react'
+import { SignOutButton, useAuth, useClerk, useUser } from '@clerk/react'
 import { useNavigate } from '@tanstack/react-router'
-import { CircleHelp, Globe, Menu, User } from 'lucide-react'
+import {
+  CircleHelp,
+  Globe,
+  Menu,
+  ShieldCheck,
+  Trash2,
+  User,
+} from 'lucide-react'
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useMyProfile } from '../../../hooks/useMyProfile'
 import { useUpdateProfile } from '../../../hooks/useUpdateProfile'
@@ -11,6 +18,7 @@ import TrainerSelectionModal from './TrainerSelectionModal'
 const SHEET_CLOSE_DURATION_MS = 350
 
 import { useTranslation } from 'react-i18next'
+import { getApiBaseUrl } from '../../../lib/apiBaseUrl'
 import {
   AppSheet,
   AppSheetNotice,
@@ -24,6 +32,7 @@ import PrivacyPolicySheet from './PrivacyPolicySheet'
 import SupportSheet from './SupportSheet'
 import EventsOrganisationsSheet from './menu/EventsOrganisationsSheet'
 import MenuPlaceholderSections from './menu/MenuPlaceholderSections'
+import OrganisationApplicationSheet from './menu/OrganisationApplicationSheet'
 
 type ProfileSettings = {
   name?: string | null
@@ -110,6 +119,7 @@ function ProfilePreferenceSections({
   context,
   setContext,
   setSupportOpen,
+  setPrivacyOpen,
 }: {
   fullName: string
   setFullName: (value: string) => void
@@ -120,6 +130,7 @@ function ProfilePreferenceSections({
   context: string
   setContext: (value: string) => void
   setSupportOpen: (value: boolean) => void
+  setPrivacyOpen: (value: boolean) => void
 }) {
   const { t, i18n } = useTranslation()
 
@@ -207,7 +218,83 @@ function ProfilePreferenceSections({
           </button>
         </div>
       </section>
+
+      <section className="py-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-(--brand-surface) text-(--brand-primary-deep)">
+              <ShieldCheck size={20} />
+            </div>
+            <AppSheetSectionTitle>
+              {t('settings.privacyPolicy')}
+            </AppSheetSectionTitle>
+          </div>
+          <button
+            type="button"
+            className="rounded-full bg-(--brand-primary) px-4 py-2 text-[length:var(--text-sm)] font-extrabold text-white transition hover:opacity-95"
+            onClick={() => setPrivacyOpen(true)}
+          >
+            {t('settings.readPolicy')}
+          </button>
+        </div>
+      </section>
     </div>
+  )
+}
+
+function DeleteAccountSheet({
+  open,
+  onClose,
+  onConfirm,
+  isDeleting,
+  error,
+}: {
+  open: boolean
+  onClose: () => void
+  onConfirm: () => void
+  isDeleting: boolean
+  error: string | null
+}) {
+  const { t } = useTranslation()
+
+  return (
+    <AppSheet
+      open={open}
+      title={t('settings.deleteAccountTitle')}
+      subtitle={t('settings.deleteAccountDescription')}
+      icon={<Trash2 size={20} strokeWidth={2.4} />}
+      onClose={onClose}
+      height="compact"
+      footer={
+        <section className="space-y-2.5 pb-1">
+          {error ? (
+            <AppSheetNotice tone="danger">{error}</AppSheetNotice>
+          ) : null}
+          <button
+            type="button"
+            className="w-full rounded-full bg-red-600 px-4 py-4 text-[length:var(--text-base)] font-extrabold text-white transition hover:bg-red-700 active:scale-[0.985] disabled:cursor-not-allowed disabled:opacity-70"
+            disabled={isDeleting}
+            onClick={onConfirm}
+          >
+            {isDeleting
+              ? t('settings.deletingAccount')
+              : t('settings.confirmDeleteAccount')}
+          </button>
+          <button
+            type="button"
+            className={appSheetSecondaryButtonClass}
+            disabled={isDeleting}
+            onClick={onClose}
+          >
+            {t('settings.cancel')}
+          </button>
+        </section>
+      }
+    >
+      <AppSheetNotice tone="danger">
+        {t('settings.deleteAccountWarning')}
+      </AppSheetNotice>
+    </AppSheet>
   )
 }
 
@@ -282,6 +369,9 @@ function SettingsModalBody({
 }) {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const { user } = useUser()
+  const { getToken } = useAuth()
+  const { signOut } = useClerk()
   const [fullName, setFullName] = useState(profile.name?.trim() ?? '')
   const [intensityLevel, setIntensityLevel] = useState(() =>
     normalizeIntensityLevel(profile.intensityLevel),
@@ -294,6 +384,12 @@ function SettingsModalBody({
   const [supportOpen, setSupportOpen] = useState(false)
   const [privacyOpen, setPrivacyOpen] = useState(false)
   const [eventsOpen, setEventsOpen] = useState(false)
+  const [applicationOpen, setApplicationOpen] = useState(false)
+  const [deleteAccountOpen, setDeleteAccountOpen] = useState(false)
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false)
+  const [deleteAccountError, setDeleteAccountError] = useState<string | null>(
+    null,
+  )
 
   const feedbackTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const isInitialMount = useRef(true)
@@ -365,6 +461,33 @@ function SettingsModalBody({
     }
   }
 
+  const handleDeleteAccount = async () => {
+    if (!user || isDeletingAccount) return
+
+    setDeleteAccountError(null)
+    setIsDeletingAccount(true)
+
+    try {
+      const token = await getToken()
+      const response = await fetch(`${getApiBaseUrl()}/api/users/me`, {
+        method: 'DELETE',
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      })
+
+      if (!response.ok) {
+        throw new Error(`Account deletion failed with ${response.status}`)
+      }
+
+      await user.delete()
+      setOpen(false)
+      await signOut({ redirectUrl: '/' })
+    } catch (error) {
+      console.error('[SettingsModalSheet] Account deletion failed:', error)
+      setDeleteAccountError(t('settings.deleteAccountError'))
+      setIsDeletingAccount(false)
+    }
+  }
+
   return (
     <>
       <AppSheet
@@ -392,27 +515,6 @@ function SettingsModalBody({
                 </button>
               </>
             ) : null}
-
-            <nav
-              aria-label={`${t('settings.privacyPolicy')}, ${t('settings.getHelp')}`}
-              className="flex min-h-9 flex-wrap items-center justify-center gap-x-2 text-[length:var(--text-xs)] font-bold text-(--brand-muted)"
-            >
-              <button
-                type="button"
-                onClick={() => setPrivacyOpen(true)}
-                className="rounded-lg px-1.5 py-2 underline decoration-(--brand-border-strong) underline-offset-3 transition hover:text-(--brand-primary) focus-visible:ring-2 focus-visible:ring-(--brand-border-strong) focus-visible:ring-offset-1 focus-visible:outline-none"
-              >
-                {t('settings.privacyPolicy')}
-              </button>
-              <span aria-hidden="true">·</span>
-              <button
-                type="button"
-                onClick={() => setSupportOpen(true)}
-                className="rounded-lg px-1.5 py-2 underline decoration-(--brand-border-strong) underline-offset-3 transition hover:text-(--brand-primary) focus-visible:ring-2 focus-visible:ring-(--brand-border-strong) focus-visible:ring-offset-1 focus-visible:outline-none"
-              >
-                {t('settings.getHelp')}
-              </button>
-            </nav>
           </section>
         }
       >
@@ -439,6 +541,7 @@ function SettingsModalBody({
               context={context}
               setContext={setContext}
               setSupportOpen={setSupportOpen}
+              setPrivacyOpen={setPrivacyOpen}
             />
           ) : null}
 
@@ -462,19 +565,48 @@ function SettingsModalBody({
                 {t('auth.logout')}
               </button>
             </SignOutButton>
+            <button
+              type="button"
+              className="w-full rounded-xl px-4 py-3 text-[length:var(--text-sm)] font-bold text-red-600 transition hover:bg-red-50 focus-visible:ring-2 focus-visible:ring-red-300 focus-visible:outline-none"
+              onClick={() => {
+                setDeleteAccountError(null)
+                setDeleteAccountOpen(true)
+              }}
+            >
+              {t('settings.deleteAccount')}
+            </button>
           </section>
         </div>
       </AppSheet>
       <PrivacyPolicySheet open={privacyOpen} setOpen={setPrivacyOpen} />
       <SupportSheet open={supportOpen} setOpen={setSupportOpen} />
       <EventsOrganisationsSheet
-        open={open && eventsOpen}
+        open={open && eventsOpen && !applicationOpen}
         onBack={() => setEventsOpen(false)}
         onClose={() => {
           setEventsOpen(false)
           setOpen(false)
         }}
+        onApply={() => setApplicationOpen(true)}
         userCity={profile.city}
+      />
+      <OrganisationApplicationSheet
+        open={open && applicationOpen}
+        onBack={() => setApplicationOpen(false)}
+        onClose={() => {
+          setApplicationOpen(false)
+          setEventsOpen(false)
+          setOpen(false)
+        }}
+      />
+      <DeleteAccountSheet
+        open={open && deleteAccountOpen}
+        onClose={() => {
+          if (!isDeletingAccount) setDeleteAccountOpen(false)
+        }}
+        onConfirm={() => void handleDeleteAccount()}
+        isDeleting={isDeletingAccount}
+        error={deleteAccountError}
       />
     </>
   )

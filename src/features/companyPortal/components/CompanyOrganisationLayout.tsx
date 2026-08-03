@@ -29,6 +29,25 @@ export default function CompanyOrganisationLayout({
           onClose={onClose}
         />
 
+        {vm.organisations.length > 1 ? (
+          <label className="mb-3 block rounded-2xl border border-[#ebe4ff] bg-[#fcfbff] px-4 py-3 text-sm font-bold text-[#4e4674]">
+            Organisation
+            <select
+              value={vm.selectedOrganisationId ?? ''}
+              onChange={(event) =>
+                vm.setSelectedOrganisationId(Number(event.target.value))
+              }
+              className="mt-1.5 w-full rounded-xl border border-[#dcd3f4] bg-white px-3 py-2 text-sm font-semibold text-[#221447] outline-none focus:ring-2 focus:ring-[#7356d9]"
+            >
+              {vm.organisations.map((organisation) => (
+                <option key={organisation.id} value={organisation.id}>
+                  {organisation.name}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : null}
+
         <div
           className={`grid gap-2.5 ${vm.isWideLayout ? 'grid-cols-12 items-start' : ''}`}
         >

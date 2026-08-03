@@ -4,9 +4,8 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import {
   createCompanyEvent,
   deleteCompanyEvent,
-  fetchCompanyEvents,
-  fetchCompanyMe,
-  fetchCompanyOrganisation,
+  fetchMyOrganisations,
+  fetchOrganisationEvents,
   updateCompanyEvent,
   updateCompanyOrganisation,
   type CompanyEvent,
@@ -15,6 +14,8 @@ import {
   emptyEventForm,
   type EventForm,
 } from '../features/companyPortal/types.ts'
+
+const emptyOrganisations: never[] = []
 
 function toLocalDateTime(value: string) {
   const trimmed = value.trim()
@@ -78,30 +79,45 @@ export function useCompanyOrganisationPage() {
     useState<EventForm>(emptyEventForm)
   const [showCreateEvent, setShowCreateEvent] = useState(false)
   const [statusMessage, setStatusMessage] = useState<string | null>(null)
+  const [selectedOrganisationId, setSelectedOrganisationId] = useState<
+    number | null
+  >(null)
 
-  const meQuery = useQuery({
-    queryKey: ['company-me'],
-    queryFn: async () => fetchCompanyMe(await requireToken()),
-    enabled: isLoaded && isSignedIn,
-  })
-
-  const organisationQuery = useQuery({
-    queryKey: ['company-organisation'],
-    queryFn: async () => fetchCompanyOrganisation(await requireToken()),
-    enabled: isLoaded && isSignedIn,
-  })
-
-  const eventsQuery = useQuery({
-    queryKey: ['company-events'],
-    queryFn: async () => fetchCompanyEvents(await requireToken()),
-    enabled: isLoaded && isSignedIn,
-  })
-
-  async function requireToken() {
+  async function getRequiredToken() {
     const token = await getToken()
-    if (!token) throw new Error('Du måste vara inloggad som organisatör.')
+    if (!token)
+      throw new Error(
+        'Du behöver vara inloggad för att hantera organisationer.',
+      )
     return token
   }
+
+  const organisationsQuery = useQuery({
+    queryKey: ['my-organisations'],
+    queryFn: async () => fetchMyOrganisations(await getRequiredToken()),
+    enabled: isLoaded && Boolean(isSignedIn),
+  })
+
+  const organisations = organisationsQuery.data ?? emptyOrganisations
+  const activeOrganisationId =
+    selectedOrganisationId ?? organisations[0]?.id ?? null
+  const activeOrganisation =
+    organisations.find(
+      (organisation) => organisation.id === activeOrganisationId,
+    ) ?? null
+
+  useEffect(() => {
+    if (!selectedOrganisationId && organisations[0]) {
+      setSelectedOrganisationId(organisations[0].id)
+    }
+  }, [organisations, selectedOrganisationId])
+
+  const eventsQuery = useQuery({
+    queryKey: ['organisation-events', activeOrganisationId],
+    queryFn: async () =>
+      fetchOrganisationEvents(await getRequiredToken(), activeOrganisationId!),
+    enabled: isLoaded && Boolean(isSignedIn) && activeOrganisationId != null,
+  })
 
   const events = useMemo(() => {
     const list = eventsQuery.data ?? []
@@ -111,13 +127,13 @@ export function useCompanyOrganisationPage() {
   }, [eventsQuery.data])
 
   useEffect(() => {
-    const organisation = organisationQuery.data
+    const organisation = activeOrganisation
     if (!organisation) return
 
     setOrgName(organisation.name)
     setOrgDescription(organisation.description ?? '')
     setOrgCity(organisation.orgCity ?? '')
-  }, [organisationQuery.data])
+  }, [activeOrganisation])
 
   useLayoutEffect(() => {
     const el = layoutRef.current
@@ -136,21 +152,25 @@ export function useCompanyOrganisationPage() {
 
   const orgMutation = useMutation({
     mutationFn: async () => {
-      const organisationId = organisationQuery.data?.id
+      const organisationId = activeOrganisationId
       if (!organisationId) {
         throw new Error('Organisation saknas.')
       }
 
-      return updateCompanyOrganisation(await requireToken(), {
-        name: orgName.trim(),
-        description: orgDescription.trim(),
-        orgCity: orgCity.trim(),
-      })
+      return updateCompanyOrganisation(
+        await getRequiredToken(),
+        organisationId,
+        {
+          name: orgName.trim(),
+          description: orgDescription.trim(),
+          orgCity: orgCity.trim(),
+        },
+      )
     },
     onSuccess: async () => {
       setStatusMessage('Organisationen sparades.')
       await queryClient.invalidateQueries({
-        queryKey: ['company-organisation'],
+        queryKey: ['my-organisations'],
       })
     },
     onError: (error) => {
@@ -160,21 +180,18 @@ export function useCompanyOrganisationPage() {
 
   const createEventMutation = useMutation({
     mutationFn: async () =>
-      createCompanyEvent(
-        await requireToken(),
-        organisationQuery.data?.id ?? 0,
-        {
-          name: eventForm.name.trim(),
-          description: eventForm.description.trim(),
-          time: toLocalDateTime(eventForm.time),
-          city: eventForm.city.trim(),
-          venue: eventForm.venue.trim(),
-        },
-      ),
+      createCompanyEvent(await getRequiredToken(), activeOrganisationId!, {
+        name: eventForm.name.trim(),
+        description: eventForm.description.trim(),
+        time: toLocalDateTime(eventForm.time),
+        city: eventForm.city.trim(),
+        venue: eventForm.venue.trim(),
+        eventType: eventForm.eventType as 'IN_PERSON' | 'ONLINE',
+      }),
     onSuccess: async () => {
       setEventForm(emptyEventForm)
       setStatusMessage('Event skapades.')
-      await queryClient.invalidateQueries({ queryKey: ['company-events'] })
+      await queryClient.invalidateQueries({ queryKey: ['organisation-events'] })
     },
     onError: (error) => {
       setStatusMessage((error as Error).message)
@@ -187,19 +204,20 @@ export function useCompanyOrganisationPage() {
         throw new Error('Välj ett event att redigera.')
       }
 
-      return updateCompanyEvent(await requireToken(), editingEventId, {
+      return updateCompanyEvent(await getRequiredToken(), editingEventId, {
         name: editingEventForm.name.trim(),
         description: editingEventForm.description.trim(),
         time: toLocalDateTime(editingEventForm.time),
         city: editingEventForm.city.trim(),
         venue: editingEventForm.venue.trim(),
+        eventType: editingEventForm.eventType as 'IN_PERSON' | 'ONLINE',
       })
     },
     onSuccess: async () => {
       setEditingEventId(null)
       setEditingEventForm(emptyEventForm)
       setStatusMessage('Event uppdaterades.')
-      await queryClient.invalidateQueries({ queryKey: ['company-events'] })
+      await queryClient.invalidateQueries({ queryKey: ['organisation-events'] })
     },
     onError: (error) => {
       setStatusMessage((error as Error).message)
@@ -208,10 +226,10 @@ export function useCompanyOrganisationPage() {
 
   const deleteEventMutation = useMutation({
     mutationFn: async (eventId: number) =>
-      deleteCompanyEvent(await requireToken(), eventId),
+      deleteCompanyEvent(await getRequiredToken(), eventId),
     onSuccess: async () => {
       setStatusMessage('Event togs bort.')
-      await queryClient.invalidateQueries({ queryKey: ['company-events'] })
+      await queryClient.invalidateQueries({ queryKey: ['organisation-events'] })
     },
     onError: (error) => {
       setStatusMessage((error as Error).message)
@@ -223,26 +241,22 @@ export function useCompanyOrganisationPage() {
     eventForm.name.trim().length > 1 &&
     eventForm.time.trim().length > 0 &&
     eventForm.city.trim().length > 0 &&
-    eventForm.venue.trim().length > 0
+    eventForm.venue.trim().length > 0 &&
+    eventForm.eventType !== ''
 
   const canSaveEditedEvent =
     editingEventForm.name.trim().length > 1 &&
     editingEventForm.time.trim().length > 0 &&
     editingEventForm.city.trim().length > 0 &&
-    editingEventForm.venue.trim().length > 0
+    editingEventForm.venue.trim().length > 0 &&
+    editingEventForm.eventType !== ''
 
-  const isLoading =
-    !isLoaded ||
-    organisationQuery.isLoading ||
-    eventsQuery.isLoading ||
-    meQuery.isLoading
-  const isError =
-    organisationQuery.isError || eventsQuery.isError || meQuery.isError
+  const isLoading = organisationsQuery.isLoading || eventsQuery.isLoading
+  const isError = organisationsQuery.isError || eventsQuery.isError
 
   const errorMessage =
-    (organisationQuery.error as Error)?.message ||
+    (organisationsQuery.error as Error)?.message ||
     (eventsQuery.error as Error)?.message ||
-    (meQuery.error as Error)?.message ||
     'Okänt fel.'
 
   function startEditingEvent(event: CompanyEvent) {
@@ -253,6 +267,7 @@ export function useCompanyOrganisationPage() {
       time: toInputDateTime(event.time),
       city: event.city,
       venue: event.venue,
+      eventType: event.eventType,
     })
   }
 
@@ -265,6 +280,9 @@ export function useCompanyOrganisationPage() {
     layoutRef,
     isWideLayout,
     statusMessage,
+    organisations,
+    selectedOrganisationId: activeOrganisationId,
+    setSelectedOrganisationId,
     orgName,
     setOrgName,
     orgDescription,

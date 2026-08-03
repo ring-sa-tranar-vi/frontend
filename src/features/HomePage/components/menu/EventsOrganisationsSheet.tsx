@@ -1,5 +1,6 @@
 import {
   ArrowLeft,
+  Building2,
   Check,
   Clock3,
   MapPin,
@@ -310,11 +311,13 @@ export default function EventsOrganisationsSheet({
   open,
   onBack,
   onClose,
+  onApply,
   userCity,
 }: {
   open: boolean
   onBack: () => void
   onClose: () => void
+  onApply: () => void
   userCity?: string | null
 }) {
   const { t, i18n } = useTranslation()
@@ -638,6 +641,29 @@ export default function EventsOrganisationsSheet({
           >
             <div className="rounded-2xl bg-(--brand-soft) px-4 py-3 text-[length:var(--text-sm)] leading-snug font-semibold text-(--brand-body-ink)">
               {t('menu.events.directory.organisationsIntro')}
+            </div>
+
+            <div className="mt-4 rounded-2xl border border-(--brand-border-light) bg-white/70 p-4 shadow-[0_1px_2px_rgba(30,20,80,0.04)]">
+              <div className="flex items-start gap-3">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-(--brand-soft) text-(--brand-primary-deep)">
+                  <Building2 size={21} strokeWidth={2.3} aria-hidden="true" />
+                </div>
+                <div className="min-w-0">
+                  <h2 className="text-[length:var(--text-base)] leading-tight font-extrabold text-(--brand-title-ink)">
+                    {t('menu.events.application.cardTitle')}
+                  </h2>
+                  <p className="mt-1 text-[length:var(--text-xs)] leading-snug font-semibold text-(--brand-body-ink)">
+                    {t('menu.events.application.cardText')}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={onApply}
+                className="mt-4 min-h-11 w-full rounded-xl bg-(--brand-primary) px-4 py-3 text-[length:var(--text-sm)] font-extrabold text-white shadow-[0_3px_10px_rgba(80,64,200,0.20)] transition hover:bg-(--brand-primary-strong) focus-visible:ring-2 focus-visible:ring-(--brand-border-strong) focus-visible:ring-offset-2 focus-visible:outline-none active:scale-[0.985]"
+              >
+                {t('menu.events.application.cardAction')}
+              </button>
             </div>
 
             <div className="mt-5 mb-3 flex items-end justify-between gap-3">

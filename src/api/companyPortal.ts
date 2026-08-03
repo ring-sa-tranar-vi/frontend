@@ -2,19 +2,12 @@ import { getApiBaseUrl } from '../lib/apiBaseUrl'
 
 const API_URL = getApiBaseUrl()
 
-export type CompanyMe = {
-  userId: number | null
-  role: string
-  canManageOrganisation: boolean
-  organisationId: number | null
-  organisationName: string | null
-}
-
 export type CompanyOrganisation = {
   id: number
   name: string
   description: string
   orgCity: string
+  organizerId: number | null
 }
 
 export type CompanyEvent = {
@@ -22,10 +15,11 @@ export type CompanyEvent = {
   name: string
   description: string
   time: string
+  organisationId: number
   city: string
   venue: string
-  attendeesCount: number
-  eventType?: string
+  eventType: 'IN_PERSON' | 'ONLINE'
+  attendeesCount?: number
 }
 
 export type CompanyOrganisationUpdateInput = {
@@ -40,60 +34,57 @@ export type CompanyEventInput = {
   time: string
   city: string
   venue: string
+  eventType: 'IN_PERSON' | 'ONLINE'
 }
 
-async function request(
-  path: string,
-  token: string,
-  init?: RequestInit,
-): Promise<Response> {
-  const headers = new Headers(init?.headers)
-  headers.set('Accept', 'application/json')
-  headers.set('Authorization', `Bearer ${token}`)
-
+async function request(path: string, token: string, init?: RequestInit) {
   const response = await fetch(`${API_URL}${path}`, {
     ...init,
-    headers,
+    headers: {
+      Accept: 'application/json',
+      Authorization: `Bearer ${token}`,
+      ...(init?.headers ?? {}),
+    },
   })
 
   if (!response.ok) {
-    const message = await response.text().catch(() => '')
-    throw new Error(message || `Request failed (${response.status})`)
+    const text = await response.text().catch(() => '')
+    throw new Error(text || `Request failed (${response.status})`)
   }
 
   return response
 }
 
-async function requestJson<T>(
-  path: string,
-  token: string,
-  init?: RequestInit,
-): Promise<T> {
+async function requestJson<T>(path: string, token: string, init?: RequestInit) {
   const response = await request(path, token, init)
   return response.json() as Promise<T>
 }
 
-export function fetchCompanyMe(token: string) {
-  return requestJson<CompanyMe>('/api/company/me', token)
+export function fetchMyOrganisations(token: string) {
+  return requestJson<CompanyOrganisation[]>('/api/organisations/me', token)
 }
 
-export function fetchCompanyOrganisation(token: string) {
-  return requestJson<CompanyOrganisation>('/api/company/organisation', token)
+export function fetchOrganisationEvents(token: string, organisationId: number) {
+  return requestJson<CompanyEvent[]>(
+    `/api/organisations/${organisationId}/events`,
+    token,
+  )
 }
 
 export function updateCompanyOrganisation(
   token: string,
+  organisationId: number,
   payload: CompanyOrganisationUpdateInput,
 ) {
-  return requestJson<CompanyOrganisation>('/api/company/organisation', token, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  })
-}
-
-export function fetchCompanyEvents(token: string) {
-  return requestJson<CompanyEvent[]>('/api/company/events', token)
+  return requestJson<CompanyOrganisation>(
+    `/api/organisations/${organisationId}`,
+    token,
+    {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    },
+  )
 }
 
 export function createCompanyEvent(
@@ -101,13 +92,12 @@ export function createCompanyEvent(
   organisationId: number,
   payload: CompanyEventInput,
 ) {
-  return requestJson<CompanyEvent>('/api/company/events', token, {
+  return requestJson<CompanyEvent>('/api/events', token, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       ...payload,
-      eventType: 'IN_PERSON',
-      organisation: { id: organisationId },
+      organisationId,
     }),
   })
 }
@@ -117,13 +107,13 @@ export function updateCompanyEvent(
   eventId: number,
   payload: CompanyEventInput,
 ) {
-  return requestJson<CompanyEvent>(`/api/company/events/${eventId}`, token, {
+  return requestJson<CompanyEvent>(`/api/events/${eventId}`, token, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ ...payload, eventType: 'IN_PERSON' }),
+    body: JSON.stringify(payload),
   })
 }
 
-export async function deleteCompanyEvent(token: string, eventId: number) {
-  await request(`/api/company/events/${eventId}`, token, { method: 'DELETE' })
+export function deleteCompanyEvent(token: string, eventId: number) {
+  return request(`/api/events/${eventId}`, token, { method: 'DELETE' })
 }
