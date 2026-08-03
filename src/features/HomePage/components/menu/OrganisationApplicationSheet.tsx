@@ -154,6 +154,7 @@ export default function OrganisationApplicationSheet({
 
           <label className="block text-[length:var(--text-sm)] font-extrabold text-(--brand-title-ink)">
             {t('menu.events.application.name')}
+            <span aria-hidden="true"> *</span>
             <input
               required
               maxLength={100}
@@ -169,6 +170,7 @@ export default function OrganisationApplicationSheet({
 
           <label className="block text-[length:var(--text-sm)] font-extrabold text-(--brand-title-ink)">
             {t('menu.events.application.description')}
+            <span aria-hidden="true"> *</span>
             <textarea
               required
               maxLength={300}
@@ -184,6 +186,7 @@ export default function OrganisationApplicationSheet({
 
           <label className="block text-[length:var(--text-sm)] font-extrabold text-(--brand-title-ink)">
             {t('menu.events.application.city')}
+            <span aria-hidden="true"> *</span>
             <input
               required
               maxLength={100}
@@ -197,6 +200,7 @@ export default function OrganisationApplicationSheet({
 
           <label className="block text-[length:var(--text-sm)] font-extrabold text-(--brand-title-ink)">
             {t('menu.events.application.motivation')}
+            <span aria-hidden="true"> *</span>
             <textarea
               required
               maxLength={600}
