@@ -4,8 +4,8 @@ import {
   readProfileSuggestions,
   sleep,
   waitForAIToFinishSpeaking,
-} from './helpers'
-import type { ToolExecutionContext, ToolHandlerFn } from '../session/types'
+} from '../helpers'
+import type { ToolExecutionContext, ToolHandlerFn } from '../../session/types'
 // Helpers to format standard success/error responses quickly
 const createSuccessResponse = (
   id: string,
