@@ -1,10 +1,8 @@
 import type { CoachCallSession } from '../session/types'
-import {
-  ALREADY_COMPLETED_TOOLS,
-  SESSION_CONTROL_TOOLS,
-  ONBOARDING_TOOLS,
-} from './prompts'
-import { GUEST_SESSION_TOOLS } from './prompts'
+import { ALREADY_COMPLETED_TOOLS } from './prompts/alreadyFinishedPrompt'
+import { GUEST_SESSION_TOOLS } from './prompts/guestPrompts'
+import { ONBOARDING_TOOLS } from './prompts/onboardingPrompts'
+import { SESSION_TOOLS } from './prompts/standardPrompts'
 
 export interface GetSessionToolsOptions {
   isSignedIn?: boolean
@@ -26,5 +24,5 @@ export function getSessionTools({
   if (session.onboarding) {
     return [...ONBOARDING_TOOLS]
   }
-  return [...SESSION_CONTROL_TOOLS]
+  return [...SESSION_TOOLS]
 }

@@ -1,13 +1,11 @@
 import type { CalendarActivity } from '../HomePage/components/menu/types'
 import type { CoachCallSession } from '../session/types'
-import {
-  ALREADY_COMPLETED_TODAY_INSTRUCTION,
-  buildUserContext,
-  ONBOARDING_SYSTEM_INSTRUCTION,
-  GUEST_SESSION_INSTRUCTION,
-  liveSystemInstruction,
-} from './prompts'
-import { buildGuestContext } from './prompts'
+import { ALREADY_COMPLETED_INSTRUCTION } from './prompts/alreadyFinishedPrompt'
+import { GUEST_SESSION_INSTRUCTION } from './prompts/guestPrompts'
+import { ONBOARDING_SYSTEM_INSTRUCTION } from './prompts/onboardingPrompts'
+
+import { buildGuestContext, buildUserContext } from './prompts/setupPrompts'
+import { SESSION_INSTRUCTION } from './prompts/standardPrompts'
 
 export function buildSessionInstruction(
   session: CoachCallSession,
@@ -32,12 +30,12 @@ export function buildSessionInstruction(
     : `\n\nTrainer identity and style (apply this throughout the conversation):\n${trainerNameLine}${personaStability}`
 
   if (alreadyCompletedToday) {
-    return `${userContext} ${ALREADY_COMPLETED_TODAY_INSTRUCTION}${trainerIdentity}`
+    return `${trainerIdentity}${userContext} ${ALREADY_COMPLETED_INSTRUCTION}`
   }
 
   if (session.onboarding) {
-    return `${userContext} ${ONBOARDING_SYSTEM_INSTRUCTION}${trainerIdentity}`
+    return `${trainerIdentity}${userContext} ${ONBOARDING_SYSTEM_INSTRUCTION}`
   }
 
-  return `${userContext}${liveSystemInstruction}${trainerIdentity}`
+  return `${trainerIdentity}${userContext}${SESSION_INSTRUCTION}`
 }
