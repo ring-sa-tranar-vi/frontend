@@ -4,6 +4,7 @@ export type EventForm = {
   time: string
   city: string
   venue: string
+  eventType: '' | 'IN_PERSON' | 'ONLINE'
 }
 
 export const emptyEventForm: EventForm = {
@@ -12,4 +13,5 @@ export const emptyEventForm: EventForm = {
   time: '',
   city: '',
   venue: '',
+  eventType: '',
 }

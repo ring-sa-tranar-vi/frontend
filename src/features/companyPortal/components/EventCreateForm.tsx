@@ -57,6 +57,21 @@ export default function EventCreateForm({
           }
           className={`${appSheetFieldClass} px-3 py-2 text-sm outline-none focus:border-[#5836d6] md:bg-white`}
         />
+        <select
+          aria-label="Typ av event"
+          value={eventForm.eventType}
+          onChange={(e) =>
+            setEventForm((f) => ({
+              ...f,
+              eventType: e.target.value as EventForm['eventType'],
+            }))
+          }
+          className={`${appSheetFieldClass} px-3 py-2 text-sm outline-none focus:border-[#5836d6] md:bg-white`}
+        >
+          <option value="">Välj typ av event</option>
+          <option value="IN_PERSON">På plats</option>
+          <option value="ONLINE">Online</option>
+        </select>
         <textarea
           placeholder="Beskrivning"
           rows={2}

@@ -177,6 +177,28 @@
         "noMatchingEvents": "Inga event matchar din sökning eller ditt filter.",
         "noOrganisations": "Det finns inga organisationer att visa just nu.",
         "noMatchingOrganisations": "Inga organisationer matchar din sökning."
+      },
+      "application": {
+        "cardTitle": "Vill din organisation vara med?",
+        "cardText": "Ansök om att bli en del av Ring så tränar vi och skapa aktiviteter för fler.",
+        "cardAction": "Ansök som organisation",
+        "title": "Organisationsansökan",
+        "subtitle": "Berätta om er organisation",
+        "back": "Tillbaka till organisationer",
+        "name": "Organisationsnamn",
+        "namePlaceholder": "Organisationens namn",
+        "description": "Kort beskrivning",
+        "descriptionPlaceholder": "Vad gör organisationen?",
+        "city": "Stad",
+        "cityPlaceholder": "Var finns organisationen?",
+        "motivation": "Varför vill ni vara med?",
+        "motivationPlaceholder": "Berätta varför ni vill ansluta till Ring så tränar vi.",
+        "submit": "Skicka ansökan",
+        "submitting": "Skickar…",
+        "error": "Ansökan kunde inte skickas. Försök igen.",
+        "successTitle": "Ansökan är skickad",
+        "successText": "Vi återkommer när ansökan har granskats.",
+        "backToOrganisations": "Tillbaka till organisationer"
       }
     },
     "calendar": {
@@ -224,7 +246,9 @@
     "language": "Språk",
     "getHelp": "Hjälp & support",
     "getHelpButton": "Hjälp",
+    "readPolicy": "Läs",
     "privacyComingSoon": "Integritetspolicy kommer snart",
+    "privacyPolicy": "Integritetspolicy",
     "fullName": "Namn",
     "fullNameDescription": "Namnet används av coachen under samtalet.",
     "fullNamePlaceholder": "Ditt förnamn",
@@ -232,7 +256,30 @@
     "noFullNameFound": "Ingen namnuppgift hittades.",
     "saveAndClose": "Spara och stäng",
     "close": "Stäng",
-    "cancel": "Avbryt"
+    "cancel": "Avbryt",
+    "deleteAccount": "Ta bort konto",
+    "deleteAccountTitle": "Ta bort ditt konto?",
+    "deleteAccountDescription": "Kontot och din inloggning tas bort permanent.",
+    "deleteAccountWarning": "Det här går inte att ångra. Är du säker på att du vill fortsätta?",
+    "confirmDeleteAccount": "Ja, ta bort mitt konto",
+    "deletingAccount": "Tar bort konto...",
+    "deleteAccountError": "Kontot kunde inte tas bort. Försök igen."
+  },
+
+  "privacy": {
+    "title": "Integritetspolicy",
+    "subtitle": "Så hanterar vi dina uppgifter",
+    "draftNotice": "Det här är en tillfällig version. Innehållet uppdateras innan lansering.",
+    "dataTitle": "Uppgifter vi använder",
+    "dataText": "Vi använder de profiluppgifter och träningsval du lämnar i appen, till exempel namn, tränare, intensitet och träningshistorik.",
+    "useTitle": "Varför uppgifterna behövs",
+    "useText": "Uppgifterna hjälper oss att anpassa träningspassen, visa din aktivitet och hantera event som du anmäler dig till.",
+    "sharingTitle": "Hur uppgifter delas",
+    "sharingText": "Vi säljer inte dina personuppgifter. Uppgifter delas bara med tjänster som behövs för att appen ska fungera.",
+    "rightsTitle": "Dina val",
+    "rightsText": "Du kan ändra dina val i menyn och avanmäla dig från event. Kontakta oss om du vill få hjälp med dina uppgifter.",
+    "contactTitle": "Frågor om integritet",
+    "contactText": "Kontakta Ring så tränar vi om du har frågor om hur dina uppgifter hanteras."
   },
 
   "support": {

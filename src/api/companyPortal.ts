@@ -2,41 +2,12 @@ import { getApiBaseUrl } from '../lib/apiBaseUrl'
 
 const API_URL = getApiBaseUrl()
 
-type LegacyOrganisation = {
-  id: number
-  name: string
-  description?: string | null
-  orgCity?: string | null
-}
-
-type LegacyEvent = {
-  id: number
-  name: string
-  description?: string | null
-  time: string
-  city?: string | null
-  venue?: string | null
-}
-
-type HttpError = Error & {
-  status?: number
-}
-
-let fallbackOrganisationId: number | null = null
-
-export type CompanyMe = {
-  userId: number | null
-  role: string
-  canManageOrganisation: boolean
-  organisationId: number | null
-  organisationName: string | null
-}
-
 export type CompanyOrganisation = {
   id: number
   name: string
   description: string
   orgCity: string
+  organizerId: number | null
 }
 
 export type CompanyEvent = {
@@ -44,9 +15,11 @@ export type CompanyEvent = {
   name: string
   description: string
   time: string
+  organisationId: number
   city: string
   venue: string
-  attendeesCount: number
+  eventType: 'IN_PERSON' | 'ONLINE'
+  attendeesCount?: number
 }
 
 export type CompanyOrganisationUpdateInput = {
@@ -61,239 +34,86 @@ export type CompanyEventInput = {
   time: string
   city: string
   venue: string
+  eventType: 'IN_PERSON' | 'ONLINE'
 }
 
-async function request(path: string, init?: RequestInit): Promise<Response> {
+async function request(path: string, token: string, init?: RequestInit) {
   const response = await fetch(`${API_URL}${path}`, {
     ...init,
     headers: {
       Accept: 'application/json',
+      Authorization: `Bearer ${token}`,
       ...(init?.headers ?? {}),
     },
   })
 
   if (!response.ok) {
     const text = await response.text().catch(() => '')
-    const error = new Error(
-      text || `Request failed (${response.status})`,
-    ) as HttpError
-    error.status = response.status
-    throw error
+    throw new Error(text || `Request failed (${response.status})`)
   }
 
   return response
 }
 
-async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await request(path, init)
+async function requestJson<T>(path: string, token: string, init?: RequestInit) {
+  const response = await request(path, token, init)
   return response.json() as Promise<T>
 }
 
-export function fetchCompanyMe() {
-  return requestJson<CompanyMe>('/api/company/me').catch(async (error) => {
-    if ((error as HttpError).status !== 404) {
-      throw error
-    }
-
-    const organisations =
-      await requestJson<LegacyOrganisation[]>('/api/organisations')
-    const first = organisations[0]
-
-    fallbackOrganisationId = first?.id ?? null
-
-    return {
-      userId: null,
-      role: 'ORGANIZER',
-      canManageOrganisation: true,
-      organisationId: first?.id ?? null,
-      organisationName: first?.name ?? null,
-    } satisfies CompanyMe
-  })
+export function fetchMyOrganisations(token: string) {
+  return requestJson<CompanyOrganisation[]>('/api/organisations/me', token)
 }
 
-export function fetchCompanyOrganisation() {
-  return requestJson<CompanyOrganisation>('/api/company/organisation')
-    .then((org) => {
-      fallbackOrganisationId = org.id
-      return org
-    })
-    .catch(async (error) => {
-      if ((error as HttpError).status !== 404) {
-        throw error
-      }
-
-      const organisations =
-        await requestJson<LegacyOrganisation[]>('/api/organisations')
-      const first = organisations[0]
-      if (!first) {
-        return {
-          id: 0,
-          name: '',
-          description: '',
-          orgCity: '',
-        } satisfies CompanyOrganisation
-      }
-
-      fallbackOrganisationId = first.id
-
-      return {
-        id: first.id,
-        name: first.name,
-        description: first.description ?? '',
-        orgCity: first.orgCity ?? '',
-      } satisfies CompanyOrganisation
-    })
+export function fetchOrganisationEvents(token: string, organisationId: number) {
+  return requestJson<CompanyEvent[]>(
+    `/api/organisations/${organisationId}/events`,
+    token,
+  )
 }
 
 export function updateCompanyOrganisation(
+  token: string,
   organisationId: number,
   payload: CompanyOrganisationUpdateInput,
 ) {
-  return requestJson<CompanyOrganisation>('/api/company/organisation', {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  }).catch((error) => {
-    if ((error as HttpError).status !== 404) {
-      throw error
-    }
-
-    const id = fallbackOrganisationId ?? organisationId
-    if (!id || id <= 0) {
-      return requestJson<CompanyOrganisation>('/api/admin/organisations', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: payload.name,
-          description: payload.description,
-        }),
-      }).then((created) => {
-        fallbackOrganisationId = created.id
-        return created
-      })
-    }
-
-    return requestJson<CompanyOrganisation>(`/api/organisations/${id}`, {
+  return requestJson<CompanyOrganisation>(
+    `/api/organisations/${organisationId}`,
+    token,
+    {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        name: payload.name,
-        description: payload.description,
-        events: [],
-        orgCity: payload.orgCity,
-        organizerId: 1,
-      }),
-    })
-  })
-}
-
-export function fetchCompanyEvents() {
-  return requestJson<CompanyEvent[]>('/api/company/events').catch(
-    async (error) => {
-      if ((error as HttpError).status !== 404) {
-        throw error
-      }
-
-      const organisationId = fallbackOrganisationId
-      if (!organisationId) {
-        return []
-      }
-
-      const events = await requestJson<LegacyEvent[]>(
-        `/api/organisations/${organisationId}/events`,
-      )
-      return events.map((event) => ({
-        id: event.id,
-        name: event.name,
-        description: event.description ?? '',
-        time: event.time,
-        city: event.city ?? '',
-        venue: event.venue ?? '',
-        attendeesCount: 0,
-      }))
+      body: JSON.stringify(payload),
     },
   )
 }
 
-export function createCompanyEvent(payload: CompanyEventInput) {
-  return requestJson<CompanyEvent>('/api/company/events', {
+export function createCompanyEvent(
+  token: string,
+  organisationId: number,
+  payload: CompanyEventInput,
+) {
+  return requestJson<CompanyEvent>('/api/events', token, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  }).catch((error) => {
-    if ((error as HttpError).status !== 404) {
-      throw error
-    }
-
-    const organisationId = fallbackOrganisationId
-    if (!organisationId) {
-      throw new Error('No organisation available for event creation')
-    }
-
-    return requestJson<CompanyEvent>('/api/events', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        name: payload.name,
-        description: payload.description,
-        time: payload.time,
-        organisation: { id: organisationId },
-        city: payload.city,
-        venue: payload.venue,
-        eventType: 'IN_PERSON',
-      }),
-    }).then((event) => ({
-      ...event,
-      attendeesCount: (event as CompanyEvent).attendeesCount ?? 0,
-    }))
+    body: JSON.stringify({
+      ...payload,
+      organisationId,
+    }),
   })
 }
 
 export function updateCompanyEvent(
+  token: string,
   eventId: number,
   payload: CompanyEventInput,
 ) {
-  return requestJson<CompanyEvent>(`/api/company/events/${eventId}`, {
+  return requestJson<CompanyEvent>(`/api/events/${eventId}`, token, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
-  }).catch((error) => {
-    if ((error as HttpError).status !== 404) {
-      throw error
-    }
-
-    const organisationId = fallbackOrganisationId
-    if (!organisationId) {
-      throw new Error('No organisation available for event update')
-    }
-
-    return requestJson<CompanyEvent>(`/api/events/${eventId}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        name: payload.name,
-        description: payload.description,
-        time: payload.time,
-        organisation: { id: organisationId },
-        city: payload.city,
-        venue: payload.venue,
-        eventType: 'IN_PERSON',
-      }),
-    }).then((event) => ({
-      ...event,
-      attendeesCount: (event as CompanyEvent).attendeesCount ?? 0,
-    }))
   })
 }
 
-export async function deleteCompanyEvent(eventId: number) {
-  try {
-    await request(`/api/company/events/${eventId}`, { method: 'DELETE' })
-  } catch (error) {
-    if ((error as HttpError).status !== 404) {
-      throw error
-    }
-
-    await request(`/api/events/${eventId}`, { method: 'DELETE' })
-  }
+export function deleteCompanyEvent(token: string, eventId: number) {
+  return request(`/api/events/${eventId}`, token, { method: 'DELETE' })
 }

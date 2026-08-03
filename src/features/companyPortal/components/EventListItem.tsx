@@ -54,10 +54,12 @@ export default function EventListItem({ event, onEdit, onDelete }: Props) {
           </p>
         </div>
 
-        <p className="mt-2 inline-flex items-center gap-1 rounded-full bg-[#f0ecff] px-3 py-1 text-xs font-semibold text-[#5b3fe6]">
-          <Users size={13} />
-          <span>{event.attendeesCount} anmälda</span>
-        </p>
+        {typeof event.attendeesCount === 'number' ? (
+          <p className="mt-2 inline-flex items-center gap-1 rounded-full bg-[#f0ecff] px-3 py-1 text-xs font-semibold text-[#5b3fe6]">
+            <Users size={13} />
+            <span>{event.attendeesCount} anmälda</span>
+          </p>
+        ) : null}
       </div>
 
       <div className="flex flex-col items-center gap-2">
