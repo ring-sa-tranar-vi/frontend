@@ -11,7 +11,7 @@ import CompanyOrganisationAdminPage from './CompanyOrganisationAdminPage'
 import { useAdminPage } from '../../hooks/useAdminPage'
 import { useMyProfile } from '../../hooks/useMyProfile'
 import LanguageSwitcher from '../../components/LanguageSwitcher'
-import { fetchAdminUserCount } from '../../api/admins'
+import { fetchAdminUsers, type AdminUser } from '../../api/admins'
 
 type AdminView =
   'dashboard' | 'workouts' | 'trainers' | 'feedback' | 'organisations'
@@ -82,17 +82,21 @@ function SidebarActiveUsersCard() {
   const { t } = useTranslation()
   const { getToken } = useAuth()
 
-  const { data } = useQuery<{ count: number; activeCount: number }>({
-    queryKey: ['admin-user-count'],
+  const { data: users = [] } = useQuery<AdminUser[]>({
+    queryKey: ['admin-users'],
     queryFn: async () => {
       const token = await getToken()
       if (!token) {
         throw new Error('Missing auth token')
       }
-      return fetchAdminUserCount(token)
+      return fetchAdminUsers(token)
     },
     staleTime: 60_000,
   })
+
+  const activeCount = users.filter(
+    (user) => user.active !== false && user.enabled !== false,
+  ).length
 
   return (
     <div className="m-3 rounded-2xl bg-[#f5f0ff] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)]">
@@ -109,13 +113,13 @@ function SidebarActiveUsersCard() {
         </svg>
         <div>
           <p className="text-3xl leading-none font-extrabold text-[#100b2f]">
-            {data?.activeCount ?? '–'}
+            {activeCount}
           </p>
           <p className="mt-1 text-xs font-medium text-[#5836d6]">
             {t('admin.activeLast30Days')}
           </p>
           <p className="mt-0.5 text-[10px] text-[#9b96b8]">
-            {t('admin.totalRegistered')}: {data?.count ?? '–'}
+            {t('admin.totalRegistered')}: {users.length}
           </p>
         </div>
       </div>
