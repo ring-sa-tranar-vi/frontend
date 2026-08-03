@@ -156,7 +156,6 @@ export default function HomePage() {
     if (!selectedWorkoutId && !alreadyCompletedToday) {
       return
     }
-    startRingback()
     void primeSessionAudio()
     void primeMicrophonePermission()
     setActiveAlreadyCompleted(alreadyCompletedToday)

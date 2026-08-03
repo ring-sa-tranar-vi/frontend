@@ -21,6 +21,9 @@ type BackendWorkoutResponse = {
   instructionsVideoStart?: number | null
   instructionsVideoStop?: number | null
 
+  workoutInstructions?: string | null
+  workoutGuidance?: string | null
+
   durationMinutes?: number | null
   durationSeconds?: number | null
 
@@ -187,6 +190,8 @@ export async function getCoachCallSession(
         workout.dashboardDescription ??
         workout.description)
       : undefined,
+    workoutInstructions: workout?.workoutInstructions,
+    workoutGuidance: workout?.workoutGuidance,
     subtitleText: workout?.subtitleText,
     instructionsSubtitleText: workout?.instructionsSubtitleText,
 

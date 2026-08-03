@@ -1,3 +1,11 @@
+import type { FunctionResponse } from '@google/genai'
+import type { RefObject } from 'react'
+import type { CoachSessionStep } from '../ai-conversation'
+import type {
+  AITurnState,
+  ProfileSuggestions,
+} from '../ai-conversation/helpers'
+
 export type SessionPanel = 'none' | 'info' | 'exercise' | 'suite'
 
 export type CompletedWorkout = {
@@ -36,6 +44,8 @@ export type CoachCallSession = {
   instructions?: string | null
   subtitleText?: string | null
   instructionsSubtitleText?: string | null
+  workoutInstructions?: string | null
+  workoutGuidance?: string | null
 
   level?: number | string | null
   type?: string | null
@@ -69,3 +79,35 @@ export type CoachCallSession = {
   completedWorkouts?: CompletedWorkout[]
   onboarding?: boolean
 }
+
+export type OnboardingStage = 'confirm_name' | 'intensity' | 'context' | 'done'
+
+export interface ToolExecutionContext {
+  stepRef: RefObject<CoachSessionStep>
+  setSessionStep: (nextStep: CoachSessionStep) => void
+
+  onboardingStageRef: RefObject<OnboardingStage>
+  aiTurnStateRef: RefObject<AITurnState>
+  finishSessionRef: RefObject<
+    (summary?: string, suggestions?: ProfileSuggestions) => void
+  >
+
+  startWorkoutVideoRef: RefObject<() => void>
+  updateUserNameRef: RefObject<(userName: string) => Promise<void>>
+  updateIntensityLevelRef: RefObject<(intensityLevel: number) => Promise<void>>
+  updateUserContextRef: RefObject<(context: string) => Promise<void>>
+  onboardingToTrainingRef: RefObject<() => Promise<void>>
+  endOnboardingRef: RefObject<() => Promise<void>>
+
+  addDebugEvent: (
+    label: string,
+    detail?: string | number | boolean | null,
+  ) => void
+  getAiPlaybackRemainingMs: () => number
+}
+
+export type ToolHandlerFn<TArgs = Record<string, any>> = (
+  callId: string,
+  args: TArgs,
+  ctx: ToolExecutionContext,
+) => Promise<FunctionResponse>
