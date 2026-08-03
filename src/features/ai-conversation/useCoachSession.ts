@@ -504,7 +504,7 @@ export function useCoachSession(
     workoutCompletedRef.current = true
   }, [])
 
-  /*
+  /*  
   //──────────────────────
   // Play instructions
   //──────────────────────
