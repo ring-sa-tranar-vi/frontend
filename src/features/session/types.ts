@@ -84,21 +84,25 @@ export type OnboardingStage = 'confirm_name' | 'intensity' | 'context' | 'done'
 
 export interface ToolExecutionContext {
   stepRef: RefObject<CoachSessionStep>
+  setSessionStep: (nextStep: CoachSessionStep) => void
+
   onboardingStageRef: RefObject<OnboardingStage>
   aiTurnStateRef: RefObject<AITurnState>
   finishSessionRef: RefObject<
     (summary?: string, suggestions?: ProfileSuggestions) => void
   >
+
+  startWorkoutVideoRef: RefObject<() => void>
   updateUserNameRef: RefObject<(userName: string) => Promise<void>>
   updateIntensityLevelRef: RefObject<(intensityLevel: number) => Promise<void>>
   updateUserContextRef: RefObject<(context: string) => Promise<void>>
   onboardingToTrainingRef: RefObject<() => Promise<void>>
   endOnboardingRef: RefObject<() => Promise<void>>
+
   addDebugEvent: (
     label: string,
     detail?: string | number | boolean | null,
   ) => void
-  setSessionStep: (nextStep: CoachSessionStep) => void
   getAiPlaybackRemainingMs: () => number
 }
 

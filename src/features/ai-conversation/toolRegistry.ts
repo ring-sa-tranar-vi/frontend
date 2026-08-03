@@ -32,6 +32,15 @@ const createErrorResponse = (
 // ─────────────────────────────────────────────────────────────
 const toolRegistry: Record<string, ToolHandlerFn> = {
   //──────────────────────
+  // Start Workout Video
+  //──────────────────────
+  start_workout_video: async (id, _args, ctx) => {
+    ctx.addDebugEvent('start_workout_video')
+    ctx.startWorkoutVideoRef.current()
+    return createSuccessResponse(id, 'start_workout_video')
+  },
+
+  //──────────────────────
   // End Guest Session
   //──────────────────────
   end_guest_session: async (id, _args, ctx) => {
