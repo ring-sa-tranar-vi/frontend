@@ -1,7 +1,7 @@
 import { getJson } from '../../lib/api/fetcher'
 import type { CoachCallSession, Trainer } from './types'
 
-type BackendWorkoutResponse = {
+export type BackendWorkoutResponse = {
   id: number
   name: string
   description?: string | null

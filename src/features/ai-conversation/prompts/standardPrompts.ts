@@ -31,6 +31,16 @@ export const SESSION_TOOLS: ToolListUnion = [
       },
       {
         name: 'change_workout',
+        parameters: {
+          type: Type.OBJECT,
+          properties: {
+            userInput: {
+              type: Type.STRING,
+              description:
+                'The user input that indicates they want to change the workout. This can be a request for a different workout, a specific workout name, or any other relevant input.',
+            },
+          },
+        },
         description: 'Call this when the user wants to change the workout.',
       },
       {

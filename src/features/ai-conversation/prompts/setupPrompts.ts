@@ -1,5 +1,5 @@
-import type { CoachCallSession } from '../../session/types'
 import type { CalendarActivity } from '../../HomePage/components/menu/types'
+import type { CoachCallSession } from '../../session/types'
 
 export function buildUserContext(
   session: CoachCallSession,

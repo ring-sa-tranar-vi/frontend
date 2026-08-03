@@ -94,7 +94,6 @@ function ReadySessionPage({
     toggleSpeakerMuted,
     caption,
     captionDraft,
-    playbackSubtitle,
     captionsEnabled,
     toggleCaptions,
     captionHistory,
@@ -165,7 +164,6 @@ function ReadySessionPage({
       onToggleSpeakerMuted={toggleSpeakerMuted}
       caption={caption}
       captionDraft={captionDraft}
-      playbackSubtitle={playbackSubtitle}
       captionsEnabled={captionsEnabled}
       onToggleCaptions={toggleCaptions}
       captionHistory={captionHistory}

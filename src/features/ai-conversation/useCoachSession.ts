@@ -20,6 +20,7 @@ import {
   normalizeCaptionText,
   normalizeLiveVoice,
   sleep,
+  splitCaptionParagraphs,
   waitForAIToFinishSpeaking,
   type AITurnState,
   type CoachSessionDebugEvent,
@@ -29,8 +30,8 @@ import {
 } from './helpers'
 import { COACH_PROMPTS } from './prompts/setupPrompts'
 import { buildSessionInstruction } from './setupSessionInstruction'
-import { getSessionTools } from './setupSessionTools'
-import { dispatchToolCall } from './toolRegistry'
+import { getSessionTools } from './tools/setupSessionTools'
+import { dispatchToolCall } from './tools/toolRegistry'
 
 //──────────────────────
 // Build system instruction
@@ -116,7 +117,6 @@ export function useCoachSession(
   const [caption, setCaption] = useState<string | null>(null)
   const [captionDraft, setCaptionDraft] = useState<string>('')
   const [captionHistory, setCaptionHistory] = useState<string[]>([])
-  const [playbackSubtitle] = useState<string>('')
   // captions are per-call (ephemeral) — do not persist to localStorage
   const [captionsEnabled, setCaptionsEnabled] = useState<boolean>(false)
   const toggleCaptions = useCallback(() => setCaptionsEnabled((c) => !c), [])
@@ -154,6 +154,7 @@ export function useCoachSession(
   const onboardingToTrainingRef = useRef<() => Promise<void>>(async () => {})
   const endOnboardingRef = useRef<() => Promise<void>>(async () => {})
   const startInstructionsRef = useRef<() => void>(() => {})
+  const changeWorkoutRef = useRef<(userInput: string) => void>(() => {})
   const finishedWorkoutRef = useRef<() => void>(() => {})
   //const startWorkoutRef = useRef<() => Promise<void>>(async () => {})
   const finishSessionRef = useRef<
@@ -214,6 +215,22 @@ export function useCoachSession(
       }),
     [isSignedIn, options.alreadyCompletedToday, session],
   )
+  const addCaptionParagraph = useCallback((text?: string | null) => {
+    const paragraphs = splitCaptionParagraphs(text)
+    if (paragraphs.length === 0) return
+
+    setCaptionHistory((current) => {
+      const next = [...current]
+      for (const paragraph of paragraphs) {
+        const last = next[next.length - 1]
+        if (last !== paragraph) {
+          next.push(paragraph)
+        }
+      }
+      return next.slice(-100)
+    })
+  }, [])
+
   const {
     geminiConnect,
     geminiDisconnect,
@@ -237,19 +254,21 @@ export function useCoachSession(
     //──────────────────────
     onToolCall: (functionCall) =>
       dispatchToolCall(functionCall, {
-        stepRef,
-        onboardingStageRef,
-        aiTurnStateRef,
-        finishSessionRef,
-        startWorkoutVideoRef,
-        updateUserNameRef,
-        updateIntensityLevelRef,
-        updateUserContextRef,
-        onboardingToTrainingRef,
-        endOnboardingRef,
-        addDebugEvent,
-        setSessionStep,
-        getAiPlaybackRemainingMs,
+        changeWorkoutRef: changeWorkoutRef,
+        finishedWorkoutRef: finishedWorkoutRef,
+        stepRef: stepRef,
+        onboardingStageRef: onboardingStageRef,
+        aiTurnStateRef: aiTurnStateRef,
+        finishSessionRef: finishSessionRef,
+        startWorkoutVideoRef: startWorkoutVideoRef,
+        updateUserNameRef: updateUserNameRef,
+        updateIntensityLevelRef: updateIntensityLevelRef,
+        updateUserContextRef: updateUserContextRef,
+        onboardingToTrainingRef: onboardingToTrainingRef,
+        endOnboardingRef: endOnboardingRef,
+        addDebugEvent: addDebugEvent,
+        setSessionStep: setSessionStep,
+        getAiPlaybackRemainingMs: getAiPlaybackRemainingMs,
       }),
 
     //──────────────────────
@@ -267,18 +286,12 @@ export function useCoachSession(
 
       if (trainerText) {
         const mergedCaption = mergeCaptionFragments(captionDraft, trainerText)
+
         setCaption(mergedCaption)
         setCaptionDraft(mergedCaption)
 
         if (transcription?.finished) {
-          setCaptionHistory((cur) => {
-            const next = [...cur]
-            const last = next[next.length - 1]
-            if (last !== mergedCaption) {
-              next.push(mergedCaption)
-            }
-            return next.slice(-100)
-          })
+          addCaptionParagraph(mergedCaption)
           setCaption('')
           setCaptionDraft('')
         }
@@ -303,6 +316,20 @@ export function useCoachSession(
   useEffect(() => {
     disconnectRef.current = geminiDisconnect
   }, [geminiDisconnect])
+  /*
+  //──────────────────────
+  // Pause live audio capture
+  //──────────────────────
+  const pauseLive = useCallback(() => {
+    addDebugEvent('pauseAI-called', stepRef.current)
+    // Halt sending audio data to Gemini without closing the AudioContext or
+    // stopping media tracks — avoids OS audio session reconfiguration that
+    // would cause a brief dropout in the gym ambience.
+    haltCapture()
+    setAudioCapturing(false)
+  }, [addDebugEvent, currentTurn, haltCapture])
+
+  */
 
   //──────────────────────
   // Disconnect live session
@@ -314,6 +341,26 @@ export function useCoachSession(
     setAudioCapturing(false)
   }, [addDebugEvent, geminiDisconnect])
 
+  /*
+  //──────────────────────
+  // Connect with fresh token
+  //──────────────────────
+  const connectFreshLive = useCallback(async () => {
+    addDebugEvent('load live token', stepRef.current)
+    const freshToken = await loadToken()
+
+    if (!freshToken) {
+      setError(COACH_PROMPTS.NO_TOKEN_ERROR)
+      setSessionStep('error')
+      hasStartedRef.current = false
+      return
+    }
+
+    addDebugEvent('connect live', stepRef.current)
+    await geminiConnect(freshToken)
+    return true
+  }, [addDebugEvent, geminiConnect, loadToken, setSessionStep])
+*/
   //──────────────────────
   // Send prompt to Gemini
   //──────────────────────
@@ -329,41 +376,6 @@ export function useCoachSession(
     [getSession],
   )
 
-  /*
-  //──────────────────────
-  // Ask if ready for workout
-  //──────────────────────
-  const askIfReadyForWorkout = useCallback(async () => {
-    allowAiOutput()
-    addDebugEvent('resume after instructions')
-    setSessionStep('asking_ready')
-
-    if (!getSession()) {
-      addDebugEvent('session timed out — reconnecting')
-      const connected = await connectFreshLive()
-      if (!connected) return
-    }
-
-    await sleep(250)
-
-    const started = await startAudioCapture()
-    setAudioCapturing(started)
-    addDebugEvent('mic after instructions', started)
-
-    if (!started) {
-      setError('Kunde inte starta mikrofonen.')
-      setSessionStep('error')
-      return
-    }
-  }, [
-    addDebugEvent,
-    allowAiOutput,
-    connectFreshLive,
-    getSession,
-    setSessionStep,
-    startAudioCapture,
-  ])
-*/
   //──────────────────────
   // Play instructions video
   //──────────────────────
@@ -379,6 +391,14 @@ export function useCoachSession(
     }
   }, [addDebugEvent, session.video])
 
+  const changeWorkout = useCallback((userInput: string) => {
+    addDebugEvent('change_workout', userInput)
+    console.log('changeWorkout called with userInput:', userInput)
+    console.log(
+      'TBD: Implement the logic to change the workout based on userInput',
+    )
+  }, [])
+
   //──────────────────────
   // Workout completed
   //──────────────────────
@@ -387,83 +407,6 @@ export function useCoachSession(
     addDebugEvent('workout completed')
     workoutCompletedRef.current = true
   }, [])
-
-  /*  
-  //──────────────────────
-  // Play instructions
-  //──────────────────────
-  const clearVideoTimers = useCallback(() => {
-    videoTimersRef.current.forEach((id) => window.clearTimeout(id))
-    videoTimersRef.current = []
-  }, [])
-
-  const playInstructions = useCallback(async () => {
-    clearVideoTimers()
-    setShowInstructionsVideo(false)
-    pauseLive()
-    setSessionStep('playing_instructions')
-
-    const instructionsAudioUrl =
-      session.instructionsAudio ?? session.instructionsAudioUrl
-
-    if (!instructionsAudioUrl) {
-      setError(COACH_PROMPTS.NO_INSTRUCTIONS_AUDIO)
-      setSessionStep('error')
-      return
-    }
-    try {
-      const subtitleText = resolveInstructionSubtitle()
-      setPlaybackSubtitle(subtitleText)
-      addDebugEvent('play instructions', instructionsAudioUrl)
-      await startSessionAudio(instructionsAudioUrl, {
-        onEnded: () => {
-          addDebugEvent('instructions ended')
-          setPlaybackSubtitle('')
-          void askIfReadyForWorkout()
-        },
-      })
-
-      const videoUrl = session.instructionsVideo
-      const videoStart = session.instructionsVideoStart
-      const videoStop = session.instructionsVideoStop
-
-      addDebugEvent(
-        'video-fields',
-        `url=${String(videoUrl)} start=${String(videoStart)} stop=${String(videoStop)}`,
-      )
-
-      if (videoUrl && videoStart != null && videoStop != null) {
-        const t1 = window.setTimeout(() => {
-          addDebugEvent('instructions video show')
-          setShowInstructionsVideo(true)
-        }, videoStart * 1000)
-        const t2 = window.setTimeout(() => {
-          addDebugEvent('instructions video hide')
-          setShowInstructionsVideo(false)
-        }, videoStop * 1000)
-        videoTimersRef.current = [t1, t2]
-      }
-
-      addDebugEvent('play-started', 'instructions')
-    } catch {
-      addDebugEvent('instructions audio failed')
-      setError('Kunde inte spela upp instruktionerna.')
-      setSessionStep('error')
-    }
-  }, [
-    addDebugEvent,
-    askIfReadyForWorkout,
-    clearVideoTimers,
-    pauseLive,
-    resolveInstructionSubtitle,
-    session.instructionsAudio,
-    session.instructionsAudioUrl,
-    session.instructionsVideo,
-    session.instructionsVideoStart,
-    session.instructionsVideoStop,
-    setSessionStep,
-  ])
-  */
 
   //──────────────────────
   // Start session
@@ -490,12 +433,6 @@ export function useCoachSession(
       hasStartedRef.current = false
       return
     }
-    /*
-    preloadSessionAudio(
-      session.instructionsAudio ?? session.instructionsAudioUrl,
-    )
-    preloadSessionAudio(session.workoutAudio ?? session.workoutAudioUrl)
-    */
 
     await geminiConnect(freshToken)
     addDebugEvent('initial live connected')
@@ -510,11 +447,8 @@ export function useCoachSession(
       hasStartedRef.current = false
       return
     }
-
-    //console.log('[useCoachSession] Session started, waiting for ringback...')
     await sleep(1000)
     stopRingback()
-    // console.log('[useCoachSession] Ringback stopped, starting gym ambience...')
 
     startGymAmbience(session.trainer?.ambience)
     setSessionStep(
@@ -604,129 +538,6 @@ export function useCoachSession(
     sendCoachPrompt('Jag är redo att höra instruktionerna.')
   }, [addDebugEvent, sendCoachPrompt, updateProfile])
 
-  /*
-  //──────────────────────
-  // Start workout
-  //──────────────────────
-  const startWorkout = useCallback(async () => {
-    pauseLive()
-    setSessionStep('playing_workout')
-
-    const workoutAudioUrl = session.workoutAudio ?? session.workoutAudioUrl
-
-    if (!workoutAudioUrl) {
-      setError(COACH_PROMPTS.NO_WORKOUT_AUDIO)
-      setSessionStep('error')
-      return
-    }
-
-    try {
-      const subtitleText = resolveWorkoutSubtitle()
-      setPlaybackSubtitle(subtitleText)
-      addCaptionParagraph(subtitleText)
-      addDebugEvent('play workout', workoutAudioUrl)
-      await startSessionAudio(workoutAudioUrl, {
-        onEnded: async () => {
-          workoutCompletedRef.current = true
-          setPlaybackSubtitle('')
-          allowAiOutput()
-          addDebugEvent('workout ended')
-          setSessionStep('collecting_feedback')
-
-          try {
-            const backendUserId = Number(userId)
-            const workoutId = Number(session.id)
-
-            if (
-              !Number.isInteger(backendUserId) ||
-              backendUserId <= 0 ||
-              !Number.isInteger(workoutId) ||
-              workoutId <= 0
-            ) {
-              throw new Error('Missing backend user or workout id')
-            }
-
-            const activityToken = await getToken()
-            if (!activityToken) {
-              throw new Error('Missing Clerk token')
-            }
-
-            const activityResult = await executeLiveToolCall(
-              {
-                name: 'create_activity_log',
-                args: {
-                  userId: backendUserId,
-                  workoutId,
-                  durationSeconds: session.durationSeconds,
-                },
-              },
-              { token: activityToken },
-            )
-            activityLogIdRef.current = getCreatedActivityLogId(activityResult)
-
-            addDebugEvent(
-              'create_activity_log',
-              JSON.stringify(activityResult?.response ?? {}),
-            )
-
-            if (!activityLogIdRef.current) {
-              throw new Error('Backend did not create an activity log')
-            }
-
-            void queryClient.invalidateQueries({ queryKey: ['my-progress'] })
-            void queryClient.invalidateQueries({ queryKey: ['calendar'] })
-
-            if (!getSession()) {
-              addDebugEvent('session timed out — reconnecting')
-              const connected = await connectFreshLive()
-              if (!connected) return
-            }
-
-            const started = await startAudioCapture()
-            setAudioCapturing(started)
-            addDebugEvent('mic after workout', started)
-
-            if (!started) {
-              setError('Kunde inte starta mikrofonen.')
-              setSessionStep('error')
-              return
-            }
-          } catch (e) {
-            addDebugEvent('activity save failed', String(e))
-            const connected = await connectFreshLive()
-            if (!connected) return
-            const started = await startAudioCapture()
-            setAudioCapturing(started)
-            addDebugEvent('mic after workout (fallback)', started)
-          }
-        },
-      })
-      addDebugEvent('play-started', 'workout')
-    } catch {
-      addDebugEvent('workout audio failed')
-      setError('Kunde inte spela upp workouten.')
-      setSessionStep('error')
-    }
-  }, [
-    pauseLive,
-    setSessionStep,
-    session.workoutAudio,
-    session.workoutAudioUrl,
-    session.id,
-    session.durationSeconds,
-    addDebugEvent,
-    addCaptionParagraph,
-    allowAiOutput,
-    resolveWorkoutSubtitle,
-    userId,
-    getSession,
-    startAudioCapture,
-    connectFreshLive,
-    queryClient,
-    getToken,
-  ])
-  */
-
   //──────────────────────
   // Finalize session
   //──────────────────────
@@ -749,9 +560,7 @@ export function useCoachSession(
       }
 
       try {
-        const workoutCompleted = workoutCompletedRef.current
-
-        if (workoutCompleted) {
+        if (workoutCompletedRef.current) {
           addDebugEvent('finish_session', 'workout completed - saving feedback')
           if (userId) {
             queryClient.setQueryData(['has-completed-today', userId], {
@@ -820,6 +629,8 @@ export function useCoachSession(
   // Sync latest callbacks into refs
   //──────────────────────
   useEffect(() => {
+    disconnectRef.current = disconnectLive
+    changeWorkoutRef.current = changeWorkout
     startWorkoutVideoRef.current = playInstructionsVideo
     updateUserNameRef.current = updateUserName
     updateIntensityLevelRef.current = updateIntensityLevel
@@ -828,12 +639,10 @@ export function useCoachSession(
     endOnboardingRef.current = endOnboarding
     startInstructionsRef.current = playInstructionsVideo
     finishedWorkoutRef.current = workoutCompleted
-    //startWorkoutRef.current = startWorkout
     finishSessionRef.current = finishSessionWithSummary
   }, [
     finishSessionWithSummary,
     playInstructionsVideo,
-    //startWorkout,
     updateIntensityLevel,
     updateUserContext,
     updateUserName,
@@ -852,34 +661,22 @@ export function useCoachSession(
     )
     stopRingback()
     addDebugEvent('manual end')
-    // clearVideoTimers()
     setShowInstructionsVideo(false)
     stopSessionAudio()
 
     disconnectLive()
     hasStartedRef.current = false
     setSessionStep('idle')
-  }, [
-    addDebugEvent,
-    // clearVideoTimers,
-    disconnectLive,
-    getAiPlaybackRemainingMs,
-    setSessionStep,
-  ])
+  }, [addDebugEvent, disconnectLive, getAiPlaybackRemainingMs, setSessionStep])
 
   const hangUp = useCallback(() => {
     stopRingback()
     addDebugEvent('hang up')
-    // clearVideoTimers()
     setShowInstructionsVideo(false)
     stopSessionAudio()
     disconnectLive()
     setSessionStep('idle')
-  }, [
-    addDebugEvent, // clearVideoTimers,
-    disconnectLive,
-    setSessionStep,
-  ])
+  }, [addDebugEvent, disconnectLive, setSessionStep])
 
   //──────────────────────
   // Cleanup on unmount
@@ -937,7 +734,6 @@ export function useCoachSession(
     debugEvents,
     isLoadingToken: tokenLoading,
     startSession,
-    //startWorkout,
     finishSession,
     endSession,
     hangUp,
@@ -950,7 +746,6 @@ export function useCoachSession(
     isSpeakerMuted,
     caption,
     captionDraft,
-    playbackSubtitle,
     captionsEnabled,
     toggleCaptions,
     captionHistory,
