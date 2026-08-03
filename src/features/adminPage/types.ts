@@ -1,32 +1,16 @@
 import type { ToastType } from '../../hooks/useToast.ts'
 
-export type TrainerOption = {
-  id: number
-  name: string
-}
-
 export type WorkoutForm = {
   name: string
   description: string
   dashboardName: string
   dashboardDescription: string
-  subtitleText: string
-  instructionsSubtitleText: string
+  instructions: string
+  guidance: string
   level: number
   type: string
-  durationSeconds: number
-  instructionsAudio: string
-  workoutAudio: string
-  instructionsImage: string
-  workoutImage: string
-  instructionsVideo: string
-  instructionsVideoStart: string
-  instructionsVideoStop: string
-  kneeFriendly: boolean
-  lowImpact: boolean
-  seated: boolean
-  beginnerFriendly: boolean
-  trainerId: string
+  image: string
+  video: string
 }
 
 export type WorkoutResponse = {
@@ -35,25 +19,13 @@ export type WorkoutResponse = {
   description?: string
   dashboardName?: string | null
   dashboardDescription?: string | null
-  subtitleText?: string | null
-  instructionsSubtitleText?: string | null
+  instructions?: string | null
+  guidance?: string | null
   level?: number
   type?: string
-  durationSeconds?: number
-  instructionsAudio?: string
-  workoutAudio?: string
-  instructionsImage?: string
-  workoutImage?: string
-  instructionsVideo?: string | null
-  instructionsVideoStart?: number | null
-  instructionsVideoStop?: number | null
-  kneeFriendly?: boolean
-  lowImpact?: boolean
-  seated?: boolean
-  beginnerFriendly?: boolean
-  trainer?: {
-    id?: number
-  } | null
+  image?: string | null
+  video?: string | null
+  enabled?: boolean
 }
 
 export type FeedbackRow = {
@@ -71,7 +43,7 @@ export type Workout = {
   name: string
   type?: string
   level?: number
-  durationSeconds?: number
+  enabled?: boolean
 }
 
 export type StatusFn = (

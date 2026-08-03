@@ -39,38 +39,37 @@ export default function useCurrentWorkout() {
   })
 
   const filteredWorkouts = useMemo(() => {
-    if (!trainerId || level == null) return []
+    if (level == null) return []
     const desiredLevel = Number(level)
+    const allWorkouts = workouts ?? []
 
-    const byTrainer = (workouts ?? []).filter(
-      (w: BackendWorkoutResponse) => w.trainer?.id === trainerId,
-    )
-
-    const exact = byTrainer.filter((w) => Number(w.level) === desiredLevel)
+    const exact = allWorkouts.filter((w) => Number(w.level) === desiredLevel)
     if (exact.length > 0) return exact
 
-    if (byTrainer.length === 0) return []
+    if (allWorkouts.length === 0) return []
 
     const levels = Array.from(
       new Set(
-        byTrainer.map((w) => Number(w.level)).filter((n) => Number.isFinite(n)),
+        allWorkouts
+          .map((w) => Number(w.level))
+          .filter((n) => Number.isFinite(n)),
       ),
     ).sort((a, b) => a - b)
 
     const lower = levels.filter((l) => l < desiredLevel)
     if (lower.length > 0) {
       const chosen = lower[lower.length - 1]
-      return byTrainer.filter((w) => Number(w.level) === chosen)
+      return allWorkouts.filter((w) => Number(w.level) === chosen)
     }
 
     const higher = levels.filter((l) => l > desiredLevel)
     if (higher.length > 0) {
       const chosen = higher[0]
-      return byTrainer.filter((w) => Number(w.level) === chosen)
+      return allWorkouts.filter((w) => Number(w.level) === chosen)
     }
 
     return []
-  }, [workouts, trainerId, level])
+  }, [workouts, level])
 
   const { data: completedTodayData } = useQuery<{ hasCompletedToday: boolean }>(
     {

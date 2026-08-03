@@ -49,16 +49,9 @@ export async function getTrainingContextHandler(args: LiveToolArgs) {
       completedWorkouts: progress.ok ? progress.data.completedWorkouts : [],
       workoutName: workout.ok ? workout.data.name : null,
       workoutInstructions: workout.ok ? workout.data.instructions : null,
+      workoutGuidance: workout.ok ? workout.data.guidance : null,
       workoutType: workout.ok ? workout.data.type : null,
       workoutLevel: workout.ok ? workout.data.level : null,
-      accessibility: workout.ok
-        ? {
-            kneeFriendly: workout.data.kneeFriendly ?? null,
-            lowImpact: workout.data.lowImpact ?? null,
-            seated: workout.data.seated ?? null,
-            beginnerFriendly: workout.data.beginnerFriendly ?? null,
-          }
-        : null,
     },
     note: 'Frontend called existing REST endpoints on the deployed backend. Backend has no Gemini or AI-dev orchestration here.',
   }

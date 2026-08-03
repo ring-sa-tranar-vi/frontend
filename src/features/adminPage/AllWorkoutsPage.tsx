@@ -137,8 +137,7 @@ export default function AllWorkoutsPage({
             <div>
               <p className="font-semibold">{workout.name}</p>
               <p className="text-xs text-(--brand-muted)">
-                {workout.type ?? 'No type'} • Level {workout.level ?? '-'} •{' '}
-                {workout.durationSeconds ?? '-'} sec
+                {workout.type ?? 'No type'} • Level {workout.level ?? '-'}
               </p>
             </div>
 

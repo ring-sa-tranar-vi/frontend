@@ -1,9 +1,4 @@
-import {
-  Clock3,
-  Headphones,
-  MessageSquareText,
-  ShieldCheck,
-} from 'lucide-react'
+import { Headphones, MessageSquareText } from 'lucide-react'
 import type { CoachCallSession } from '../types'
 import { useTranslation } from 'react-i18next'
 
@@ -42,15 +37,6 @@ export function ExercisePanel({ session }: ExercisePanelProps) {
   const instructions =
     session.instructions?.trim() || t('exercisePanel.noInstructions')
 
-  const durationSeconds = session.durationSeconds ?? 0
-
-  const tags = [
-    session.lowImpact ? t('exercisePanel.lowImpact') : null,
-    session.seated ? t('exercisePanel.seated') : null,
-    session.beginnerFriendly ? t('exercisePanel.beginnerFriendly') : null,
-    session.kneeFriendly ? t('exercisePanel.kneeFriendly') : null,
-  ].filter(Boolean)
-
   return (
     <div className="space-y-4">
       <InstructionCard
@@ -78,31 +64,6 @@ export function ExercisePanel({ session }: ExercisePanelProps) {
           {instructions}
         </p>
       </InstructionCard>
-
-      {durationSeconds > 0 ? (
-        <InstructionCard
-          label={t('exercisePanel.time')}
-          icon={<Clock3 size={20} strokeWidth={2.4} />}
-        >
-          <p className="text-lg leading-snug font-extrabold text-[#100b2f]">
-            {durationSeconds} {t('exercisePanel.seconds')}
-          </p>
-        </InstructionCard>
-      ) : null}
-
-      {tags.length > 0 ? (
-        <div className="flex flex-wrap gap-2">
-          {tags.map((tag) => (
-            <div
-              key={tag}
-              className="flex items-center gap-1.5 rounded-full bg-[#f4efff] px-3 py-2 text-xs font-extrabold text-[#5b3fd6]"
-            >
-              <ShieldCheck size={15} strokeWidth={2.4} />
-              {tag}
-            </div>
-          ))}
-        </div>
-      ) : null}
     </div>
   )
 }

@@ -63,7 +63,7 @@
     "openWorkouts": "ورک آؤٹس کھولیں",
     "totalWorkoutsSmall": "کل ورک آؤٹس",
     "withFeedback": "فیڈبیک کے ساتھ",
-    "avgDuration": "اوسط دورانیہ",
+    "avgDuration": "فعال ورک آؤٹس",
     "durationSeconds": "{{seconds}} سیکنڈ",
     "workoutsTip": "مشورہ: مکمل فہرست اور تفصیل کے لیے ورک آؤٹس ٹیب استعمال کریں۔",
     "totalLabel": "کل"
@@ -362,6 +362,8 @@
     "typePlaceholder": "STRENGTH",
     "workoutImage": "ورک آؤٹ تصویر URL",
     "urlPlaceholder": "https://example.com/image.png",
+    "instructions": "ہدایات",
+    "guidance": "رہنمائی",
     "moreFields": "مزید فیلڈز ▾",
     "instructionsImage": "ہدایات کی تصویر URL",
     "workoutAudio": "ورک آؤٹ آڈیو URL",

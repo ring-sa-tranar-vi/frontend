@@ -3,10 +3,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { LogIn, Menu, Phone } from 'lucide-react'
 import { SessionPage } from '../session/SessionPage'
 import { primeSessionAudio } from '../ai-conversation/audio/sessionAudio'
-import {
-  startRingback,
-  stopGymAmbience,
-} from '../ai-conversation/audio/ringback'
+import { stopGymAmbience } from '../ai-conversation/audio/ringback'
 import { coachCallSessionQueryOptions } from '../session/query'
 import { SignInButton, useAuth } from '@clerk/react'
 import SettingsModalSheet from './components/SettingsModalSheet'

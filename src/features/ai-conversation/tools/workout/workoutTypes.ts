@@ -1,26 +1,17 @@
-import type { Trainer } from '../../../session/types'
-
 export type BackendWorkoutResponse = {
   id: number
   name: string
   description?: string | null
+  dashboardName?: string | null
+  dashboardDescription?: string | null
   instructions?: string | null
+  guidance?: string | null
 
   level?: number | string | null
   type?: string | null
 
-  instructionsAudio?: string | null
-  workoutAudio?: string | null
-  instructionsImage?: string | null
-  workoutImage?: string | null
+  image?: string | null
+  video?: string | null
 
-  durationMinutes?: number | null
-  durationSeconds?: number | null
-
-  kneeFriendly?: boolean
-  lowImpact?: boolean
-  seated?: boolean
-  beginnerFriendly?: boolean
-
-  trainer?: Trainer | null
+  enabled?: boolean
 }

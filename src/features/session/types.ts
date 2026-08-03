@@ -42,32 +42,13 @@ export type CoachCallSession = {
   description?: string | null
   dashboardDescription?: string | null
   instructions?: string | null
-  subtitleText?: string | null
-  instructionsSubtitleText?: string | null
-  workoutInstructions?: string | null
-  workoutGuidance?: string | null
+  guidance?: string | null
 
   level?: number | string | null
   type?: string | null
 
-  instructionsAudio?: string | null
-  workoutAudio?: string | null
-  instructionsAudioUrl?: string | null
-  workoutAudioUrl?: string | null
-
-  instructionsImage?: string | null
-  workoutImage?: string | null
-
-  instructionsVideo?: string | null
-  instructionsVideoStart?: number | null
-  instructionsVideoStop?: number | null
-
-  kneeFriendly?: boolean
-  lowImpact?: boolean
-  seated?: boolean
-  beginnerFriendly?: boolean
-
-  durationSeconds: number
+  image?: string | null
+  video?: string | null
 
   trainer?: Trainer | null
 

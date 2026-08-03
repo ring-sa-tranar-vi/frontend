@@ -8,7 +8,6 @@ import type { CoachCallSession, SessionPanel } from './types'
 const LOADING_SESSION: CoachCallSession = {
   id: '',
   isAuthenticated: false,
-  durationSeconds: 0,
 }
 
 export function SessionPage({

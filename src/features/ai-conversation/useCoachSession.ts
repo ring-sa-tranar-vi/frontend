@@ -1,5 +1,3 @@
-import { useAuth } from '@clerk/react'
-import { type FunctionResponse } from '@google/genai'
 import { useQueryClient } from '@tanstack/react-query'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useCalendarEvents } from '../../hooks/useCalendarEvents'
@@ -22,7 +20,6 @@ import {
   normalizeCaptionText,
   normalizeLiveVoice,
   sleep,
-  splitCaptionParagraphs,
   waitForAIToFinishSpeaking,
   type AITurnState,
   type CoachSessionDebugEvent,
@@ -53,21 +50,6 @@ function mergeCaptionFragments(previous: string, next: string) {
   return `${current} ${incoming}`.replace(/\s+/g, ' ').trim()
 }
 
-function getCreatedActivityLogId(response: FunctionResponse) {
-  const responseBody = response.response
-
-  if (!responseBody || typeof responseBody !== 'object') return null
-
-  const output = (responseBody as Record<string, unknown>).output
-
-  if (!output || typeof output !== 'object') return null
-
-  const activityLogId = (output as Record<string, unknown>).activityLogId
-  return typeof activityLogId === 'number' && Number.isFinite(activityLogId)
-    ? activityLogId
-    : null
-}
-
 export function useCoachSession(
   options: UseCoachSessionOptions & {
     trainerId?: string
@@ -76,7 +58,6 @@ export function useCoachSession(
   },
 ) {
   const queryClient = useQueryClient()
-  const { getToken } = useAuth()
   const { session, autoStart = true } = options
 
   const {
@@ -135,7 +116,7 @@ export function useCoachSession(
   const [caption, setCaption] = useState<string | null>(null)
   const [captionDraft, setCaptionDraft] = useState<string>('')
   const [captionHistory, setCaptionHistory] = useState<string[]>([])
-  const [playbackSubtitle, setPlaybackSubtitle] = useState<string>('')
+  const [playbackSubtitle] = useState<string>('')
   // captions are per-call (ephemeral) — do not persist to localStorage
   const [captionsEnabled, setCaptionsEnabled] = useState<boolean>(false)
   const toggleCaptions = useCallback(() => setCaptionsEnabled((c) => !c), [])
@@ -233,59 +214,10 @@ export function useCoachSession(
       }),
     [isSignedIn, options.alreadyCompletedToday, session],
   )
-  const addCaptionParagraph = useCallback((text?: string | null) => {
-    const paragraphs = splitCaptionParagraphs(text)
-    if (paragraphs.length === 0) return
-
-    setCaptionHistory((current) => {
-      const next = [...current]
-      for (const paragraph of paragraphs) {
-        const last = next[next.length - 1]
-        if (last !== paragraph) {
-          next.push(paragraph)
-        }
-      }
-      return next.slice(-100)
-    })
-  }, [])
-
-  const resolveInstructionSubtitle = useCallback(() => {
-    return normalizeCaptionText(
-      session.instructionsSubtitleText ??
-        session.dashboardDescription ??
-        session.description ??
-        session.instructions ??
-        session.name,
-    )
-  }, [
-    session.description,
-    session.dashboardDescription,
-    session.instructions,
-    session.instructionsSubtitleText,
-    session.name,
-  ])
-
-  const resolveWorkoutSubtitle = useCallback(() => {
-    return normalizeCaptionText(
-      session.subtitleText ??
-        session.dashboardDescription ??
-        session.description ??
-        session.name,
-    )
-  }, [
-    session.description,
-    session.dashboardDescription,
-    session.name,
-    session.subtitleText,
-  ])
-
   const {
     geminiConnect,
     geminiDisconnect,
     startAudioCapture,
-    haltCapture,
-    suppressAiOutput,
-    allowAiOutput,
     isActive,
     connectionError,
     currentTurn,
@@ -373,18 +305,6 @@ export function useCoachSession(
   }, [geminiDisconnect])
 
   //──────────────────────
-  // Pause live audio capture
-  //──────────────────────
-  const pauseLive = useCallback(() => {
-    addDebugEvent('pauseAI-called', stepRef.current)
-    // Halt sending audio data to Gemini without closing the AudioContext or
-    // stopping media tracks — avoids OS audio session reconfiguration that
-    // would cause a brief dropout in the gym ambience.
-    haltCapture()
-    setAudioCapturing(false)
-  }, [addDebugEvent, currentTurn, haltCapture])
-
-  //──────────────────────
   // Disconnect live session
   //──────────────────────
   const disconnectLive = useCallback(() => {
@@ -393,25 +313,6 @@ export function useCoachSession(
     geminiDisconnect()
     setAudioCapturing(false)
   }, [addDebugEvent, geminiDisconnect])
-
-  //──────────────────────
-  // Connect with fresh token
-  //──────────────────────
-  const connectFreshLive = useCallback(async () => {
-    addDebugEvent('load live token', stepRef.current)
-    const freshToken = await loadToken()
-
-    if (!freshToken) {
-      setError(COACH_PROMPTS.NO_TOKEN_ERROR)
-      setSessionStep('error')
-      hasStartedRef.current = false
-      return
-    }
-
-    addDebugEvent('connect live', stepRef.current)
-    await geminiConnect(freshToken)
-    return true
-  }, [addDebugEvent, geminiConnect, loadToken, setSessionStep])
 
   //──────────────────────
   // Send prompt to Gemini
@@ -468,32 +369,15 @@ export function useCoachSession(
   //──────────────────────
 
   const playInstructionsVideo = useCallback(() => {
-    const videoUrl = session.instructionsVideo
-    const videoStart = session.instructionsVideoStart
-    const videoStop = session.instructionsVideoStop
+    const videoUrl = session.video
 
-    addDebugEvent(
-      'video-fields',
-      `url=${String(videoUrl)} start=${String(videoStart)} stop=${String(videoStop)}`,
-    )
+    addDebugEvent('video-fields', `url=${String(videoUrl)}`)
 
-    if (videoUrl && videoStart != null && videoStop != null) {
-      const t1 = window.setTimeout(() => {
-        addDebugEvent('instructions video show')
-        setShowInstructionsVideo(true)
-      }, videoStart * 1000)
-      const t2 = window.setTimeout(() => {
-        addDebugEvent('instructions video hide')
-        setShowInstructionsVideo(false)
-      }, videoStop * 1000)
-      videoTimersRef.current = [t1, t2]
+    if (videoUrl) {
+      addDebugEvent('instructions video show')
+      setShowInstructionsVideo(true)
     }
-  }, [
-    addDebugEvent,
-    session.instructionsVideo,
-    session.instructionsVideoStart,
-    session.instructionsVideoStop,
-  ])
+  }, [addDebugEvent, session.video])
 
   //──────────────────────
   // Workout completed
@@ -642,11 +526,7 @@ export function useCoachSession(
     geminiConnect,
     loadToken,
     sendCoachPrompt,
-    session.instructionsAudio,
-    session.instructionsAudioUrl,
     session.trainer?.ambience,
-    session.workoutAudio,
-    session.workoutAudioUrl,
     setSessionStep,
     startAudioCapture,
   ])
@@ -858,7 +738,7 @@ export function useCoachSession(
   // Finish session with summary
   //──────────────────────
   const finishSessionWithSummary = useCallback(
-    async (summary = '', suggestions?: ProfileSuggestions) => {
+    async (_summary = '', suggestions?: ProfileSuggestions) => {
       stopSessionAudio()
 
       if (!isSignedIn) {
