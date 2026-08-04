@@ -91,6 +91,7 @@ export interface ToolExecutionContext {
   finishSessionRef: RefObject<
     (summary?: string, suggestions?: ProfileSuggestions) => void
   >
+  finishedWorkoutRef: RefObject<() => void>
 
   startWorkoutVideoRef: RefObject<() => void>
   updateUserNameRef: RefObject<(userName: string) => Promise<void>>
