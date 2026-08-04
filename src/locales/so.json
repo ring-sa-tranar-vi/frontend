@@ -63,7 +63,7 @@
     "openWorkouts": "Fur jimicsiyada",
     "totalWorkoutsSmall": "Wadarta jimicsiyada",
     "withFeedback": "Leh jawaab celin",
-    "avgDuration": "Celcelis muddada",
+    "avgDuration": "Jimicsiyada shaqeynaya",
     "durationSeconds": "{{seconds}} ilbiriqsi",
     "workoutsTip": "Talo: Isticmaal tabka Jimicsiyada si aad u aragto liiska oo dhan iyo faahfaahinta.",
     "totalLabel": "WADARTA"
@@ -375,6 +375,8 @@
     "typePlaceholder": "XOOG",
     "workoutImage": "URL sawirka jimicsiga",
     "urlPlaceholder": "https://example.com/image.png",
+    "instructions": "Tilmaamaha",
+    "guidance": "Hagitaanka",
     "moreFields": "Goobo dheeraad ah ▾",
     "instructionsImage": "URL sawirka tilmaamaha",
     "workoutAudio": "URL codka jimicsiga",

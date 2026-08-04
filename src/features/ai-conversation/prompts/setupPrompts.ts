@@ -1,6 +1,5 @@
-import { Type, type ToolListUnion } from '@google/genai'
-import type { CoachCallSession } from '../../session/types'
 import type { CalendarActivity } from '../../HomePage/components/menu/types'
+import type { CoachCallSession } from '../../session/types'
 
 export function buildUserContext(
   session: CoachCallSession,
@@ -24,11 +23,11 @@ export function buildUserContext(
   if (workoutName) {
     parts.push(`Dagens pass heter "${workoutName}".`)
   }
-  if (session.workoutInstructions?.trim()) {
-    parts.push(`Passets INSTRUKTIONER: ${session.workoutInstructions.trim()}`)
+  if (session.instructions?.trim()) {
+    parts.push(`Passets INSTRUKTIONER: ${session.instructions.trim()}`)
   }
-  if (session.workoutGuidance?.trim()) {
-    parts.push(`Passets GUIDNING: ${session.workoutGuidance.trim()}`)
+  if (session.guidance?.trim()) {
+    parts.push(`Passets GUIDNING: ${session.guidance.trim()}`)
   }
   const activities = calendarEvents?.filter((e) => !e.completed).map((e) => e)
 
@@ -62,11 +61,11 @@ export function buildGuestContext(session: CoachCallSession): string {
   if (workoutName) {
     parts.push(`Dagens pass heter "${workoutName}".`)
   }
-  if (session.workoutInstructions?.trim()) {
-    parts.push(`Passets INSTRUKTIONER: ${session.workoutInstructions.trim()}`)
+  if (session.instructions?.trim()) {
+    parts.push(`Passets INSTRUKTIONER: ${session.instructions.trim()}`)
   }
-  if (session.workoutGuidance?.trim()) {
-    parts.push(`Passets GUIDNING: ${session.workoutGuidance.trim()}`)
+  if (session.guidance?.trim()) {
+    parts.push(`Passets GUIDNING: ${session.guidance.trim()}`)
   }
   return parts.join(' ')
 }

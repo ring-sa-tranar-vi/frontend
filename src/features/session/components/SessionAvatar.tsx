@@ -75,26 +75,24 @@ export default function SessionAvatar({
               alt={name}
               className="absolute inset-0 h-full w-full rounded-full object-cover transition-opacity duration-1000"
               style={{
-                opacity:
-                  showInstructionsVideo && session.instructionsVideo ? 0 : 1,
+                opacity: showInstructionsVideo && session.video ? 0 : 1,
               }}
             />
           ) : (
             <div
               className="absolute inset-0 flex items-center justify-center rounded-full bg-[#e8e1f8] text-[#5b3fd6] transition-opacity duration-1000"
               style={{
-                opacity:
-                  showInstructionsVideo && session.instructionsVideo ? 0 : 1,
+                opacity: showInstructionsVideo && session.video ? 0 : 1,
               }}
             >
               <UserRound size={56} strokeWidth={1.8} />
             </div>
           )}
 
-          {session.instructionsVideo && (
+          {session.video && (
             <video
               ref={videoRef}
-              src={session.instructionsVideo}
+              src={session.video}
               loop
               playsInline
               preload="auto"

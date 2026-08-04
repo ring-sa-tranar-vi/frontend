@@ -63,7 +63,7 @@
     "openWorkouts": "பயிற்சிகளை திற",
     "totalWorkoutsSmall": "மொத்த பயிற்சிகள்",
     "withFeedback": "கருத்துடன்",
-    "avgDuration": "சராசரி நேரம்",
+    "avgDuration": "செயல்படுத்தப்பட்ட பயிற்சிகள்",
     "durationSeconds": "{{seconds}} வினாடி",
     "workoutsTip": "உதவி: முழு பட்டியலை திருத்தவும் விவரங்களையும் காணவும் பயிற்சி தாவலை பயன்படுத்தவும்.",
     "totalLabel": "மொத்தம்"
@@ -376,6 +376,8 @@
     "typePlaceholder": "STRENGTH",
     "workoutImage": "பயிற்சி பட URL",
     "urlPlaceholder": "https://example.com/image.png",
+    "instructions": "வழிமுறைகள்",
+    "guidance": "வழிகாட்டுதல்",
     "moreFields": "மேலும் புலங்கள் ▾",
     "instructionsImage": "வழிமுறை படம் URL",
     "workoutAudio": "பயிற்சி ஆடியோ URL",

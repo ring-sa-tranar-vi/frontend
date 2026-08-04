@@ -8,7 +8,6 @@ import type { CoachCallSession, SessionPanel } from './types'
 const LOADING_SESSION: CoachCallSession = {
   id: '',
   isAuthenticated: false,
-  durationSeconds: 0,
 }
 
 export function SessionPage({
@@ -95,7 +94,6 @@ function ReadySessionPage({
     toggleSpeakerMuted,
     caption,
     captionDraft,
-    playbackSubtitle,
     captionsEnabled,
     toggleCaptions,
     captionHistory,
@@ -166,7 +164,6 @@ function ReadySessionPage({
       onToggleSpeakerMuted={toggleSpeakerMuted}
       caption={caption}
       captionDraft={captionDraft}
-      playbackSubtitle={playbackSubtitle}
       captionsEnabled={captionsEnabled}
       onToggleCaptions={toggleCaptions}
       captionHistory={captionHistory}

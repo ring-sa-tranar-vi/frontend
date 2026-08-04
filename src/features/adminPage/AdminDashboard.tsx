@@ -218,18 +218,10 @@ export default function AdminDashboard({
       .slice(0, 4)
   }, [feedbackSummary])
 
-  const totalDuration = useMemo(
-    () =>
-      workouts.reduce(
-        (sum, workout) => sum + (workout.durationSeconds ?? 0),
-        0,
-      ),
+  const enabledWorkoutCount = useMemo(
+    () => workouts.filter((workout) => workout.enabled !== false).length,
     [workouts],
   )
-
-  const averageDuration = workouts.length
-    ? Math.round(totalDuration / workouts.length)
-    : 0
 
   const normalizedSearch = searchTerm.trim().toLowerCase()
   const filteredRecentFeedbacks = useMemo(() => {
@@ -524,9 +516,7 @@ export default function AdminDashboard({
               {t('admin.avgDuration')}
             </p>
             <p className="mt-2 text-3xl font-extrabold text-[#100b2f]">
-              {averageDuration > 0
-                ? t('admin.durationSeconds', { seconds: averageDuration })
-                : '—'}
+              {enabledWorkoutCount}
             </p>
           </div>
         </div>

@@ -1,38 +1,19 @@
 import { getJson } from '../../lib/api/fetcher'
 import type { CoachCallSession, Trainer } from './types'
 
-type BackendWorkoutResponse = {
+export type BackendWorkoutResponse = {
   id: number
   name: string
   description?: string | null
   dashboardName?: string | null
   dashboardDescription?: string | null
   instructions?: string | null
-  subtitleText?: string | null
-  instructionsSubtitleText?: string | null
+  guidance?: string | null
   level?: number | string | null
   type?: string | null
 
-  instructionsAudio?: string | null
-  workoutAudio?: string | null
-  instructionsImage?: string | null
-  workoutImage?: string | null
-  instructionsVideo?: string | null
-  instructionsVideoStart?: number | null
-  instructionsVideoStop?: number | null
-
-  workoutInstructions?: string | null
-  workoutGuidance?: string | null
-
-  durationMinutes?: number | null
-  durationSeconds?: number | null
-
-  kneeFriendly?: boolean
-  lowImpact?: boolean
-  seated?: boolean
-  beginnerFriendly?: boolean
-
-  trainer?: ({ id: number } & Partial<Trainer>) | null
+  image?: string | null
+  video?: string | null
 }
 export type BackendTrainerResponse = {
   id: number
@@ -89,18 +70,6 @@ function toTrainerSummary(
     imageStart: trainer.imageStart ?? null,
     ambience: trainer.ambience ?? null,
   }
-}
-
-function toDurationSeconds(workout: BackendWorkoutResponse) {
-  if (typeof workout.durationSeconds === 'number') {
-    return workout.durationSeconds
-  }
-
-  if (typeof workout.durationMinutes === 'number') {
-    return workout.durationMinutes * 60
-  }
-
-  return 0
 }
 
 export async function getTrainers(
@@ -160,8 +129,7 @@ export async function getCoachCallSession(
     }
   }
 
-  const resolvedTrainerId =
-    workout?.trainer?.id ?? user?.trainerId ?? DEFAULT_TRAINER_ID
+  const resolvedTrainerId = user?.trainerId ?? DEFAULT_TRAINER_ID
 
   let trainer: BackendTrainerResponse | null = null
 
@@ -203,31 +171,13 @@ export async function getCoachCallSession(
         workout.dashboardDescription ??
         workout.description)
       : undefined,
-    workoutInstructions: workout?.workoutInstructions,
-    workoutGuidance: workout?.workoutGuidance,
-    subtitleText: workout?.subtitleText,
-    instructionsSubtitleText: workout?.instructionsSubtitleText,
+    guidance: workout?.guidance,
 
     level: workout?.level,
     type: workout?.type,
 
-    instructionsAudio: workout?.instructionsAudio,
-    workoutAudio: workout?.workoutAudio,
-    instructionsAudioUrl: workout?.instructionsAudio,
-    workoutAudioUrl: workout?.workoutAudio,
-
-    instructionsImage: workout?.instructionsImage,
-    workoutImage: workout?.workoutImage,
-    instructionsVideo: workout?.instructionsVideo,
-    instructionsVideoStart: workout?.instructionsVideoStart,
-    instructionsVideoStop: workout?.instructionsVideoStop,
-
-    kneeFriendly: workout?.kneeFriendly,
-    lowImpact: workout?.lowImpact,
-    seated: workout?.seated,
-    beginnerFriendly: workout?.beginnerFriendly,
-
-    durationSeconds: workout ? toDurationSeconds(workout) : 0,
+    image: workout?.image,
+    video: workout?.video,
 
     trainer: resolvedTrainer,
 

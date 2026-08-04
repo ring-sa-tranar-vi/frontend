@@ -1,9 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@clerk/react'
 import { useCreateWorkout } from '../../hooks/useCreateWorkoutHook'
-import { fetchTrainersWithToken } from '../../api/trainers'
-import type { StatusFn, TrainerOption, WorkoutForm } from './types.ts'
+import type { StatusFn, WorkoutForm } from './types.ts'
 
 type Props = {
   onBack?: () => void
@@ -11,6 +10,7 @@ type Props = {
 }
 
 const isValidUrl = (url: string): boolean => {
+  if (!url) return true
   try {
     new URL(url)
     return true
@@ -27,71 +27,17 @@ export default function AddWorkoutPage({ onBack, onStatusChange }: Props) {
     description: '',
     dashboardName: '',
     dashboardDescription: '',
-    subtitleText: '',
-    instructionsSubtitleText: '',
+    instructions: '',
+    guidance: '',
     level: 2,
     type: '',
-    durationSeconds: 0,
-    instructionsAudio: '',
-    workoutAudio: '',
-    instructionsImage: '',
-    workoutImage: '',
-    instructionsVideo: '',
-    instructionsVideoStart: '',
-    instructionsVideoStop: '',
-    kneeFriendly: false,
-    lowImpact: false,
-    seated: false,
-    beginnerFriendly: false,
-    trainerId: '',
+    image: '',
+    video: '',
   })
   const { mutateAsync, isPending } = useCreateWorkout(getToken)
   const [errors, setErrors] = useState<string[]>([])
   const [success, setSuccess] = useState(false)
-  const [trainers, setTrainers] = useState<TrainerOption[]>([])
-  const [trainersLoading, setTrainersLoading] = useState(true)
-  const [trainersError, setTrainersError] = useState('')
   const isSubmitting = isPending
-
-  useEffect(() => {
-    let isMounted = true
-
-    async function loadTrainers() {
-      try {
-        setTrainersLoading(true)
-        const token = await getToken()
-
-        if (!token) {
-          throw new Error('Missing Clerk token')
-        }
-
-        const data = await fetchTrainersWithToken(token)
-
-        if (!isMounted) return
-
-        setTrainers(Array.isArray(data) ? data : [])
-        setTrainersError('')
-      } catch (error) {
-        if (!isMounted) return
-
-        console.error(error)
-        setTrainersError(t('workoutsAdmin.trainersLoadFailed'))
-        onStatusChange?.(t('workoutsAdmin.trainersLoadFailed'), {
-          type: 'error',
-        })
-      } finally {
-        if (isMounted) {
-          setTrainersLoading(false)
-        }
-      }
-    }
-
-    loadTrainers()
-
-    return () => {
-      isMounted = false
-    }
-  }, [getToken, onStatusChange, t])
 
   const handleChange = (
     e: React.ChangeEvent<
@@ -100,12 +46,7 @@ export default function AddWorkoutPage({ onBack, onStatusChange }: Props) {
   ) => {
     const { name, value, type } = e.target
 
-    let newValue =
-      type === 'checkbox'
-        ? (e.target as HTMLInputElement).checked
-        : type === 'number'
-          ? Number(value)
-          : value
+    let newValue = type === 'number' ? Number(value) : value
 
     // Constrain level to 0-4
     if (name === 'level' && typeof newValue === 'number') {
@@ -125,42 +66,12 @@ export default function AddWorkoutPage({ onBack, onStatusChange }: Props) {
     if (!form.description)
       newErrors.push(t('workoutsAdmin.validation.descriptionRequired'))
     if (!form.type) newErrors.push(t('workoutsAdmin.validation.typeRequired'))
-    if (form.durationSeconds <= 0)
-      newErrors.push(t('workoutsAdmin.validation.durationPositive'))
     if (form.level < 0 || form.level > 4)
       newErrors.push(t('workoutsAdmin.validation.levelRange'))
-    if (!form.trainerId)
-      newErrors.push(t('workoutsAdmin.validation.trainerRequired'))
-    if (!form.instructionsAudio)
-      newErrors.push(t('workoutsAdmin.validation.instructionsAudioRequired'))
-    else if (!isValidUrl(form.instructionsAudio))
-      newErrors.push(t('workoutsAdmin.validation.instructionsAudioUrl'))
-    if (!form.workoutAudio)
-      newErrors.push(t('workoutsAdmin.validation.workoutAudioRequired'))
-    else if (!isValidUrl(form.workoutAudio))
-      newErrors.push(t('workoutsAdmin.validation.workoutAudioUrl'))
-    if (!form.instructionsImage)
-      newErrors.push(t('workoutsAdmin.validation.instructionsImageRequired'))
-    else if (!isValidUrl(form.instructionsImage))
-      newErrors.push(t('workoutsAdmin.validation.instructionsImageUrl'))
-    if (!form.workoutImage)
-      newErrors.push(t('workoutsAdmin.validation.workoutImageRequired'))
-    else if (!isValidUrl(form.workoutImage))
+    if (!isValidUrl(form.image))
       newErrors.push(t('workoutsAdmin.validation.workoutImageUrl'))
-
-    if (form.instructionsVideo && !isValidUrl(form.instructionsVideo))
+    if (!isValidUrl(form.video))
       newErrors.push(t('workoutsAdmin.validation.instructionsVideoUrl'))
-
-    const start =
-      form.instructionsVideoStart !== ''
-        ? Number(form.instructionsVideoStart)
-        : null
-    const stop =
-      form.instructionsVideoStop !== ''
-        ? Number(form.instructionsVideoStop)
-        : null
-    if (start !== null && stop !== null && start >= stop)
-      newErrors.push(t('workoutsAdmin.validation.videoStartBeforeStop'))
 
     setErrors(newErrors)
     return newErrors.length === 0
@@ -180,31 +91,12 @@ export default function AddWorkoutPage({ onBack, onStatusChange }: Props) {
         description: form.description,
         dashboardName: form.dashboardName || null,
         dashboardDescription: form.dashboardDescription || null,
-        subtitleText: form.subtitleText || null,
-        instructionsSubtitleText: form.instructionsSubtitleText || null,
+        instructions: form.instructions || null,
+        guidance: form.guidance || null,
         level: form.level,
         type: form.type,
-        durationSeconds: form.durationSeconds,
-        instructionsAudio: form.instructionsAudio,
-        workoutAudio: form.workoutAudio,
-        instructionsImage: form.instructionsImage,
-        workoutImage: form.workoutImage,
-        instructionsVideo: form.instructionsVideo || null,
-        instructionsVideoStart:
-          form.instructionsVideoStart !== ''
-            ? Number(form.instructionsVideoStart)
-            : null,
-        instructionsVideoStop:
-          form.instructionsVideoStop !== ''
-            ? Number(form.instructionsVideoStop)
-            : null,
-        kneeFriendly: form.kneeFriendly,
-        lowImpact: form.lowImpact,
-        seated: form.seated,
-        beginnerFriendly: form.beginnerFriendly,
-        trainer: {
-          id: Number(form.trainerId),
-        },
+        image: form.image || null,
+        video: form.video || null,
       })
 
       setSuccess(true)
@@ -271,33 +163,6 @@ export default function AddWorkoutPage({ onBack, onStatusChange }: Props) {
 
               <label className="flex flex-col gap-1">
                 <span className="text-sm opacity-80">
-                  {t('workoutsAdmin.trainer')} *
-                </span>
-                <select
-                  name="trainerId"
-                  value={form.trainerId}
-                  onChange={handleChange}
-                  disabled={trainersLoading}
-                  className="rounded-lg border border-(--brand-border) bg-white p-3 focus:ring-2 focus:ring-(--brand-primary) focus:outline-none"
-                >
-                  <option value="">
-                    {trainersLoading
-                      ? t('workoutsAdmin.loadingTrainers')
-                      : t('workoutsAdmin.chooseTrainer')}
-                  </option>
-                  {trainers.map((trainer) => (
-                    <option key={trainer.id} value={trainer.id}>
-                      {trainer.name}
-                    </option>
-                  ))}
-                </select>
-                {trainersError && (
-                  <span className="text-sm text-red-600">{trainersError}</span>
-                )}
-              </label>
-
-              <label className="flex flex-col gap-1">
-                <span className="text-sm opacity-80">
                   {t('workoutsAdmin.level')} *
                 </span>
                 <input
@@ -307,20 +172,6 @@ export default function AddWorkoutPage({ onBack, onStatusChange }: Props) {
                   onChange={handleChange}
                   min="0"
                   max="4"
-                  className="rounded-lg border border-(--brand-border) bg-white p-3"
-                />
-              </label>
-
-              <label className="flex flex-col gap-1 md:col-span-2">
-                <span className="text-sm opacity-80">
-                  {t('workoutsAdmin.duration')} *
-                </span>
-                <input
-                  type="number"
-                  name="durationSeconds"
-                  value={form.durationSeconds}
-                  onChange={handleChange}
-                  min="0"
                   className="rounded-lg border border-(--brand-border) bg-white p-3"
                 />
               </label>
@@ -349,12 +200,11 @@ export default function AddWorkoutPage({ onBack, onStatusChange }: Props) {
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <label className="flex flex-col gap-1">
               <span className="text-sm opacity-80">
-                Workout audio subtitle text
+                {t('workoutsAdmin.instructions')}
               </span>
               <textarea
-                name="subtitleText"
-                placeholder="Example: subtitles for the workout audio in the language spoken during the workout"
-                value={form.subtitleText}
+                name="instructions"
+                value={form.instructions}
                 onChange={handleChange}
                 className="min-h-[120px] rounded-lg border border-(--brand-border) bg-white p-3"
               />
@@ -362,17 +212,17 @@ export default function AddWorkoutPage({ onBack, onStatusChange }: Props) {
 
             <label className="flex flex-col gap-1">
               <span className="text-sm opacity-80">
-                Instructions audio subtitle text
+                {t('workoutsAdmin.guidance')}
               </span>
               <textarea
-                name="instructionsSubtitleText"
-                placeholder="Example: subtitles for the instructions audio in the language spoken during the instructions"
-                value={form.instructionsSubtitleText}
+                name="guidance"
+                value={form.guidance}
                 onChange={handleChange}
                 className="min-h-[120px] rounded-lg border border-(--brand-border) bg-white p-3"
               />
             </label>
           </div>
+
           {/* Dashboard Display (English) */}
           <div>
             <h2 className="mb-1 text-xl font-semibold">
@@ -419,12 +269,12 @@ export default function AddWorkoutPage({ onBack, onStatusChange }: Props) {
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <label className="flex flex-col gap-1">
                 <span className="text-sm opacity-80">
-                  {t('workoutsAdmin.instructionsAudio')} *
+                  {t('workoutsAdmin.workoutImage')}
                 </span>
                 <input
-                  name="instructionsAudio"
+                  name="image"
                   placeholder={t('workoutsAdmin.urlPlaceholder')}
-                  value={form.instructionsAudio}
+                  value={form.image}
                   onChange={handleChange}
                   className="rounded-lg border border-(--brand-border) bg-white p-3"
                 />
@@ -432,119 +282,16 @@ export default function AddWorkoutPage({ onBack, onStatusChange }: Props) {
 
               <label className="flex flex-col gap-1">
                 <span className="text-sm opacity-80">
-                  {t('workoutsAdmin.workoutAudio')} *
+                  {t('workoutsAdmin.videoPlaceholder')}
                 </span>
                 <input
-                  name="workoutAudio"
-                  placeholder={t('workoutsAdmin.urlPlaceholder')}
-                  value={form.workoutAudio}
-                  onChange={handleChange}
-                  className="rounded-lg border border-(--brand-border) bg-white p-3"
-                />
-              </label>
-
-              <label className="flex flex-col gap-1">
-                <span className="text-sm opacity-80">
-                  {t('workoutsAdmin.instructionsImage')} *
-                </span>
-                <input
-                  name="instructionsImage"
-                  placeholder={t('workoutsAdmin.urlPlaceholder')}
-                  value={form.instructionsImage}
-                  onChange={handleChange}
-                  className="rounded-lg border border-(--brand-border) bg-white p-3"
-                />
-              </label>
-
-              <label className="flex flex-col gap-1">
-                <span className="text-sm opacity-80">
-                  {t('workoutsAdmin.workoutImage')} *
-                </span>
-                <input
-                  name="workoutImage"
-                  placeholder={t('workoutsAdmin.urlPlaceholder')}
-                  value={form.workoutImage}
-                  onChange={handleChange}
-                  className="rounded-lg border border-(--brand-border) bg-white p-3"
-                />
-              </label>
-
-              <label className="flex flex-col gap-1 md:col-span-2">
-                <span className="text-sm opacity-80">
-                  {t('workoutsAdmin.instructionsVideoOptional')}
-                </span>
-                <input
-                  name="instructionsVideo"
+                  name="video"
                   placeholder={t('workoutsAdmin.videoPlaceholder')}
-                  value={form.instructionsVideo}
+                  value={form.video}
                   onChange={handleChange}
                   className="rounded-lg border border-(--brand-border) bg-white p-3"
                 />
               </label>
-
-              <label className="flex flex-col gap-1">
-                <span className="text-sm opacity-80">
-                  {t('workoutsAdmin.videoStartSeconds')}
-                </span>
-                <input
-                  name="instructionsVideoStart"
-                  inputMode="numeric"
-                  pattern="[0-9]*"
-                  placeholder={t('workoutsAdmin.videoStartPlaceholder')}
-                  value={form.instructionsVideoStart}
-                  onChange={handleChange}
-                  className="rounded-lg border border-(--brand-border) bg-white p-3"
-                />
-              </label>
-
-              <label className="flex flex-col gap-1">
-                <span className="text-sm opacity-80">
-                  {t('workoutsAdmin.videoStopSeconds')}
-                </span>
-                <input
-                  name="instructionsVideoStop"
-                  inputMode="numeric"
-                  pattern="[0-9]*"
-                  placeholder={t('workoutsAdmin.videoStopPlaceholder')}
-                  value={form.instructionsVideoStop}
-                  onChange={handleChange}
-                  className="rounded-lg border border-(--brand-border) bg-white p-3"
-                />
-              </label>
-            </div>
-          </div>
-
-          {/* Options */}
-          <div>
-            <h2 className="mb-4 text-xl font-semibold">
-              {t('workoutsAdmin.options')}
-            </h2>
-            <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-              {[
-                {
-                  name: 'kneeFriendly',
-                  label: t('exercisePanel.kneeFriendly'),
-                },
-                { name: 'lowImpact', label: t('exercisePanel.lowImpact') },
-                { name: 'seated', label: t('exercisePanel.seated') },
-                {
-                  name: 'beginnerFriendly',
-                  label: t('exercisePanel.beginnerFriendly'),
-                },
-              ].map((item) => (
-                <label
-                  key={item.name}
-                  className="flex cursor-pointer items-center gap-2 rounded-lg border border-(--brand-border) bg-(--brand-surface-glass) p-3 hover:border-(--brand-primary)"
-                >
-                  <input
-                    type="checkbox"
-                    name={item.name}
-                    checked={form[item.name as keyof WorkoutForm] as boolean}
-                    onChange={handleChange}
-                  />
-                  {item.label}
-                </label>
-              ))}
             </div>
           </div>
 
