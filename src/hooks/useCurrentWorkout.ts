@@ -16,7 +16,7 @@ type RecommendedWorkoutResponse = {
 
 export default function useCurrentWorkout() {
   const { getToken, isSignedIn } = useAuth()
-  const { trainerId, level, userId } = useCurrentUser()
+  const { level, userId } = useCurrentUser()
 
   const {
     data: workouts = [] as BackendWorkoutResponse[],
@@ -66,27 +66,23 @@ export default function useCurrentWorkout() {
     : false
 
   const { data: recommendation } = useQuery<RecommendedWorkoutResponse>({
-    queryKey: ['recommended-workout', trainerId, userId, level],
+    queryKey: ['recommended-workout', userId, level],
     queryFn: async () => {
       if (DEBUG) {
         console.debug('[useCurrentWorkout] fetching recommendation', {
-          trainerId,
           userId,
           level,
         })
       }
-      if (!trainerId || !userId || level == null) {
+      if (!userId || level == null) {
         console.log(
           '[useCurrentWorkout] Missing required parameters for recommendation',
           {
-            trainerId,
             userId,
             level,
           },
         )
-        throw new Error(
-          'Cannot fetch recommendation without trainerId, userId, and level',
-        )
+        throw new Error('Cannot fetch recommendation without userId and level')
       }
 
       const rawToken = isSignedIn ? await getToken() : undefined
@@ -101,7 +97,6 @@ export default function useCurrentWorkout() {
     },
     enabled:
       isSignedIn &&
-      !!trainerId &&
       !!userId &&
       level != null &&
       (!DAILY_WORKOUT_LIMIT_ENABLED || !alreadyCompletedToday),
@@ -131,7 +126,6 @@ export default function useCurrentWorkout() {
 
   if (DEBUG) {
     console.debug('[useCurrentWorkout] state', {
-      trainerId,
       userId,
       currentWorkout,
       recommendedWorkoutReasoning,
