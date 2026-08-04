@@ -95,7 +95,7 @@ export default function useCurrentWorkout() {
         throw new Error('Cannot fetch recommendation without token')
       }
       return await getJson<RecommendedWorkoutResponse>(
-        `/api/trainers/${trainerId}/recommend-for/${userId}`,
+        `/api/trainers/recommend-for/${userId}`,
         { token },
       )
     },
