@@ -593,10 +593,6 @@ function SettingsModalBody({
       <OrganisationApplicationSheet
         open={open && applicationOpen}
         onBack={() => setApplicationOpen(false)}
-        onBackToMenu={() => {
-          setApplicationOpen(false)
-          setEventsOpen(false)
-        }}
         onClose={() => {
           setApplicationOpen(false)
           setEventsOpen(false)

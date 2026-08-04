@@ -198,8 +198,7 @@
         "error": "The application could not be sent. Try again.",
         "successTitle": "Application sent",
         "successText": "We will get back to you when the application has been reviewed.",
-        "backToOrganisations": "Back to organisations",
-        "backToMenu": "Back to the menu"
+        "backToOrganisations": "Back to organisations"
       }
     },
     "calendar": {

@@ -198,8 +198,7 @@
         "error": "Ansökan kunde inte skickas. Försök igen.",
         "successTitle": "Ansökan är skickad",
         "successText": "Vi återkommer när ansökan har granskats.",
-        "backToOrganisations": "Tillbaka till organisationer",
-        "backToMenu": "Tillbaka till menyn"
+        "backToOrganisations": "Tillbaka till organisationer"
       }
     },
     "calendar": {
