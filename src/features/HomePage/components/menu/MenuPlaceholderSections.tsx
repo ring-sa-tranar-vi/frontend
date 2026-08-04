@@ -3,8 +3,14 @@ import CallbackSchedulerSection from './CallbackSchedulerSection'
 import MenuCalendarSection from './MenuCalendarSection'
 import PhysicalEventsSection from './PhysicalEventsSection'
 import { useActivitySummary } from '../../../../hooks/useActivitySummary'
+import { useEventsAndOrganisations } from '../../../../hooks/useEventsAndOrganisations'
 import { menuPlaceholderData } from './placeholderData'
-import type { CallbackRequest, MenuPlaceholderData } from './types'
+import type {
+  CalendarActivity,
+  CallbackRequest,
+  MenuPlaceholderData,
+} from './types'
+import { useMemo } from 'react'
 
 export default function MenuPlaceholderSections({
   data = menuPlaceholderData,
@@ -18,6 +24,45 @@ export default function MenuPlaceholderSections({
   dataEnabled?: boolean
 }) {
   const activityQuery = useActivitySummary(dataEnabled)
+  const calendarAttendance = useEventsAndOrganisations(dataEnabled, {
+    fetchEvents: false,
+    fetchOrganisations: false,
+    fetchFollowing: false,
+  })
+
+  const attendedEventsById = useMemo(
+    () =>
+      new Map(
+        (calendarAttendance.attendingQuery.data ?? []).map((event) => [
+          String(event.id),
+          event,
+        ]),
+      ),
+    [calendarAttendance.attendingQuery.data],
+  )
+  const calendarEventIds = useMemo(
+    () => new Set(attendedEventsById.keys()),
+    [attendedEventsById],
+  )
+  const calendarCancellationEventId = calendarAttendance.attendanceMutation
+    .isPending
+    ? String(calendarAttendance.attendanceMutation.variables?.event.id)
+    : undefined
+  const cancelledCalendarEventId = calendarAttendance.attendanceMutation
+    .isSuccess
+    ? String(calendarAttendance.attendanceMutation.variables?.event.id)
+    : undefined
+
+  function cancelCalendarEvent(activity: CalendarActivity) {
+    const event = attendedEventsById.get(activity.id)
+
+    if (!event || calendarAttendance.attendanceMutation.isPending) return
+
+    calendarAttendance.attendanceMutation.mutate({
+      event,
+      isAttending: true,
+    })
+  }
 
   return (
     <div className="divide-y divide-(--brand-border)/60">
@@ -33,7 +78,17 @@ export default function MenuPlaceholderSections({
         <PhysicalEventsSection onFindEvents={onFindEvents} />
       </div>
       <div className="py-7">
-        <MenuCalendarSection enabled={dataEnabled} />
+        <MenuCalendarSection
+          enabled={dataEnabled}
+          cancelableEventIds={calendarEventIds}
+          cancellingEventId={calendarCancellationEventId}
+          cancelledEventId={cancelledCalendarEventId}
+          cancellationError={calendarAttendance.attendanceMutation.isError}
+          onCancelEvent={cancelCalendarEvent}
+          onDismissCancellationError={() =>
+            calendarAttendance.attendanceMutation.reset()
+          }
+        />
       </div>
       <div className="py-7">
         <CallbackSchedulerSection

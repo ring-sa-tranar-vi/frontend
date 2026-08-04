@@ -31,10 +31,12 @@ const fieldClass =
 export default function OrganisationApplicationSheet({
   open,
   onBack,
+  onBackToMenu,
   onClose,
 }: {
   open: boolean
   onBack: () => void
+  onBackToMenu: () => void
   onClose: () => void
 }) {
   const { t } = useTranslation()
@@ -94,6 +96,12 @@ export default function OrganisationApplicationSheet({
     onBack()
   }
 
+  function returnToMenu() {
+    applicationMutation.reset()
+    setForm(emptyApplication)
+    onBackToMenu()
+  }
+
   return (
     <AppSheet
       open={open}
@@ -106,26 +114,37 @@ export default function OrganisationApplicationSheet({
       height="large"
       fillHeight
       footer={
-        applicationMutation.isSuccess ? (
-          <button
-            type="button"
-            className={appSheetSecondaryButtonClass}
-            onClick={returnToOrganisations}
-          >
-            {t('menu.events.application.backToOrganisations')}
-          </button>
-        ) : (
-          <button
-            type="submit"
-            form="organisation-application-form"
-            className={appSheetPrimaryButtonClass}
-            disabled={!isComplete || applicationMutation.isPending}
-          >
-            {applicationMutation.isPending
-              ? t('menu.events.application.submitting')
-              : t('menu.events.application.submit')}
-          </button>
-        )
+        <section className="space-y-2.5 pb-1">
+          {!applicationMutation.isSuccess ? (
+            <button
+              type="submit"
+              form="organisation-application-form"
+              className={appSheetPrimaryButtonClass}
+              disabled={!isComplete || applicationMutation.isPending}
+            >
+              {applicationMutation.isPending
+                ? t('menu.events.application.submitting')
+                : t('menu.events.application.submit')}
+            </button>
+          ) : null}
+
+          <div className="grid grid-cols-2 gap-2.5">
+            <button
+              type="button"
+              className={appSheetSecondaryButtonClass}
+              onClick={returnToOrganisations}
+            >
+              {t('menu.events.application.backToOrganisations')}
+            </button>
+            <button
+              type="button"
+              className={appSheetSecondaryButtonClass}
+              onClick={returnToMenu}
+            >
+              {t('menu.events.application.backToMenu')}
+            </button>
+          </div>
+        </section>
       }
     >
       {applicationMutation.isSuccess ? (

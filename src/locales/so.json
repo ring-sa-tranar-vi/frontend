@@ -153,7 +153,14 @@
       "loadError": "Hadda kalandarka lama soo dejin karo.",
       "retry": "Mar kale isku day",
       "noEventsForDay": "Maalintan wax dhaqdhaqaaq ah ma jiraan",
-      "untitledActivity": "Dhaqdhaqaaq"
+      "untitledActivity": "Dhaqdhaqaaq",
+      "cancelEvent": "Ka noqo",
+      "cancelEventTitle": "Ma ka noqonaysaa dhacdadan?",
+      "cancelEventText": "Ma hubtaa inaad ka noqonayso {{name}}? Mar kale ayaad iska diiwaangelin kartaa.",
+      "keepEvent": "Hayso dhacdada",
+      "confirmCancelEvent": "Haa, ka noqo",
+      "cancelingEvent": "Waa la joojinayaa…",
+      "cancelEventError": "Dhacdada hadda lama joojin karo."
     },
     "callback": {
       "title": "Codso in lagu soo waco",

@@ -198,7 +198,8 @@
         "error": "Ansökan kunde inte skickas. Försök igen.",
         "successTitle": "Ansökan är skickad",
         "successText": "Vi återkommer när ansökan har granskats.",
-        "backToOrganisations": "Tillbaka till organisationer"
+        "backToOrganisations": "Tillbaka till organisationer",
+        "backToMenu": "Tillbaka till menyn"
       }
     },
     "calendar": {
@@ -213,7 +214,14 @@
       "loadError": "Kunde inte hämta kalendern just nu.",
       "retry": "Försök igen",
       "noEventsForDay": "Inga aktiviteter denna dag",
-      "untitledActivity": "Aktivitet"
+      "untitledActivity": "Aktivitet",
+      "cancelEvent": "Avboka",
+      "cancelEventTitle": "Avboka event?",
+      "cancelEventText": "Vill du avboka {{name}}? Du kan anmäla dig igen senare.",
+      "keepEvent": "Behåll eventet",
+      "confirmCancelEvent": "Ja, avboka",
+      "cancelingEvent": "Avbokar…",
+      "cancelEventError": "Kunde inte avboka eventet just nu."
     },
     "callback": {
       "title": "Be om att bli uppringd",

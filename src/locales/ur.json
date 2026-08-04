@@ -153,7 +153,14 @@
       "loadError": "کیلنڈر ابھی لوڈ نہیں ہو سکا۔",
       "retry": "دوبارہ کوشش کریں",
       "noEventsForDay": "اس دن کوئی سرگرمی نہیں ہے",
-      "untitledActivity": "سرگرمی"
+      "untitledActivity": "سرگرمی",
+      "cancelEvent": "منسوخ کریں",
+      "cancelEventTitle": "تقریب منسوخ کریں؟",
+      "cancelEventText": "کیا آپ {{name}} منسوخ کرنا چاہتے ہیں؟ آپ بعد میں دوبارہ رجسٹر کر سکتے ہیں۔",
+      "keepEvent": "تقریب برقرار رکھیں",
+      "confirmCancelEvent": "ہاں، منسوخ کریں",
+      "cancelingEvent": "منسوخ کیا جا رہا ہے…",
+      "cancelEventError": "تقریب ابھی منسوخ نہیں ہو سکی۔"
     },
     "callback": {
       "title": "واپسی کال کی درخواست کریں",
