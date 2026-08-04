@@ -1,4 +1,5 @@
 import { useAuth } from '@clerk/react'
+import { type FunctionResponse } from '@google/genai'
 import { useQueryClient } from '@tanstack/react-query'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useCalendarEvents } from '../../hooks/useCalendarEvents'
@@ -33,7 +34,6 @@ import { COACH_PROMPTS } from './prompts/setupPrompts'
 import { buildSessionInstruction } from './setupSessionInstruction'
 import { getSessionTools } from './setupSessionTools'
 import { dispatchToolCall } from './toolRegistry'
-import { postActivityEndpoint } from './tools/activity/activityEndpoint'
 
 //──────────────────────
 // Build system instruction
@@ -51,6 +51,21 @@ function mergeCaptionFragments(previous: string, next: string) {
   if (current.endsWith(incoming)) return current
   if (incoming.endsWith(current)) return incoming
   return `${current} ${incoming}`.replace(/\s+/g, ' ').trim()
+}
+
+function getCreatedActivityLogId(response: FunctionResponse) {
+  const responseBody = response.response
+
+  if (!responseBody || typeof responseBody !== 'object') return null
+
+  const output = (responseBody as Record<string, unknown>).output
+
+  if (!output || typeof output !== 'object') return null
+
+  const activityLogId = (output as Record<string, unknown>).activityLogId
+  return typeof activityLogId === 'number' && Number.isFinite(activityLogId)
+    ? activityLogId
+    : null
 }
 
 export function useCoachSession(
@@ -294,7 +309,6 @@ export function useCoachSession(
         onboardingStageRef,
         aiTurnStateRef,
         finishSessionRef,
-        finishedWorkoutRef,
         startWorkoutVideoRef,
         updateUserNameRef,
         updateIntensityLevelRef,
@@ -859,34 +873,6 @@ export function useCoachSession(
 
         if (workoutCompleted) {
           addDebugEvent('finish_session', 'workout completed - saving feedback')
-          const workoutId = Number(session.id)
-
-          if (!Number.isInteger(workoutId) || workoutId <= 0) {
-            throw new Error('Missing workout id')
-          }
-
-          if (!activityLogIdRef.current) {
-            const activityToken = await getToken()
-            if (!activityToken) {
-              throw new Error('Missing Clerk token')
-            }
-
-            const activity = await postActivityEndpoint(
-              workoutId,
-              session.durationSeconds,
-              '',
-              activityToken,
-            )
-
-            if (!activity.ok) {
-              throw new Error(activity.error)
-            }
-
-            activityLogIdRef.current = activity.data.id
-            void queryClient.invalidateQueries({ queryKey: ['my-progress'] })
-            void queryClient.invalidateQueries({ queryKey: ['calendar'] })
-          }
-
           if (userId) {
             queryClient.setQueryData(['has-completed-today', userId], {
               hasCompletedToday: true,
@@ -947,8 +933,6 @@ export function useCoachSession(
       updateProfile,
       queryClient,
       userId,
-      getToken,
-      session.durationSeconds,
     ],
   )
 

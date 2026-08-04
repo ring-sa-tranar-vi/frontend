@@ -40,12 +40,6 @@ const toolRegistry: Record<string, ToolHandlerFn> = {
     return createSuccessResponse(id, 'start_workout_video')
   },
 
-  workout_completed: async (id, _args, ctx) => {
-    ctx.addDebugEvent('workout_completed')
-    ctx.finishedWorkoutRef.current()
-    return createSuccessResponse(id, 'workout_completed')
-  },
-
   //──────────────────────
   // End Guest Session
   //──────────────────────
