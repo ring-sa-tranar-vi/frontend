@@ -33,11 +33,18 @@ type ToggleOrganisationVariables = {
   isFollowing: boolean
 }
 
-async function requestJson<T>(
+type EventsAndOrganisationsOptions = {
+  fetchEvents?: boolean
+  fetchOrganisations?: boolean
+  fetchAttendance?: boolean
+  fetchFollowing?: boolean
+}
+
+async function request(
   path: string,
   token: string,
   method: 'GET' | 'POST' | 'DELETE' = 'GET',
-): Promise<T> {
+): Promise<Response> {
   const response = await fetch(`${API_URL}${path}`, {
     method,
     headers: {
@@ -51,6 +58,15 @@ async function requestJson<T>(
     throw new Error(message || `Request failed (${response.status})`)
   }
 
+  return response
+}
+
+async function requestJson<T>(
+  path: string,
+  token: string,
+  method: 'GET' | 'POST' | 'DELETE' = 'GET',
+): Promise<T> {
+  const response = await request(path, token, method)
   const contentType = response.headers.get('content-type') ?? ''
 
   if (!contentType.toLowerCase().includes('application/json')) {
@@ -64,7 +80,15 @@ function isArrayResponse<T>(value: unknown): value is T[] {
   return Array.isArray(value)
 }
 
-export function useEventsAndOrganisations(enabled: boolean) {
+export function useEventsAndOrganisations(
+  enabled: boolean,
+  {
+    fetchEvents = true,
+    fetchOrganisations = true,
+    fetchAttendance = true,
+    fetchFollowing = true,
+  }: EventsAndOrganisationsOptions = {},
+) {
   const { getToken, isLoaded, isSignedIn, userId } = useAuth()
   const queryClient = useQueryClient()
   const canFetch = enabled && isLoaded && Boolean(isSignedIn) && Boolean(userId)
@@ -93,7 +117,7 @@ export function useEventsAndOrganisations(enabled: boolean) {
 
       return events
     },
-    enabled: canFetch,
+    enabled: canFetch && fetchEvents,
     staleTime: 5 * 60_000,
     retry: 1,
   })
@@ -113,7 +137,7 @@ export function useEventsAndOrganisations(enabled: boolean) {
 
       return organisations
     },
-    enabled: canFetch,
+    enabled: canFetch && fetchOrganisations,
     staleTime: 5 * 60_000,
     retry: 1,
   })
@@ -133,7 +157,7 @@ export function useEventsAndOrganisations(enabled: boolean) {
 
       return events
     },
-    enabled: canFetch,
+    enabled: canFetch && fetchAttendance,
     staleTime: 60_000,
     retry: 1,
   })
@@ -153,7 +177,7 @@ export function useEventsAndOrganisations(enabled: boolean) {
 
       return organisations
     },
-    enabled: canFetch,
+    enabled: canFetch && fetchFollowing,
     staleTime: 60_000,
     retry: 1,
   })
@@ -161,7 +185,7 @@ export function useEventsAndOrganisations(enabled: boolean) {
   const attendanceMutation = useMutation({
     mutationFn: async ({ event, isAttending }: ToggleEventVariables) => {
       const token = await getRequiredToken()
-      await requestJson<unknown>(
+      await request(
         `/api/users/me/attending-events/${event.id}`,
         token,
         isAttending ? 'DELETE' : 'POST',
@@ -184,7 +208,7 @@ export function useEventsAndOrganisations(enabled: boolean) {
       isFollowing,
     }: ToggleOrganisationVariables) => {
       const token = await getRequiredToken()
-      await requestJson<unknown>(
+      await request(
         `/api/users/me/followed-orgs/${organisation.id}`,
         token,
         isFollowing ? 'DELETE' : 'POST',

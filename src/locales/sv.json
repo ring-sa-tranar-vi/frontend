@@ -213,7 +213,20 @@
       "loadError": "Kunde inte hämta kalendern just nu.",
       "retry": "Försök igen",
       "noEventsForDay": "Inga aktiviteter denna dag",
-      "untitledActivity": "Aktivitet"
+      "untitledActivity": "Aktivitet",
+      "cancelEvent": "Avboka",
+      "cancelEventTitle": "Avboka event?",
+      "cancelEventText": "Vill du avboka {{name}}? Du kan anmäla dig igen senare.",
+      "keepEvent": "Behåll eventet",
+      "confirmCancelEvent": "Ja, avboka",
+      "cancelingEvent": "Avbokar…",
+      "cancelEventError": "Kunde inte avboka eventet just nu.",
+      "cancelCallback": "Ta bort",
+      "cancelCallbackTitle": "Ta bort uppringning?",
+      "cancelCallbackText": "Detta tar bort kommande uppringningar på samma veckodag.",
+      "confirmCancelCallback": "Ja, ta bort",
+      "cancelingCallback": "Tar bort…",
+      "cancelCallbackError": "Kunde inte ta bort uppringningen just nu."
     },
     "callback": {
       "title": "Be om att bli uppringd",

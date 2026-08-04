@@ -1,6 +1,6 @@
 import { useAuth } from '@clerk/react'
 import { useMutation } from '@tanstack/react-query'
-import { Building2 } from 'lucide-react'
+import { ArrowLeft, Building2 } from 'lucide-react'
 import { type FormEvent, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
@@ -99,7 +99,7 @@ export default function OrganisationApplicationSheet({
       open={open}
       title={t('menu.events.application.title')}
       subtitle={t('menu.events.application.subtitle')}
-      icon={<Building2 size={20} strokeWidth={2.4} />}
+      icon={<ArrowLeft size={22} strokeWidth={2.6} />}
       onBack={returnToOrganisations}
       backLabel={t('menu.events.application.back')}
       onClose={onClose}
@@ -154,6 +154,7 @@ export default function OrganisationApplicationSheet({
 
           <label className="block text-[length:var(--text-sm)] font-extrabold text-(--brand-title-ink)">
             {t('menu.events.application.name')}
+            <span aria-hidden="true"> *</span>
             <input
               required
               maxLength={100}
@@ -169,6 +170,7 @@ export default function OrganisationApplicationSheet({
 
           <label className="block text-[length:var(--text-sm)] font-extrabold text-(--brand-title-ink)">
             {t('menu.events.application.description')}
+            <span aria-hidden="true"> *</span>
             <textarea
               required
               maxLength={300}
@@ -184,6 +186,7 @@ export default function OrganisationApplicationSheet({
 
           <label className="block text-[length:var(--text-sm)] font-extrabold text-(--brand-title-ink)">
             {t('menu.events.application.city')}
+            <span aria-hidden="true"> *</span>
             <input
               required
               maxLength={100}
@@ -197,6 +200,7 @@ export default function OrganisationApplicationSheet({
 
           <label className="block text-[length:var(--text-sm)] font-extrabold text-(--brand-title-ink)">
             {t('menu.events.application.motivation')}
+            <span aria-hidden="true"> *</span>
             <textarea
               required
               maxLength={600}

@@ -213,7 +213,20 @@
       "loadError": "The calendar could not be loaded right now.",
       "retry": "Try again",
       "noEventsForDay": "No activities on this day",
-      "untitledActivity": "Activity"
+      "untitledActivity": "Activity",
+      "cancelEvent": "Cancel",
+      "cancelEventTitle": "Cancel event?",
+      "cancelEventText": "Do you want to cancel {{name}}? You can register again later.",
+      "keepEvent": "Keep event",
+      "confirmCancelEvent": "Yes, cancel",
+      "cancelingEvent": "Cancelling…",
+      "cancelEventError": "The event could not be cancelled right now.",
+      "cancelCallback": "Remove",
+      "cancelCallbackTitle": "Remove callback?",
+      "cancelCallbackText": "This removes upcoming callbacks on the same weekday.",
+      "confirmCancelCallback": "Yes, remove",
+      "cancelingCallback": "Removing…",
+      "cancelCallbackError": "The callback could not be removed right now."
     },
     "callback": {
       "title": "Request a callback",

@@ -72,18 +72,29 @@ function toTrainerSummary(
   }
 }
 
-export async function getTrainers(): Promise<BackendTrainerResponse[]> {
-  return await getJson<BackendTrainerResponse[]>(`/api/trainers`)
+export async function getTrainers(
+  token?: string | null,
+): Promise<BackendTrainerResponse[]> {
+  return await getJson<BackendTrainerResponse[]>(`/api/trainers`, {
+    token: token ?? undefined,
+  })
 }
 
 export async function getTrainer(
   trainerId: string,
+  token?: string | null,
 ): Promise<BackendTrainerResponse> {
-  return await getJson<BackendTrainerResponse>(`/api/trainers/${trainerId}`)
+  return await getJson<BackendTrainerResponse>(`/api/trainers/${trainerId}`, {
+    token: token ?? undefined,
+  })
 }
 
-export async function getWorkouts(): Promise<BackendWorkoutResponse[]> {
-  return await getJson<BackendWorkoutResponse[]>(`/api/workouts`)
+export async function getWorkouts(
+  token?: string | null,
+): Promise<BackendWorkoutResponse[]> {
+  return await getJson<BackendWorkoutResponse[]>(`/api/workouts`, {
+    token: token ?? undefined,
+  })
 }
 
 export async function getCoachCallSession(
@@ -91,7 +102,9 @@ export async function getCoachCallSession(
   token?: string | null,
 ): Promise<CoachCallSession> {
   const workout = workoutId
-    ? await getJson<BackendWorkoutResponse>(`/api/workouts/${workoutId}`)
+    ? await getJson<BackendWorkoutResponse>(`/api/workouts/${workoutId}`, {
+        token: token ?? undefined,
+      })
     : null
 
   let user: BackendUserResponse | null = null
@@ -121,7 +134,7 @@ export async function getCoachCallSession(
   let trainer: BackendTrainerResponse | null = null
 
   try {
-    trainer = await getTrainer(String(resolvedTrainerId))
+    trainer = await getTrainer(String(resolvedTrainerId), token)
   } catch (error) {
     console.warn('[session/api] Could not fetch trainer details', error)
   }
