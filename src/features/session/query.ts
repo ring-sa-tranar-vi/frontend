@@ -36,14 +36,28 @@ export function useCoachCallSession(workoutId: string | undefined) {
   })
 }
 
-export function trainerQueryOptions(trainerId: string) {
+export function trainerQueryOptions(trainerId: string, token?: string | null) {
   return {
-    queryKey: ['trainer', trainerId] as const,
-    queryFn: () => getTrainer(trainerId),
+    queryKey: ['trainer', trainerId, token ? 'auth' : 'guest'] as const,
+    queryFn: () => getTrainer(trainerId, token),
     retry: 1,
   }
 }
 
 export function useTrainer(trainerId: string) {
-  return useQuery(trainerQueryOptions(trainerId))
+  const { getToken, isLoaded, isSignedIn } = useAuth()
+
+  return useQuery({
+    queryKey: [
+      'trainer',
+      trainerId,
+      isLoaded ? (isSignedIn ? 'auth' : 'guest') : 'auth-loading',
+    ] as const,
+    queryFn: async () => {
+      const token = isSignedIn ? await getToken() : null
+      return getTrainer(trainerId, token)
+    },
+    enabled: isLoaded && isSignedIn,
+    retry: 1,
+  })
 }
