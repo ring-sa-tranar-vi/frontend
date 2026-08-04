@@ -160,7 +160,13 @@
       "keepEvent": "Hayso dhacdada",
       "confirmCancelEvent": "Haa, ka noqo",
       "cancelingEvent": "Waa la joojinayaa…",
-      "cancelEventError": "Dhacdada hadda lama joojin karo."
+      "cancelEventError": "Dhacdada hadda lama joojin karo.",
+      "cancelCallback": "Ka saar",
+      "cancelCallbackTitle": "Ma ka saaraysaa wicitaanka?",
+      "cancelCallbackText": "Tani waxay ka saartaa wicitaannada soo socda ee isla maalinta toddobaadka.",
+      "confirmCancelCallback": "Haa, ka saar",
+      "cancelingCallback": "Waa la saaraya…",
+      "cancelCallbackError": "Wicitaanka hadda lama saari karo."
     },
     "callback": {
       "title": "Codso in lagu soo waco",

@@ -3,14 +3,43 @@ import CallbackSchedulerSection from './CallbackSchedulerSection'
 import MenuCalendarSection from './MenuCalendarSection'
 import PhysicalEventsSection from './PhysicalEventsSection'
 import { useActivitySummary } from '../../../../hooks/useActivitySummary'
+import { useCallbackPreferences } from '../../../../hooks/useCallbackPreferences'
 import { useEventsAndOrganisations } from '../../../../hooks/useEventsAndOrganisations'
 import { menuPlaceholderData } from './placeholderData'
 import type {
   CalendarActivity,
   CallbackRequest,
+  CallbackWeekday,
   MenuPlaceholderData,
 } from './types'
 import { useMemo } from 'react'
+
+const callbackWeekdayByDayIndex: CallbackWeekday[] = [
+  'sunday',
+  'monday',
+  'tuesday',
+  'wednesday',
+  'thursday',
+  'friday',
+  'saturday',
+]
+
+function getCallbackWeekday(dateKey: string): CallbackWeekday | null {
+  const date = new Date(`${dateKey}T12:00:00`)
+
+  if (Number.isNaN(date.getTime())) return null
+  return callbackWeekdayByDayIndex[date.getDay()] ?? null
+}
+
+function toCalendarEventId(eventId: string | number): string {
+  return `EVENT-${eventId}`
+}
+
+function getEventIdFromCalendarActivity(activityId: string): string {
+  return activityId.startsWith('EVENT-')
+    ? activityId.slice('EVENT-'.length)
+    : activityId
+}
 
 export default function MenuPlaceholderSections({
   data = menuPlaceholderData,
@@ -29,6 +58,7 @@ export default function MenuPlaceholderSections({
     fetchOrganisations: false,
     fetchFollowing: false,
   })
+  const callbackPreferences = useCallbackPreferences()
 
   const attendedEventsById = useMemo(
     () =>
@@ -41,20 +71,33 @@ export default function MenuPlaceholderSections({
     [calendarAttendance.attendingQuery.data],
   )
   const calendarEventIds = useMemo(
-    () => new Set(attendedEventsById.keys()),
+    () => new Set([...attendedEventsById.keys()].map(toCalendarEventId)),
     [attendedEventsById],
   )
   const calendarCancellationEventId = calendarAttendance.attendanceMutation
     .isPending
-    ? String(calendarAttendance.attendanceMutation.variables?.event.id)
+    ? toCalendarEventId(
+        calendarAttendance.attendanceMutation.variables?.event.id ?? '',
+      )
     : undefined
   const cancelledCalendarEventId = calendarAttendance.attendanceMutation
     .isSuccess
-    ? String(calendarAttendance.attendanceMutation.variables?.event.id)
+    ? toCalendarEventId(
+        calendarAttendance.attendanceMutation.variables?.event.id ?? '',
+      )
+    : undefined
+  const cancellingCallbackId = callbackPreferences.removeCallbackMutation
+    .isPending
+    ? callbackPreferences.removeCallbackMutation.variables?.activityId
+    : undefined
+  const cancelledCallbackId = callbackPreferences.removeCallbackMutation
+    .isSuccess
+    ? callbackPreferences.removeCallbackMutation.variables?.activityId
     : undefined
 
   function cancelCalendarEvent(activity: CalendarActivity) {
-    const event = attendedEventsById.get(activity.id)
+    const eventId = getEventIdFromCalendarActivity(activity.id)
+    const event = attendedEventsById.get(eventId)
 
     if (!event || calendarAttendance.attendanceMutation.isPending) return
 
@@ -62,6 +105,21 @@ export default function MenuPlaceholderSections({
       event,
       isAttending: true,
     })
+  }
+
+  function cancelCalendarCallback(activity: CalendarActivity) {
+    const weekday = getCallbackWeekday(activity.date)
+
+    if (!weekday || callbackPreferences.removeCallbackMutation.isPending) return
+
+    callbackPreferences.removeCallbackMutation.mutate({
+      weekday,
+      activityId: activity.id,
+    })
+  }
+
+  async function saveCallback(request: CallbackRequest) {
+    await callbackPreferences.saveCallbackMutation.mutateAsync(request)
   }
 
   return (
@@ -81,19 +139,26 @@ export default function MenuPlaceholderSections({
         <MenuCalendarSection
           enabled={dataEnabled}
           cancelableEventIds={calendarEventIds}
-          cancellingEventId={calendarCancellationEventId}
-          cancelledEventId={cancelledCalendarEventId}
-          cancellationError={calendarAttendance.attendanceMutation.isError}
-          onCancelEvent={cancelCalendarEvent}
-          onDismissCancellationError={() =>
-            calendarAttendance.attendanceMutation.reset()
+          cancellingActivityId={
+            calendarCancellationEventId ?? cancellingCallbackId
           }
+          cancelledActivityId={cancelledCalendarEventId ?? cancelledCallbackId}
+          cancellationError={
+            calendarAttendance.attendanceMutation.isError ||
+            callbackPreferences.removeCallbackMutation.isError
+          }
+          onCancelEvent={cancelCalendarEvent}
+          onCancelCallback={cancelCalendarCallback}
+          onDismissCancellationError={() => {
+            calendarAttendance.attendanceMutation.reset()
+            callbackPreferences.removeCallbackMutation.reset()
+          }}
         />
       </div>
       <div className="py-7">
         <CallbackSchedulerSection
           initialRequest={data.callback}
-          onConfirm={onConfirmCallback}
+          onConfirm={onConfirmCallback ?? saveCallback}
         />
       </div>
     </div>

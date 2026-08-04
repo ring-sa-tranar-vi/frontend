@@ -220,7 +220,13 @@
       "keepEvent": "Keep event",
       "confirmCancelEvent": "Yes, cancel",
       "cancelingEvent": "Cancelling…",
-      "cancelEventError": "The event could not be cancelled right now."
+      "cancelEventError": "The event could not be cancelled right now.",
+      "cancelCallback": "Remove",
+      "cancelCallbackTitle": "Remove callback?",
+      "cancelCallbackText": "This removes upcoming callbacks on the same weekday.",
+      "confirmCancelCallback": "Yes, remove",
+      "cancelingCallback": "Removing…",
+      "cancelCallbackError": "The callback could not be removed right now."
     },
     "callback": {
       "title": "Request a callback",

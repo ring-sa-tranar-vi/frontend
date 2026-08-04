@@ -1,6 +1,6 @@
 import { useAuth } from '@clerk/react'
 import { useMutation } from '@tanstack/react-query'
-import { Building2 } from 'lucide-react'
+import { ArrowLeft, Building2 } from 'lucide-react'
 import { type FormEvent, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
@@ -99,7 +99,7 @@ export default function OrganisationApplicationSheet({
       open={open}
       title={t('menu.events.application.title')}
       subtitle={t('menu.events.application.subtitle')}
-      icon={<Building2 size={20} strokeWidth={2.4} />}
+      icon={<ArrowLeft size={22} strokeWidth={2.6} />}
       onBack={returnToOrganisations}
       backLabel={t('menu.events.application.back')}
       onClose={onClose}

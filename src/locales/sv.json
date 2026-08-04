@@ -220,7 +220,13 @@
       "keepEvent": "Behåll eventet",
       "confirmCancelEvent": "Ja, avboka",
       "cancelingEvent": "Avbokar…",
-      "cancelEventError": "Kunde inte avboka eventet just nu."
+      "cancelEventError": "Kunde inte avboka eventet just nu.",
+      "cancelCallback": "Ta bort",
+      "cancelCallbackTitle": "Ta bort uppringning?",
+      "cancelCallbackText": "Detta tar bort kommande uppringningar på samma veckodag.",
+      "confirmCancelCallback": "Ja, ta bort",
+      "cancelingCallback": "Tar bort…",
+      "cancelCallbackError": "Kunde inte ta bort uppringningen just nu."
     },
     "callback": {
       "title": "Be om att bli uppringd",
