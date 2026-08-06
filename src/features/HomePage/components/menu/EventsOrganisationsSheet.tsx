@@ -20,9 +20,9 @@ type DirectoryTab = 'events' | 'organisations'
 type EventFilter = 'all' | 'nearby' | 'week'
 
 const organisationAvatarClasses = [
-  'bg-[#eee9ff] text-[#5b3fd6]',
-  'bg-[#e5f5f1] text-[#397c6e]',
-  'bg-[#fff0e8] text-[#a85d37]',
+  'bg-(--menu-choice-bg) text-(--brand-primary-deep)',
+  'bg-(--brand-surface-soft) text-(--brand-primary-deep)',
+  'bg-(--menu-control-bg) text-(--brand-primary-deep)',
 ]
 
 function toEventDate(event: EventDto) {
@@ -69,7 +69,7 @@ function LoadingCards() {
       {[0, 1, 2].map((index) => (
         <div
           key={index}
-          className="h-32 animate-pulse rounded-2xl border border-(--brand-border-light) bg-white/55"
+          className="h-32 animate-pulse rounded-2xl border border-(--brand-border-light) bg-(--menu-content-bg)"
         />
       ))}
     </div>
@@ -78,7 +78,7 @@ function LoadingCards() {
 
 function EmptyState({ children }: { children: string }) {
   return (
-    <div className="rounded-2xl border border-dashed border-(--brand-border-field) bg-white/45 px-5 py-10 text-center text-[length:var(--text-sm)] font-bold text-(--brand-muted)">
+    <div className="rounded-2xl border border-dashed border-(--menu-control-border) bg-(--menu-content-bg) px-5 py-10 text-center text-[length:var(--text-sm)] font-bold text-(--brand-muted)">
       {children}
     </div>
   )
@@ -146,7 +146,7 @@ function EventCard({
       : t('menu.events.directory.register')
 
   return (
-    <article className="grid grid-cols-[3.5rem_minmax(0,1fr)_auto] items-center gap-3 rounded-2xl border border-(--brand-border-light) bg-white/70 p-4 shadow-[0_1px_2px_rgba(30,20,80,0.04)] max-[350px]:grid-cols-[3rem_minmax(0,1fr)]">
+    <article className="grid grid-cols-[3.5rem_minmax(0,1fr)_auto] items-center gap-3 rounded-2xl border border-(--brand-border-light) bg-(--menu-content-bg) p-4 max-[350px]:grid-cols-[3rem_minmax(0,1fr)]">
       <time
         dateTime={event.time}
         className="flex h-16 w-14 shrink-0 flex-col items-center justify-center rounded-2xl bg-(--brand-soft) text-center max-[350px]:h-14 max-[350px]:w-12"
@@ -207,7 +207,7 @@ function EventCard({
         className={`min-h-11 min-w-[5.75rem] rounded-xl px-4 py-2.5 text-[length:var(--text-sm)] font-extrabold transition focus-visible:ring-2 focus-visible:ring-(--brand-border-strong) focus-visible:ring-offset-2 focus-visible:outline-none active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-55 max-[350px]:col-start-2 max-[350px]:justify-self-end ${
           isAttending
             ? 'border border-(--brand-border-field) bg-(--brand-soft) text-(--brand-primary-deep)'
-            : 'bg-(--brand-primary) text-white shadow-[0_3px_10px_rgba(80,64,200,0.24)] hover:bg-(--brand-primary-strong)'
+            : 'bg-(--brand-primary) text-(--brand-on-primary) hover:bg-(--brand-primary-strong)'
         }`}
       >
         {buttonLabel}
@@ -244,7 +244,7 @@ function OrganisationCard({
       : t('menu.events.directory.follow')
 
   return (
-    <article className="grid grid-cols-[3rem_minmax(0,1fr)_auto] items-center gap-3 rounded-2xl border border-(--brand-border-light) bg-white/70 p-4 shadow-[0_1px_2px_rgba(30,20,80,0.04)] max-[350px]:grid-cols-[3rem_minmax(0,1fr)]">
+    <article className="grid grid-cols-[3rem_minmax(0,1fr)_auto] items-center gap-3 rounded-2xl border border-(--brand-border-light) bg-(--menu-content-bg) p-4 max-[350px]:grid-cols-[3rem_minmax(0,1fr)]">
       <div
         className={`flex h-12 w-12 items-center justify-center rounded-2xl text-[length:var(--text-base)] font-extrabold ${avatarClass}`}
         aria-hidden="true"
@@ -298,7 +298,7 @@ function OrganisationCard({
         className={`min-h-11 min-w-[4.75rem] rounded-xl px-4 py-2.5 text-[length:var(--text-sm)] font-extrabold transition focus-visible:ring-2 focus-visible:ring-(--brand-border-strong) focus-visible:ring-offset-2 focus-visible:outline-none active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-55 max-[350px]:col-start-2 max-[350px]:justify-self-end ${
           isFollowing
             ? 'border border-(--brand-border-field) bg-(--brand-soft) text-(--brand-primary-deep)'
-            : 'bg-(--brand-primary) text-white shadow-[0_3px_10px_rgba(80,64,200,0.20)] hover:bg-(--brand-primary-strong)'
+            : 'bg-(--brand-primary) text-(--brand-on-primary) hover:bg-(--brand-primary-strong)'
         }`}
       >
         {buttonLabel}
@@ -458,7 +458,7 @@ export default function EventsOrganisationsSheet({
       height="large"
       fillHeight
     >
-      <div className="pb-3">
+      <div className="rounded-2xl border border-(--menu-category-border) bg-(--menu-category-bg) p-4">
         <div
           role="tablist"
           aria-label={t('menu.events.directory.tabsLabel')}
@@ -479,8 +479,8 @@ export default function EventsOrganisationsSheet({
                 onKeyDown={(event) => handleTabKeyDown(event, tab)}
                 className={`min-h-11 rounded-xl px-3 py-2.5 text-[length:var(--text-sm)] font-extrabold transition focus-visible:ring-2 focus-visible:ring-(--brand-border-strong) focus-visible:outline-none active:scale-[0.985] ${
                   isActive
-                    ? 'bg-(--brand-primary) text-white shadow-[0_2px_8px_rgba(80,64,200,0.24)]'
-                    : 'text-(--brand-body-ink) hover:bg-white/50'
+                    ? 'bg-(--brand-primary) text-(--brand-on-primary)'
+                    : 'text-(--brand-body-ink) hover:bg-(--menu-content-bg)'
                 }`}
               >
                 {t(`menu.events.directory.tabs.${tab}`)}
@@ -509,7 +509,7 @@ export default function EventsOrganisationsSheet({
                 ? t('menu.events.directory.searchEvents')
                 : t('menu.events.directory.searchOrganisations')
             }
-            className="min-h-12 w-full rounded-2xl border border-(--brand-border-field) bg-white/65 py-3 pr-4 pl-11 text-[length:var(--text-sm)] font-semibold text-(--brand-ink) placeholder:text-(--brand-muted) focus-visible:border-(--brand-border-strong) focus-visible:ring-2 focus-visible:ring-(--brand-border-strong) focus-visible:ring-offset-2 focus-visible:outline-none"
+            className="min-h-12 w-full rounded-2xl border border-(--menu-control-border) bg-(--menu-control-bg) py-3 pr-4 pl-11 text-[length:var(--text-sm)] font-semibold text-(--brand-ink) placeholder:text-(--brand-muted) focus-visible:border-(--brand-border-strong) focus-visible:ring-2 focus-visible:ring-(--brand-border-strong) focus-visible:ring-offset-2 focus-visible:outline-none"
           />
         </label>
 
@@ -554,8 +554,8 @@ export default function EventsOrganisationsSheet({
                     onClick={() => setEventFilter(filter)}
                     className={`min-h-11 rounded-full border px-3.5 py-2 text-[length:var(--text-xs)] font-extrabold transition focus-visible:ring-2 focus-visible:ring-(--brand-border-strong) focus-visible:ring-offset-1 focus-visible:outline-none active:scale-[0.97] ${
                       eventFilter === filter
-                        ? 'border-(--brand-primary) bg-(--brand-primary) text-white'
-                        : 'border-(--brand-border-field) bg-white/60 text-(--brand-body-ink) hover:bg-(--brand-soft)'
+                        ? 'border-(--brand-primary) bg-(--brand-primary) text-(--brand-on-primary)'
+                        : 'border-(--menu-control-border) bg-(--menu-control-bg) text-(--brand-body-ink) hover:bg-(--brand-soft)'
                     }`}
                   >
                     {t(`menu.events.directory.filters.${filter}`)}
@@ -643,7 +643,7 @@ export default function EventsOrganisationsSheet({
               {t('menu.events.directory.organisationsIntro')}
             </div>
 
-            <div className="mt-4 rounded-2xl border border-(--brand-border-light) bg-white/70 p-4 shadow-[0_1px_2px_rgba(30,20,80,0.04)]">
+            <div className="mt-4 rounded-2xl border border-(--brand-border-light) bg-(--menu-content-bg) p-4">
               <div className="flex items-start gap-3">
                 <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-(--brand-soft) text-(--brand-primary-deep)">
                   <Building2 size={21} strokeWidth={2.3} aria-hidden="true" />
@@ -660,7 +660,7 @@ export default function EventsOrganisationsSheet({
               <button
                 type="button"
                 onClick={onApply}
-                className="mt-4 min-h-11 w-full rounded-xl bg-(--brand-primary) px-4 py-3 text-[length:var(--text-sm)] font-extrabold text-white shadow-[0_3px_10px_rgba(80,64,200,0.20)] transition hover:bg-(--brand-primary-strong) focus-visible:ring-2 focus-visible:ring-(--brand-border-strong) focus-visible:ring-offset-2 focus-visible:outline-none active:scale-[0.985]"
+                className="mt-4 min-h-11 w-full rounded-xl bg-(--brand-primary) px-4 py-3 text-[length:var(--text-sm)] font-extrabold text-(--brand-on-primary) transition hover:bg-(--brand-primary-strong) focus-visible:ring-2 focus-visible:ring-(--brand-border-strong) focus-visible:ring-offset-2 focus-visible:outline-none active:scale-[0.985]"
               >
                 {t('menu.events.application.cardAction')}
               </button>

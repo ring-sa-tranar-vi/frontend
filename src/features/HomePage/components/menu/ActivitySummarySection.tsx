@@ -50,7 +50,10 @@ export default function ActivitySummarySection({
   const circumference = 2 * Math.PI * 48
 
   return (
-    <section aria-labelledby="menu-activity-title">
+    <section
+      aria-labelledby="menu-activity-title"
+      className="rounded-2xl border border-(--menu-category-border) bg-(--menu-category-bg) p-4"
+    >
       <div id="menu-activity-title">
         <MenuSectionHeader
           icon={<Flame size={20} strokeWidth={2.2} />}
@@ -61,17 +64,17 @@ export default function ActivitySummarySection({
 
       {isLoading ? (
         <div
-          className="mt-4 rounded-2xl bg-(--brand-soft) p-5"
+          className="mt-4 rounded-xl bg-(--menu-content-bg) p-5"
           role="status"
           aria-label={t('menu.activity.loading')}
         >
           <div className="flex items-center gap-5" aria-hidden="true">
-            <div className="h-[122px] w-[122px] shrink-0 animate-pulse rounded-full bg-white/70" />
+            <div className="h-[122px] w-[122px] shrink-0 animate-pulse rounded-full bg-(--menu-skeleton-bg)" />
             <div className="flex-1 space-y-3">
-              <div className="h-5 w-3/4 animate-pulse rounded-full bg-white/75" />
-              <div className="h-4 w-full animate-pulse rounded-full bg-white/65" />
-              <div className="h-9 w-full animate-pulse rounded-xl bg-white/65" />
-              <div className="h-3 w-2/3 animate-pulse rounded-full bg-white/60" />
+              <div className="h-5 w-3/4 animate-pulse rounded-full bg-(--menu-skeleton-bg)" />
+              <div className="h-4 w-full animate-pulse rounded-full bg-(--menu-skeleton-bg)" />
+              <div className="h-9 w-full animate-pulse rounded-xl bg-(--menu-skeleton-bg)" />
+              <div className="h-3 w-2/3 animate-pulse rounded-full bg-(--menu-skeleton-bg)" />
             </div>
           </div>
         </div>
@@ -95,7 +98,7 @@ export default function ActivitySummarySection({
       ) : null}
 
       {!isLoading && !isError ? (
-        <div className="mt-4 rounded-2xl bg-(--brand-soft) p-5">
+        <div className="mt-4 rounded-xl bg-(--menu-content-bg) p-5">
           <div className="flex items-center gap-5">
             <div
               className="relative h-[122px] w-[122px] shrink-0"
@@ -165,8 +168,8 @@ export default function ActivitySummarySection({
                           key={weekday}
                           className={`flex aspect-square items-center justify-center rounded-[9px] text-[0.68rem] font-extrabold ${
                             isActive
-                              ? 'bg-(--brand-primary) text-white'
-                              : 'bg-white/75 text-(--brand-muted)'
+                              ? 'bg-(--brand-primary) text-(--brand-on-primary)'
+                              : 'bg-(--menu-control-bg) text-(--brand-muted)'
                           }`}
                         >
                           {weekdayLabels[index]}

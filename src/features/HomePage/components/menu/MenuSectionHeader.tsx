@@ -17,7 +17,7 @@ export default function MenuSectionHeader({
     <header>
       <div className="flex items-center gap-2.5">
         <div
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-(--brand-surface) text-(--brand-primary)"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-(--menu-control-border) bg-(--menu-control-bg) text-(--brand-primary)"
           aria-hidden="true"
         >
           {icon}

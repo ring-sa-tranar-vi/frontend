@@ -51,7 +51,27 @@ declare module '@tanstack/react-router' {
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <ClerkProvider publishableKey={import.meta.env.VITE_CLERK_PUBLISHABLE_KEY}>
+    <ClerkProvider
+      publishableKey={import.meta.env.VITE_CLERK_PUBLISHABLE_KEY}
+      appearance={{
+        variables: {
+          colorPrimary: 'var(--brand-primary)',
+          colorPrimaryForeground: 'var(--brand-on-primary)',
+          colorBackground: 'var(--brand-page)',
+          colorForeground: 'var(--brand-ink)',
+          colorMutedForeground: 'var(--brand-muted)',
+          colorNeutral: 'var(--brand-border)',
+          colorInput: 'var(--brand-surface-soft)',
+          colorInputForeground: 'var(--brand-ink)',
+        },
+        elements: {
+          cardBox: 'shadow-none',
+          card: 'shadow-none',
+          socialButtonsBlockButton: 'shadow-none',
+          formFieldInput: 'shadow-none',
+        },
+      }}
+    >
       <QueryClientProvider client={queryClient}>
         <RouterProvider router={router} />
       </QueryClientProvider>

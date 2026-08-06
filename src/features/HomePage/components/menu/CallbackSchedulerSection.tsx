@@ -83,7 +83,10 @@ export default function CallbackSchedulerSection({
   }
 
   return (
-    <section aria-labelledby="menu-callback-title">
+    <section
+      aria-labelledby="menu-callback-title"
+      className="rounded-2xl border border-(--menu-category-border) bg-(--menu-category-bg) p-4"
+    >
       <div id="menu-callback-title">
         <MenuSectionHeader
           icon={<Clock3 size={20} strokeWidth={2.2} />}
@@ -92,120 +95,125 @@ export default function CallbackSchedulerSection({
         />
       </div>
 
-      <fieldset className="mt-4">
-        <legend className="sr-only">{t('menu.callback.chooseDay')}</legend>
-        <div className="grid grid-cols-7 gap-1.5">
-          {weekdayLabels.map((day) => {
-            const isSelected = weekday === day.id
+      <div className="mt-4 rounded-xl bg-(--menu-content-bg) p-4">
+        <fieldset>
+          <legend className="sr-only">{t('menu.callback.chooseDay')}</legend>
+          <div className="grid grid-cols-7 gap-1.5">
+            {weekdayLabels.map((day) => {
+              const isSelected = weekday === day.id
 
-            return (
-              <button
-                type="button"
-                key={day.id}
-                onClick={() => {
-                  setWeekday(day.id)
-                  setFeedback(null)
-                }}
-                aria-label={day.long}
-                aria-pressed={isSelected}
-                className={`flex aspect-square min-w-0 items-center justify-center rounded-xl border text-[length:var(--text-xs)] font-extrabold transition focus-visible:ring-2 focus-visible:ring-(--brand-border-strong) focus-visible:ring-offset-1 focus-visible:outline-none active:scale-95 ${
-                  isSelected
-                    ? 'border-(--brand-primary) bg-(--brand-primary) text-white'
-                    : 'border-(--brand-border-field) bg-white/55 text-(--brand-body-ink)'
-                }`}
-              >
-                {day.short}
-              </button>
-            )
-          })}
-        </div>
-        <div className="mt-2 flex items-center justify-between text-[0.65rem] font-bold text-(--brand-muted)">
-          <span>{weekdayLabels[0].long}</span>
-          <span>{weekdayLabels[6].long}</span>
-        </div>
-      </fieldset>
+              return (
+                <button
+                  type="button"
+                  key={day.id}
+                  onClick={() => {
+                    setWeekday(day.id)
+                    setFeedback(null)
+                  }}
+                  aria-label={day.long}
+                  aria-pressed={isSelected}
+                  className={`flex aspect-square min-w-0 items-center justify-center rounded-xl border text-[length:var(--text-xs)] font-extrabold transition focus-visible:ring-2 focus-visible:ring-(--brand-border-strong) focus-visible:ring-offset-1 focus-visible:outline-none active:scale-95 ${
+                    isSelected
+                      ? 'border-(--brand-primary) bg-(--brand-primary) text-(--brand-on-primary)'
+                      : 'border-(--menu-control-border) bg-(--menu-control-bg) text-(--brand-body-ink)'
+                  }`}
+                >
+                  {day.short}
+                </button>
+              )
+            })}
+          </div>
+          <div className="mt-2 flex items-center justify-between text-[0.65rem] font-bold text-(--brand-muted)">
+            <span>{weekdayLabels[0].long}</span>
+            <span>{weekdayLabels[6].long}</span>
+          </div>
+        </fieldset>
 
-      <div className="mt-6 flex items-center justify-center gap-2" role="group">
-        <label className="sr-only" htmlFor="callback-hour">
-          {t('menu.callback.hour')}
-        </label>
-        <select
-          id="callback-hour"
-          name="callbackHour"
-          value={hour}
-          onChange={(event) => updateTime(event.target.value, minute)}
-          className="h-12 w-[112px] rounded-xl border border-(--brand-primary) bg-(--brand-primary) px-4 text-center text-xl font-extrabold text-white focus-visible:ring-2 focus-visible:ring-(--brand-border-strong) focus-visible:ring-offset-2 focus-visible:outline-none"
+        <div
+          className="mt-6 flex items-center justify-center gap-2"
+          role="group"
         >
-          {Array.from({ length: 24 }, (_, index) =>
-            String(index).padStart(2, '0'),
-          ).map((value) => (
-            <option key={value} value={value}>
-              {value}
+          <label className="sr-only" htmlFor="callback-hour">
+            {t('menu.callback.hour')}
+          </label>
+          <select
+            id="callback-hour"
+            name="callbackHour"
+            value={hour}
+            onChange={(event) => updateTime(event.target.value, minute)}
+            className="h-12 w-[112px] rounded-xl border border-(--brand-primary) bg-(--brand-primary) px-4 text-center text-xl font-extrabold text-(--brand-on-primary) focus-visible:ring-2 focus-visible:ring-(--brand-border-strong) focus-visible:ring-offset-2 focus-visible:outline-none"
+          >
+            {Array.from({ length: 24 }, (_, index) =>
+              String(index).padStart(2, '0'),
+            ).map((value) => (
+              <option key={value} value={value}>
+                {value}
+              </option>
+            ))}
+          </select>
+          <span className="text-xl font-extrabold text-(--brand-primary-deep)">
+            :
+          </span>
+          <label className="sr-only" htmlFor="callback-minute">
+            {t('menu.callback.minute')}
+          </label>
+          <select
+            id="callback-minute"
+            name="callbackMinute"
+            value={minute}
+            onChange={(event) => updateTime(hour, event.target.value)}
+            className="h-12 w-[112px] rounded-xl border border-(--brand-primary) bg-(--brand-primary) px-4 text-center text-xl font-extrabold text-(--brand-on-primary) focus-visible:ring-2 focus-visible:ring-(--brand-border-strong) focus-visible:ring-offset-2 focus-visible:outline-none"
+          >
+            {Array.from({ length: 60 }, (_, index) =>
+              String(index).padStart(2, '0'),
+            ).map((value) => (
+              <option key={value} value={value}>
+                {value}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <label className="mt-6 block" htmlFor="callback-repeat">
+          <span className="mb-2 block text-[length:var(--text-sm)] font-extrabold text-(--brand-ink)">
+            {t('menu.callback.repeat')}
+          </span>
+          <select
+            id="callback-repeat"
+            name="callbackRepeat"
+            aria-label={t('menu.callback.repeat')}
+            value={repeat}
+            onChange={(event) => {
+              setRepeat(event.target.value as CallbackRepeat)
+              setFeedback(null)
+            }}
+            className="w-full rounded-2xl border border-(--menu-control-border) bg-(--menu-control-bg) px-4 py-3.5 text-[length:var(--text-base)] font-bold text-(--brand-ink) focus-visible:border-(--brand-border-strong) focus-visible:ring-2 focus-visible:ring-(--brand-border-strong) focus-visible:ring-offset-2 focus-visible:outline-none"
+          >
+            <option value="never">{t('menu.callback.repeatNever')}</option>
+            <option value="weekly">{t('menu.callback.repeatWeekly')}</option>
+            <option value="everyOtherWeek">
+              {t('menu.callback.repeatEveryOtherWeek')}
             </option>
-          ))}
-        </select>
-        <span className="text-xl font-extrabold text-(--brand-primary-deep)">
-          :
-        </span>
-        <label className="sr-only" htmlFor="callback-minute">
-          {t('menu.callback.minute')}
+          </select>
         </label>
-        <select
-          id="callback-minute"
-          name="callbackMinute"
-          value={minute}
-          onChange={(event) => updateTime(hour, event.target.value)}
-          className="h-12 w-[112px] rounded-xl border border-(--brand-primary) bg-(--brand-primary) px-4 text-center text-xl font-extrabold text-white focus-visible:ring-2 focus-visible:ring-(--brand-border-strong) focus-visible:ring-offset-2 focus-visible:outline-none"
+
+        <button
+          type="button"
+          onClick={() => void handleConfirm()}
+          disabled={isSubmitting}
+          className={`${appSheetPrimaryButtonClass} mt-5 focus-visible:ring-2 focus-visible:ring-(--brand-border-strong) focus-visible:ring-offset-2 focus-visible:outline-none`}
         >
-          {Array.from({ length: 60 }, (_, index) =>
-            String(index).padStart(2, '0'),
-          ).map((value) => (
-            <option key={value} value={value}>
-              {value}
-            </option>
-          ))}
-        </select>
+          {isSubmitting
+            ? t('menu.callback.confirming')
+            : t('menu.callback.confirm')}
+        </button>
+
+        {feedback ? (
+          <div className="mt-3">
+            <AppSheetNotice>{feedback}</AppSheetNotice>
+          </div>
+        ) : null}
       </div>
-
-      <label className="mt-6 block" htmlFor="callback-repeat">
-        <span className="mb-2 block text-[length:var(--text-sm)] font-extrabold text-(--brand-ink)">
-          {t('menu.callback.repeat')}
-        </span>
-        <select
-          id="callback-repeat"
-          name="callbackRepeat"
-          aria-label={t('menu.callback.repeat')}
-          value={repeat}
-          onChange={(event) => {
-            setRepeat(event.target.value as CallbackRepeat)
-            setFeedback(null)
-          }}
-          className="w-full rounded-2xl border border-(--brand-border-field) bg-white/55 px-4 py-3.5 text-[length:var(--text-base)] font-bold text-(--brand-ink) focus-visible:border-(--brand-border-strong) focus-visible:ring-2 focus-visible:ring-(--brand-border-strong) focus-visible:ring-offset-2 focus-visible:outline-none"
-        >
-          <option value="never">{t('menu.callback.repeatNever')}</option>
-          <option value="weekly">{t('menu.callback.repeatWeekly')}</option>
-          <option value="everyOtherWeek">
-            {t('menu.callback.repeatEveryOtherWeek')}
-          </option>
-        </select>
-      </label>
-
-      <button
-        type="button"
-        onClick={() => void handleConfirm()}
-        disabled={isSubmitting}
-        className={`${appSheetPrimaryButtonClass} mt-5 focus-visible:ring-2 focus-visible:ring-(--brand-border-strong) focus-visible:ring-offset-2 focus-visible:outline-none`}
-      >
-        {isSubmitting
-          ? t('menu.callback.confirming')
-          : t('menu.callback.confirm')}
-      </button>
-
-      {feedback ? (
-        <div className="mt-3">
-          <AppSheetNotice>{feedback}</AppSheetNotice>
-        </div>
-      ) : null}
     </section>
   )
 }

@@ -27,9 +27,9 @@ const IntensitySlider = ({ value, onChange }: IntensitySliderProps) => {
     ((safeValue - INTENSITY_MIN) / (INTENSITY_MAX - INTENSITY_MIN)) * 100
 
   return (
-    <div>
+    <div className="rounded-xl bg-(--menu-content-bg) p-4">
       <div className="mb-2 flex items-center gap-2">
-        <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-(--brand-surface) text-(--brand-primary-deep)">
+        <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-(--menu-choice-bg) text-(--brand-primary-deep)">
           <Settings size={20} />
         </div>
 
@@ -78,7 +78,7 @@ const IntensitySlider = ({ value, onChange }: IntensitySliderProps) => {
                       className={`block rounded-full transition-all duration-150 ${
                         stepValue === safeValue
                           ? 'h-9 w-9 border-4 border-(--brand-primary) bg-(--brand-primary)'
-                          : 'h-7 w-7 border-[3px] border-(--brand-border-strong)/60 bg-(--brand-card-bg)'
+                          : 'h-7 w-7 border-[3px] border-(--brand-border-strong)/60 bg-(--menu-control-bg)'
                       }`}
                     />
                   </button>

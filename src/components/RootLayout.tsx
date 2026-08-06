@@ -37,14 +37,14 @@ export default function RootLayout() {
 
   if (isAdminRoute) {
     return (
-      <main className="relative min-h-dvh w-full text-[#221447]">
+      <main className="relative min-h-dvh w-full text-(--brand-ink)">
         <Outlet />
       </main>
     )
   }
 
   return (
-    <main className="app-root app-root-shell relative flex w-full items-center justify-center overflow-hidden text-[#221447]">
+    <main className="app-root app-root-shell relative flex w-full items-center justify-center overflow-hidden text-(--brand-ink)">
       <AppStageFrame>
         <Outlet />
       </AppStageFrame>
