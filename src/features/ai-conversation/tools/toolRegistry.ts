@@ -24,10 +24,26 @@ const toolRegistry: Record<string, ToolHandlerFn> = {
     return createSuccessResponse(id, 'start_workout_video')
   },
 
+  //──────────────────────
+  // Change Workout
+  //──────────────────────
+
   change_workout: async (id, args, ctx) => {
     ctx.addDebugEvent('change_workout')
-    ctx.changeWorkoutRef.current(args.userInput as string)
+    ctx.changeWorkoutRef.current(
+      args.workout_id as number,
+      args.reasoning as string,
+    )
     return createSuccessResponse(id, 'change_workout')
+  },
+
+  //──────────────────────
+  // Get Workouts
+  //──────────────────────
+  get_workouts: async (id, _args, ctx) => {
+    ctx.addDebugEvent('get_workouts')
+    ctx.getWorkoutsRef.current()
+    return createSuccessResponse(id, 'get_workouts')
   },
 
   //──────────────────────
@@ -144,7 +160,8 @@ interface ToolExecutionContext {
   finishSessionRef: RefObject<
     (summary?: string, suggestions?: ProfileSuggestions) => void
   >
-  changeWorkoutRef: RefObject<(workoutId: string) => void>
+  getWorkoutsRef: RefObject<() => void>
+  changeWorkoutRef: RefObject<(workoutId: number, reasoning: string) => void>
   finishedWorkoutRef: RefObject<() => void>
   startWorkoutVideoRef: RefObject<() => void>
   updateUserNameRef: RefObject<(userName: string) => Promise<void>>
