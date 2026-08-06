@@ -64,6 +64,7 @@ export default function useCurrentUser() {
 
   const userId = profile?.id ? String(profile.id) : null
   const level = profile?.intensityLevel ?? null
+  const context = profile?.context ?? null
   const voice = (trainer?.voice as string | undefined) ?? FALLBACK_VOICE
   const coachPrompt = trainer?.prompt ?? null
 
@@ -106,6 +107,7 @@ export default function useCurrentUser() {
       userId,
       trainerId,
       level,
+      context,
       voice,
       coachPrompt,
       refetchProfile,
@@ -123,6 +125,7 @@ export default function useCurrentUser() {
       userId,
       trainerId,
       level,
+      context,
       voice,
       coachPrompt,
       refetchProfile,
