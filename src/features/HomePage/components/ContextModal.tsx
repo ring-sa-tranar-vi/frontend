@@ -15,7 +15,7 @@ const ContextModel = ({ value, onChange }: ContextModelProps) => {
   const { t } = useTranslation()
 
   return (
-    <div className="rounded-xl bg-(--menu-content-bg) p-4">
+    <div>
       <div className="mb-2 flex items-center gap-2">
         <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-(--menu-choice-bg) text-(--brand-primary)">
           <FileText size={20} />

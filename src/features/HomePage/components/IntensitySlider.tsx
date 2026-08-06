@@ -27,7 +27,7 @@ const IntensitySlider = ({ value, onChange }: IntensitySliderProps) => {
     ((safeValue - INTENSITY_MIN) / (INTENSITY_MAX - INTENSITY_MIN)) * 100
 
   return (
-    <div className="rounded-xl bg-(--menu-content-bg) p-4">
+    <div>
       <div className="mb-2 flex items-center gap-2">
         <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-(--menu-choice-bg) text-(--brand-primary-deep)">
           <Settings size={20} />
@@ -42,7 +42,7 @@ const IntensitySlider = ({ value, onChange }: IntensitySliderProps) => {
         {t('intensitySlider.description')}
       </AppSheetSectionText>
 
-      <div className="mt-5 px-1">
+      <div className="mt-4 rounded-xl bg-(--menu-content-bg) p-4">
         <div className="relative">
           <div className="pointer-events-none absolute top-4 right-2 left-2 h-1 rounded-full bg-(--brand-border)" />
 
