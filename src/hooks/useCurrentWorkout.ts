@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useAuth } from '@clerk/react'
 import { useQuery } from '@tanstack/react-query'
 import { getJson } from '../lib/api/fetcher'
@@ -17,6 +17,11 @@ type RecommendedWorkoutResponse = {
 export default function useCurrentWorkout() {
   const { getToken, isSignedIn } = useAuth()
   const { level, userId } = useCurrentUser()
+  const [selectedWorkoutId, setSelectedWorkoutId] = useState<
+    string | undefined
+  >()
+  const [recommendedWorkoutReasoning, setRecommendedWorkoutReasoning] =
+    useState<string | undefined>()
 
   const {
     data: workouts = [] as BackendWorkoutResponse[],
@@ -29,6 +34,13 @@ export default function useCurrentWorkout() {
       if (DEBUG) console.debug('[useCurrentWorkout] fetching workouts')
       const rawToken = isSignedIn ? await getToken() : undefined
       const token: string | undefined = rawToken ?? undefined
+      if (!token) {
+        console.log(
+          '[useCurrentWorkout] Missing required parameters for workouts',
+          { token },
+        )
+        throw new Error('Cannot fetch workouts without token')
+      }
       return await getJson<BackendWorkoutResponse[]>(`/api/workouts`, {
         token,
       })
@@ -77,10 +89,7 @@ export default function useCurrentWorkout() {
       if (!userId || level == null) {
         console.log(
           '[useCurrentWorkout] Missing required parameters for recommendation',
-          {
-            userId,
-            level,
-          },
+          { userId, level },
         )
         throw new Error('Cannot fetch recommendation without userId and level')
       }
@@ -110,19 +119,31 @@ export default function useCurrentWorkout() {
     }
   }, [recommendation])
 
-  // Only accept recommendations inside the stable trainer + intensity bucket.
-  // When already completed today: no workout at all (session uses getAlreadyCompletedSession).
-  // Otherwise: AI recommendation, then trainer's first workout, then nothing.
   const recommendedWorkout = workouts.find(
     (workout) => workout.id === recommendation?.workoutId,
   )
   const recommendedWorkoutId = recommendedWorkout?.id.toString()
-  const currentWorkout = alreadyCompletedToday
-    ? undefined
-    : recommendedWorkoutId
-  const recommendedWorkoutReasoning = recommendedWorkout
-    ? recommendation?.reasoning
-    : undefined
+
+  // Use the manually selected ID if set; otherwise, fall back to the recommended workout ID
+  const activeWorkoutId = selectedWorkoutId ?? recommendedWorkoutId
+  const currentWorkout = alreadyCompletedToday ? undefined : activeWorkoutId
+
+  useEffect(() => {
+    if (selectedWorkoutId !== undefined) return
+    setRecommendedWorkoutReasoning(
+      recommendedWorkout ? recommendation?.reasoning : undefined,
+    )
+  }, [recommendedWorkout, recommendation?.reasoning, selectedWorkoutId])
+
+  const updateCurrentWorkout = (
+    workoutId: string | number | undefined,
+    reasoning?: string,
+  ) => {
+    setSelectedWorkoutId(
+      workoutId !== undefined ? String(workoutId) : undefined,
+    )
+    setRecommendedWorkoutReasoning(reasoning)
+  }
 
   if (DEBUG) {
     console.debug('[useCurrentWorkout] state', {
@@ -135,6 +156,7 @@ export default function useCurrentWorkout() {
 
   return {
     currentWorkout,
+    updateCurrentWorkout,
     workouts,
     isLoading,
     isError,

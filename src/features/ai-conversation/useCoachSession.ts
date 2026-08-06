@@ -2,6 +2,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useCalendarEvents } from '../../hooks/useCalendarEvents'
 import useCurrentUser from '../../hooks/useCurrentUser'
+import type { BackendWorkoutResponse } from '../session/api'
 import { useTrainer } from '../session/query'
 import type { CoachCallSession } from '../session/types'
 import {
@@ -55,11 +56,19 @@ export function useCoachSession(
   options: UseCoachSessionOptions & {
     trainerId?: string
     session: CoachCallSession
+    workouts: BackendWorkoutResponse[] | undefined
+    updateCurrentWorkout: (workoutId: number, reasoning?: string) => void
     alreadyCompletedToday?: boolean
   },
 ) {
   const queryClient = useQueryClient()
-  const { session, autoStart = true } = options
+  const {
+    session,
+    autoStart = true,
+    workouts,
+    updateCurrentWorkout,
+    alreadyCompletedToday = false,
+  } = options
 
   const {
     userId,
@@ -93,7 +102,7 @@ export function useCoachSession(
         session,
         sessionCoachPrompt,
         sessionTrainerName,
-        options.alreadyCompletedToday,
+        alreadyCompletedToday,
         isSignedIn,
         calendarEvents,
       ),
@@ -101,7 +110,7 @@ export function useCoachSession(
       session,
       sessionCoachPrompt,
       sessionTrainerName,
-      options.alreadyCompletedToday,
+      alreadyCompletedToday,
       isSignedIn,
       calendarEvents,
     ],
@@ -154,7 +163,10 @@ export function useCoachSession(
   const onboardingToTrainingRef = useRef<() => Promise<void>>(async () => {})
   const endOnboardingRef = useRef<() => Promise<void>>(async () => {})
   const startInstructionsRef = useRef<() => void>(() => {})
-  const changeWorkoutRef = useRef<(userInput: string) => void>(() => {})
+  const getWorkoutsRef = useRef<() => void>(() => {})
+  const changeWorkoutRef = useRef<
+    (workoutId: number, reasoning: string) => void
+  >(() => {})
   const finishedWorkoutRef = useRef<() => void>(() => {})
   //const startWorkoutRef = useRef<() => Promise<void>>(async () => {})
   const finishSessionRef = useRef<
@@ -210,10 +222,10 @@ export function useCoachSession(
     () =>
       getSessionTools({
         isSignedIn,
-        alreadyCompletedToday: options.alreadyCompletedToday,
+        alreadyCompletedToday,
         session,
       }),
-    [isSignedIn, options.alreadyCompletedToday, session],
+    [isSignedIn, alreadyCompletedToday, session],
   )
   const addCaptionParagraph = useCallback((text?: string | null) => {
     const paragraphs = splitCaptionParagraphs(text)
@@ -254,6 +266,7 @@ export function useCoachSession(
     //──────────────────────
     onToolCall: (functionCall) =>
       dispatchToolCall(functionCall, {
+        getWorkoutsRef: getWorkoutsRef,
         changeWorkoutRef: changeWorkoutRef,
         finishedWorkoutRef: finishedWorkoutRef,
         stepRef: stepRef,
@@ -391,13 +404,29 @@ export function useCoachSession(
     }
   }, [addDebugEvent, session.video])
 
-  const changeWorkout = useCallback((userInput: string) => {
-    addDebugEvent('change_workout', userInput)
-    console.log('changeWorkout called with userInput:', userInput)
-    console.log(
-      'TBD: Implement the logic to change the workout based on userInput',
+  const changeWorkout = useCallback(
+    (workoutId: number, reasoning: string) => {
+      addDebugEvent('change_workout', workoutId)
+      addDebugEvent('change_workout_reasoning', reasoning)
+      updateCurrentWorkout(workoutId, reasoning)
+    },
+    [addDebugEvent, updateCurrentWorkout],
+  )
+
+  const getWorkouts = useCallback(() => {
+    const workoutSummary =
+      workouts?.map((workout) => workout.name).join(', ') ?? ''
+
+    addDebugEvent('get_workouts', `workouts=${workoutSummary}`)
+    sendCoachPrompt(
+      `These are the available workouts: ${workouts
+        ?.map(
+          (workout) =>
+            `${workout.id}: ${workout.name}, ${workout.description}, ${workout.level}`,
+        )
+        .join(', ')}`,
     )
-  }, [])
+  }, [addDebugEvent, sendCoachPrompt, workouts])
 
   //──────────────────────
   // Workout completed
@@ -617,10 +646,8 @@ export function useCoachSession(
       addDebugEvent,
       disconnectLive,
       getSession,
-      session.id,
-      setSessionStep,
-      updateProfile,
       queryClient,
+      updateProfile,
       userId,
     ],
   )
@@ -629,6 +656,7 @@ export function useCoachSession(
   // Sync latest callbacks into refs
   //──────────────────────
   useEffect(() => {
+    getWorkoutsRef.current = getWorkouts
     disconnectRef.current = disconnectLive
     changeWorkoutRef.current = changeWorkout
     startWorkoutVideoRef.current = playInstructionsVideo
@@ -641,13 +669,17 @@ export function useCoachSession(
     finishedWorkoutRef.current = workoutCompleted
     finishSessionRef.current = finishSessionWithSummary
   }, [
+    changeWorkout,
+    disconnectLive,
+    endOnboarding,
     finishSessionWithSummary,
+    getWorkouts,
+    onboardingToTraining,
     playInstructionsVideo,
     updateIntensityLevel,
     updateUserContext,
     updateUserName,
-    endOnboarding,
-    onboardingToTraining,
+    workoutCompleted,
   ])
 
   //──────────────────────
