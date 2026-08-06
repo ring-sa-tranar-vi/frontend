@@ -8,13 +8,16 @@ import {
 } from 'react'
 
 export const appSheetFieldClass =
-  'rounded-2xl border border-(--brand-border-field) bg-(--brand-field-bg)'
+  'rounded-2xl border border-(--menu-control-border) bg-(--menu-control-bg)'
 
 export const appSheetCardClass =
-  'rounded-2xl border border-(--brand-border-light) bg-(--brand-card-bg) p-4'
+  'rounded-2xl border border-(--brand-border-light) bg-(--menu-content-bg) p-4'
 
 export const appSheetPrimaryButtonClass =
-  'w-full rounded-full bg-(--brand-primary) px-4 py-4 text-[length:var(--text-base)] font-extrabold text-white shadow-[0_2px_12px_rgba(80,64,200,0.28)] transition hover:bg-(--brand-primary-strong) active:scale-[0.985] disabled:cursor-not-allowed disabled:opacity-70'
+  'w-full rounded-full bg-(--brand-primary) px-4 py-4 text-[length:var(--text-base)] font-extrabold text-(--brand-on-primary) transition hover:bg-(--brand-primary-strong) active:scale-[0.985] disabled:cursor-not-allowed disabled:opacity-70'
+
+export const appSheetInlineActionButtonClass =
+  'inline-flex h-10 w-20 shrink-0 items-center justify-center rounded-full bg-(--brand-primary) px-3 text-[length:var(--text-sm)] font-extrabold text-(--brand-on-primary) transition hover:opacity-95'
 
 export const appSheetSecondaryButtonClass =
   'w-full rounded-2xl border border-(--brand-btn-secondary-border) bg-(--brand-btn-secondary-bg) px-4 py-3.5 text-[length:var(--text-sm)] font-extrabold text-(--brand-btn-secondary-text) transition hover:bg-(--brand-btn-secondary-hover) active:scale-[0.985]'
@@ -298,7 +301,7 @@ export function AppSheet({
         // No transform style prop – position is controlled entirely via
         // el.style.transform so CSS transitions always have a reliable from-state.
       >
-        <div className="mx-auto mt-3 h-1 w-9 shrink-0 cursor-grab rounded-full bg-black/20 select-none active:cursor-grabbing" />
+        <div className="mx-auto mt-3 h-1 w-9 shrink-0 cursor-grab rounded-full bg-(--brand-handle) select-none active:cursor-grabbing" />
 
         <div className="flex min-h-0 flex-1 flex-col px-5 pt-4 pb-[max(1.25rem,var(--stage-safe-bottom))]">
           <header className="flex shrink-0 items-start justify-between gap-3">
@@ -393,9 +396,9 @@ export function AppSheetNotice({
 }) {
   const toneClass =
     tone === 'success'
-      ? 'border-emerald-300 bg-emerald-50 text-emerald-950'
+      ? 'border-(--brand-success-border) bg-(--brand-success-surface) text-(--brand-success-ink)'
       : tone === 'danger'
-        ? 'border-rose-300 bg-rose-50 text-rose-950'
+        ? 'border-(--brand-danger-border) bg-(--brand-danger-surface) text-(--brand-danger-ink)'
         : 'border-(--brand-border-field) bg-(--brand-soft) text-(--brand-title-ink)'
 
   return (

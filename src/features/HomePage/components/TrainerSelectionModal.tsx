@@ -275,7 +275,10 @@ export default function TrainerSelectionModal({
   }
 
   return (
-    <section aria-labelledby="trainer-selection-title" className="space-y-4">
+    <section
+      aria-labelledby="trainer-selection-title"
+      className="space-y-4 rounded-xl bg-(--menu-content-bg) p-4"
+    >
       {isLoading ? (
         <AppSheetNotice>{t('trainerSelection.loading')}</AppSheetNotice>
       ) : isError ? (
@@ -286,7 +289,7 @@ export default function TrainerSelectionModal({
         <div>
           {/* Header */}
           <div className="flex items-start gap-3 text-(--brand-primary-deep)">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-(--brand-surface) text-(--brand-primary)">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-(--menu-choice-bg) text-(--brand-primary)">
               <UserRound size={22} />
             </div>
             <div className="min-w-0 flex-1">
@@ -315,14 +318,14 @@ export default function TrainerSelectionModal({
                 <button
                   type="button"
                   onClick={() => setFilterOpen((prev) => !prev)}
-                  className="rounded-lg border border-(--brand-border-field) bg-(--brand-surface) px-2.5 py-1 text-[length:var(--text-xs)] font-extrabold text-(--brand-primary) transition hover:bg-(--brand-soft) active:scale-95"
+                  className="rounded-lg border border-(--menu-control-border) bg-(--menu-control-bg) px-2.5 py-1 text-[length:var(--text-xs)] font-extrabold text-(--brand-primary) transition hover:bg-(--brand-soft) active:scale-95"
                 >
                   {t('trainerSelection.changeFilter')}
                 </button>
               </div>
 
               {filterOpen && (
-                <div className="absolute top-full left-0 z-10 mt-2 min-w-[180px] space-y-1 rounded-2xl border border-(--brand-border-field) bg-(--brand-surface) p-3 shadow-lg">
+                <div className="absolute top-full left-0 z-10 mt-2 min-w-[180px] space-y-1 rounded-2xl border border-(--menu-control-border) bg-(--menu-content-bg) p-3">
                   {allLanguages.map((lang) => (
                     <button
                       key={lang}
@@ -334,14 +337,14 @@ export default function TrainerSelectionModal({
                         className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-[5px] border-2 transition ${
                           activeLanguages.includes(lang)
                             ? 'border-(--brand-primary) bg-(--brand-primary)'
-                            : 'border-(--brand-border-field) bg-(--brand-surface)'
+                            : 'border-(--menu-control-border) bg-(--menu-control-bg)'
                         }`}
                       >
                         {activeLanguages.includes(lang) && (
                           <Check
                             size={11}
                             strokeWidth={3}
-                            className="text-white"
+                            className="text-(--brand-on-primary)"
                           />
                         )}
                       </div>
@@ -369,7 +372,7 @@ export default function TrainerSelectionModal({
             <div className="relative mt-4">
               {/* 3-item sliding window — overflow hides prev and next */}
               <div
-                className="overflow-hidden rounded-3xl border border-(--brand-border)"
+                className="overflow-hidden rounded-2xl border border-(--menu-category-border)"
                 onTouchStart={handleTouchStart}
                 onTouchMove={handleTouchMove}
                 onTouchEnd={handleTouchEnd}
@@ -398,7 +401,7 @@ export default function TrainerSelectionModal({
                           t={t}
                         />
                       ) : (
-                        <div className="aspect-[8/9] bg-(--brand-soft)" />
+                        <div className="aspect-[8/9] bg-(--menu-choice-bg)" />
                       )}
                     </div>
                   ))}
@@ -410,7 +413,7 @@ export default function TrainerSelectionModal({
                 type="button"
                 onClick={() => navigate(-1)}
                 disabled={n <= 1}
-                className="absolute top-1/2 left-2 z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-(--brand-primary) bg-white/20 text-(--brand-primary) shadow-[0_1px_8px_rgba(0,0,0,0.18)] backdrop-blur-[2px] transition active:scale-95 disabled:opacity-30"
+                className="absolute top-1/2 left-2 z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-(--brand-primary) bg-(--menu-control-bg) text-(--brand-primary) transition active:scale-95 disabled:opacity-30"
                 aria-label={t('trainerSelection.previousTrainer')}
               >
                 <ChevronLeft size={20} strokeWidth={2.2} />
@@ -421,7 +424,7 @@ export default function TrainerSelectionModal({
                 type="button"
                 onClick={() => navigate(1)}
                 disabled={n <= 1}
-                className="absolute top-1/2 right-2 z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-(--brand-primary) bg-white/20 text-(--brand-primary) shadow-[0_1px_8px_rgba(0,0,0,0.18)] backdrop-blur-[2px] transition active:scale-95 disabled:opacity-30"
+                className="absolute top-1/2 right-2 z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-(--brand-primary) bg-(--menu-control-bg) text-(--brand-primary) transition active:scale-95 disabled:opacity-30"
                 aria-label={t('trainerSelection.nextTrainer')}
               >
                 <ChevronRight size={20} strokeWidth={2.2} />
@@ -463,7 +466,7 @@ function TrainerCard({
   const isLoading = loadingId === id
 
   return (
-    <div className="relative aspect-[8/9] overflow-hidden bg-(--brand-soft)">
+    <div className="relative aspect-[8/9] overflow-hidden bg-(--menu-choice-bg)">
       {/* Image — left half, full height */}
       {trainer.imageSelect ? (
         <img
@@ -504,7 +507,7 @@ function TrainerCard({
         )}
         {isSelected && (
           <div className="mt-2 flex justify-end">
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-(--brand-primary-deep) text-white">
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-(--brand-primary-deep) text-(--brand-on-primary)">
               <Check size={18} strokeWidth={3} />
             </div>
           </div>
@@ -521,7 +524,7 @@ function TrainerCard({
             disabled={isLoading}
             className={`flex w-full items-center justify-center gap-1.5 ${appSheetFieldClass} px-2 py-2 text-[13px] font-extrabold transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-60 ${
               isPlaying
-                ? 'border-rose-300 bg-rose-50 text-rose-800'
+                ? 'border-(--brand-danger-border) bg-(--brand-danger-surface) text-(--brand-danger-ink-muted)'
                 : 'text-(--brand-title-ink)'
             }`}
           >
@@ -554,7 +557,7 @@ function TrainerCard({
           <button
             type="button"
             onClick={onSelect}
-            className="flex w-full items-center justify-center rounded-2xl bg-(--brand-primary) px-2 py-2.5 text-[length:var(--text-sm)] font-extrabold text-white transition active:scale-95"
+            className="flex w-full items-center justify-center rounded-2xl bg-(--brand-primary) px-2 py-2.5 text-[length:var(--text-sm)] font-extrabold text-(--brand-on-primary) transition active:scale-95"
           >
             {t('trainerSelection.selectButton')}
           </button>

@@ -102,11 +102,9 @@ export default function AppStageFrame({ children }: AppStageFrameProps) {
       >
         <div
           className={[
-            'app-stage relative origin-top-left overflow-hidden bg-[#f7f2ff]',
+            'app-stage relative origin-top-left overflow-hidden bg-(--brand-page)',
             useWideFrame ? 'app-stage--wide' : 'app-stage--mobile',
-            showPhoneFrame
-              ? 'rounded-[34px]'
-              : 'shadow-[0_0_70px_rgba(55,38,110,0.16)]',
+            showPhoneFrame ? 'rounded-[34px]' : '',
           ].join(' ')}
           style={{
             width: useDesktopScale ? DESIGN_WIDTH : stageWidth,
@@ -119,7 +117,7 @@ export default function AppStageFrame({ children }: AppStageFrameProps) {
         </div>
         {showPhoneFrame && (
           <div
-            className="pointer-events-none absolute -inset-[10px] z-[100] border-[10px] border-black shadow-[0_20px_40px_rgba(0,0,0,0.22)]"
+            className="pointer-events-none absolute -inset-[10px] z-[100] border-[10px] border-black"
             style={{ borderRadius: PHONE_FRAME_RADIUS * stageScale + 10 }}
           />
         )}

@@ -123,44 +123,36 @@ export default function MenuPlaceholderSections({
   }
 
   return (
-    <div className="divide-y divide-(--brand-border)/60">
-      <div className="pb-7">
-        <ActivitySummarySection
-          summary={activityQuery.data}
-          isLoading={activityQuery.isLoading}
-          isError={activityQuery.isError && !activityQuery.data}
-          onRetry={() => void activityQuery.refetch()}
-        />
-      </div>
-      <div className="py-7">
-        <PhysicalEventsSection onFindEvents={onFindEvents} />
-      </div>
-      <div className="py-7">
-        <MenuCalendarSection
-          enabled={dataEnabled}
-          cancelableEventIds={calendarEventIds}
-          cancellingActivityId={
-            calendarCancellationEventId ?? cancellingCallbackId
-          }
-          cancelledActivityId={cancelledCalendarEventId ?? cancelledCallbackId}
-          cancellationError={
-            calendarAttendance.attendanceMutation.isError ||
-            callbackPreferences.removeCallbackMutation.isError
-          }
-          onCancelEvent={cancelCalendarEvent}
-          onCancelCallback={cancelCalendarCallback}
-          onDismissCancellationError={() => {
-            calendarAttendance.attendanceMutation.reset()
-            callbackPreferences.removeCallbackMutation.reset()
-          }}
-        />
-      </div>
-      <div className="py-7">
-        <CallbackSchedulerSection
-          initialRequest={data.callback}
-          onConfirm={onConfirmCallback ?? saveCallback}
-        />
-      </div>
+    <div className="space-y-7">
+      <ActivitySummarySection
+        summary={activityQuery.data}
+        isLoading={activityQuery.isLoading}
+        isError={activityQuery.isError && !activityQuery.data}
+        onRetry={() => void activityQuery.refetch()}
+      />
+      <PhysicalEventsSection onFindEvents={onFindEvents} />
+      <MenuCalendarSection
+        enabled={dataEnabled}
+        cancelableEventIds={calendarEventIds}
+        cancellingActivityId={
+          calendarCancellationEventId ?? cancellingCallbackId
+        }
+        cancelledActivityId={cancelledCalendarEventId ?? cancelledCallbackId}
+        cancellationError={
+          calendarAttendance.attendanceMutation.isError ||
+          callbackPreferences.removeCallbackMutation.isError
+        }
+        onCancelEvent={cancelCalendarEvent}
+        onCancelCallback={cancelCalendarCallback}
+        onDismissCancellationError={() => {
+          calendarAttendance.attendanceMutation.reset()
+          callbackPreferences.removeCallbackMutation.reset()
+        }}
+      />
+      <CallbackSchedulerSection
+        initialRequest={data.callback}
+        onConfirm={onConfirmCallback ?? saveCallback}
+      />
     </div>
   )
 }

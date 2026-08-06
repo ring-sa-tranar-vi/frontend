@@ -26,7 +26,7 @@ const emptyApplication: OrganisationApplication = {
 }
 
 const fieldClass =
-  'mt-2 w-full rounded-2xl border border-(--brand-border-field) bg-(--brand-field-bg) px-4 py-3.5 text-[length:var(--text-base)] font-semibold text-(--brand-ink) transition placeholder:text-(--brand-muted) focus-visible:border-(--brand-border-strong) focus-visible:ring-2 focus-visible:ring-(--brand-border-strong) focus-visible:ring-offset-2 focus-visible:outline-none'
+  'mt-2 w-full rounded-2xl border border-(--menu-control-border) bg-(--menu-control-bg) px-4 py-3.5 text-[length:var(--text-base)] font-semibold text-(--brand-ink) transition placeholder:text-(--brand-muted) focus-visible:border-(--brand-border-strong) focus-visible:ring-2 focus-visible:ring-(--brand-border-strong) focus-visible:ring-offset-2 focus-visible:outline-none'
 
 export default function OrganisationApplicationSheet({
   open,
@@ -129,7 +129,7 @@ export default function OrganisationApplicationSheet({
       }
     >
       {applicationMutation.isSuccess ? (
-        <div className="flex min-h-72 flex-col items-center justify-center px-3 text-center">
+        <div className="flex min-h-72 flex-col items-center justify-center rounded-2xl border border-(--menu-category-border) bg-(--menu-category-bg) px-5 text-center">
           <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-(--brand-soft) text-(--brand-primary-deep)">
             <Building2 size={30} strokeWidth={2.2} aria-hidden="true" />
           </div>
@@ -143,7 +143,7 @@ export default function OrganisationApplicationSheet({
       ) : (
         <form
           id="organisation-application-form"
-          className="space-y-5 pb-3"
+          className="space-y-5 rounded-2xl border border-(--menu-category-border) bg-(--menu-category-bg) p-4"
           onSubmit={submitApplication}
         >
           {applicationMutation.isError ? (
