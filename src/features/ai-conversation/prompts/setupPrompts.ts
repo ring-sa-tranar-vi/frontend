@@ -1,5 +1,9 @@
 import type { CalendarActivity } from '../../HomePage/components/menu/types'
 import type { CoachCallSession } from '../../session/types'
+import { ALREADY_COMPLETED_INSTRUCTION } from './alreadyFinishedPrompt'
+import { GUEST_SESSION_INSTRUCTION } from './guestPrompts'
+import { ONBOARDING_SYSTEM_INSTRUCTION } from './onboardingPrompts'
+import { SESSION_INSTRUCTION } from './standardPrompts'
 
 export function buildUserContext(
   session: CoachCallSession,
@@ -41,6 +45,9 @@ export function buildUserContext(
   return parts.join(' ')
 }
 
+export const PERSONA_STABILITY_INSTRUCTION =
+  'Detta gäller alla trainers: behåll exakt samma trainer-personlighet, språk, dialekt, röststil, energi och tonläge genom hela samtalet, inklusive instruktioner, feedback, avbrott och avslut. Om trainerprompten säger nervös, lugn, hetsig, elegant, varm eller något annat ska det märkas konsekvent hela tiden. Använd användarkontexten för vad du säger, men byt aldrig persona.'
+
 export const COACH_PROMPTS = {
   INSTRUCTIONS_DONE:
     'Instruktionerna har precis spelats klart. Invänta användarens svar på om de är redo att starta passet.',
@@ -68,4 +75,35 @@ export function buildGuestContext(session: CoachCallSession): string {
     parts.push(`Passets GUIDNING: ${session.guidance.trim()}`)
   }
   return parts.join(' ')
+}
+
+export function buildSessionInstruction(
+  session: CoachCallSession,
+  trainerPrompt?: string | null,
+  trainerName?: string | null,
+  alreadyCompletedToday?: boolean,
+  isSignedIn?: boolean,
+  calendarEvents?: CalendarActivity[] | null,
+) {
+  const trainerNameLine = trainerName?.trim()
+    ? `Ditt namn är ${trainerName.trim()}. `
+    : ''
+  if (!isSignedIn) {
+    const guestContext = buildGuestContext(session)
+    return `${guestContext} ${GUEST_SESSION_INSTRUCTION} ${trainerNameLine}${trainerPrompt?.trim() ?? ''} ${LANGUAGE_ADAPTATION_INSTRUCTION}`
+  }
+  const userContext = buildUserContext(session, calendarEvents)
+  const trainerIdentity = trainerPrompt?.trim()
+    ? `\n\nTrainer identity and style (apply this throughout the conversation):\n${trainerNameLine}${trainerPrompt.trim()}\n${PERSONA_STABILITY_INSTRUCTION} ${LANGUAGE_ADAPTATION_INSTRUCTION}`
+    : `\n\nTrainer identity and style (apply this throughout the conversation):\n${trainerNameLine}${PERSONA_STABILITY_INSTRUCTION} ${LANGUAGE_ADAPTATION_INSTRUCTION}`
+
+  if (alreadyCompletedToday) {
+    return `${trainerIdentity}${userContext} ${ALREADY_COMPLETED_INSTRUCTION}`
+  }
+
+  if (session.onboarding) {
+    return `${trainerIdentity}${userContext} ${ONBOARDING_SYSTEM_INSTRUCTION}`
+  }
+
+  return `${trainerIdentity}${userContext}${SESSION_INSTRUCTION}`
 }
