@@ -73,7 +73,7 @@ export function useCallbackPreferences() {
           body: JSON.stringify({
             day: API_DAY_BY_WEEKDAY[request.weekday],
             time: `${request.time}:00`,
-            repeat: request.repeat === 'never' ? 'NEVER' : 'WEEKLY',
+            repeatType: request.repeat === 'never' ? 'NEVER' : 'WEEKLY',
           }),
         },
       )
