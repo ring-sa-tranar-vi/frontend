@@ -1,10 +1,9 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useCalendarEvents } from '../../hooks/useCalendarEvents'
+import { useCurrentTrainer } from '../../hooks/useCurrentTrainer'
 import useCurrentUser from '../../hooks/useCurrentUser'
-import type { BackendWorkoutResponse } from '../session/api'
-import { useTrainer } from '../session/query'
-import type { CoachCallSession } from '../session/types'
+import type { CoachCallSession, Workout } from '../session/types'
 import {
   setCallAudioMuted,
   startGymAmbience,
@@ -52,7 +51,7 @@ export function useCoachSession(
   options: UseCoachSessionOptions & {
     trainerId?: string
     session: CoachCallSession
-    workouts: BackendWorkoutResponse[] | undefined
+    workouts: Workout[] | undefined
     updateCurrentWorkout: (workoutId: number, reasoning?: string) => void
     alreadyCompletedToday?: boolean
   },
@@ -66,25 +65,13 @@ export function useCoachSession(
     alreadyCompletedToday = false,
   } = options
 
-  const {
-    userId,
-    voice,
-    coachPrompt,
-    updateProfile,
-    isTrainerLoading: isCurrentUserTrainerLoading,
-    isSignedIn,
-  } = useCurrentUser()
-  const {
-    data: trainer,
-    isLoading: isTrainerLoading,
-    error: trainerError,
-  } = useTrainer(options.trainerId ?? '1')
-  const sessionCoachPrompt =
-    trainer?.prompt ?? session.trainer?.prompt ?? coachPrompt
+  const { userId, updateProfile, isSignedIn } = useCurrentUser()
+  const { isTrainerLoading, isTrainerError: isCurrentTrainerError } =
+    useCurrentTrainer(String(session.trainer?.id ?? undefined))
+  const trainer = session.trainer
+  const sessionCoachPrompt = trainer?.prompt
   const sessionTrainerName = trainer?.name ?? session.trainer?.name
-  const sessionVoice = normalizeLiveVoice(
-    trainer?.voice ?? session.trainer?.voice ?? voice,
-  )
+  const sessionVoice = normalizeLiveVoice(trainer?.voice ?? 'Kore')
   const currentDate = new Date()
   const { activities: calendarEvents } = useCalendarEvents(
     currentDate.getFullYear(),
@@ -111,6 +98,9 @@ export function useCoachSession(
       calendarEvents,
     ],
   )
+  useEffect(() => {
+    console.log('[useCoachSession] sessionInstruction', sessionInstruction)
+  }, [sessionInstruction])
 
   const [step, setStep] = useState<CoachSessionStep>('idle')
   const [error, setError] = useState<string | null>(null)
@@ -410,18 +400,16 @@ export function useCoachSession(
   )
 
   const getWorkouts = useCallback(() => {
-    const workoutSummary =
-      workouts?.map((workout) => workout.name).join(', ') ?? ''
+    const filteredWorkouts = workouts?.filter((w) => w.level !== session.level)
+    const workoutsPrompt = `These are your available workouts: ${filteredWorkouts
+      ?.map(
+        (workout) =>
+          `${workout.id}: Name: ${workout.name}, Level: ${workout.level}`,
+      )
+      .join(', ')}`
 
-    addDebugEvent('get_workouts', `workouts=${workoutSummary}`)
-    sendCoachPrompt(
-      `These are the available workouts: ${workouts
-        ?.map(
-          (workout) =>
-            `${workout.id}: ${workout.name}, ${workout.description}, ${workout.level}`,
-        )
-        .join(', ')}`,
-    )
+    addDebugEvent('get_workouts', workoutsPrompt)
+    sendCoachPrompt(workoutsPrompt)
   }, [addDebugEvent, sendCoachPrompt, workouts])
 
   //──────────────────────
@@ -731,9 +719,7 @@ export function useCoachSession(
   }, [isSpeakerMuted, setSpeakerMuted])
 
   // must be declared before usage in the auto-start effect
-  const canStartLive = Boolean(
-    sessionVoice && !isTrainerLoading && !isCurrentUserTrainerLoading,
-  )
+  const canStartLive = Boolean(sessionVoice && !isTrainerLoading)
 
   //──────────────────────
   // Auto-start on mount
@@ -768,7 +754,7 @@ export function useCoachSession(
     getCurrentRms,
     trainer,
     isTrainerLoading,
-    trainerError,
+    trainerError: isCurrentTrainerError,
     showInstructionsVideo,
     isMicrophoneMuted,
     isSpeakerMuted,

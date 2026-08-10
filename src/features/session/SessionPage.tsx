@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useCoachSession } from '../ai-conversation'
-import type { BackendWorkoutResponse } from './api'
 import { SessionCall } from './components/SessionCall'
 import { useCoachCallSession } from './query'
-import type { CoachCallSession, SessionPanel } from './types'
+import type { CoachCallSession, SessionPanel, Workout } from './types'
+import useCurrentWorkout from '../../hooks/useCurrentWorkout'
 
 const LOADING_SESSION: CoachCallSession = {
   id: '',
@@ -12,24 +12,24 @@ const LOADING_SESSION: CoachCallSession = {
 }
 
 export function SessionPage({
-  workoutId,
   workouts,
   updateCurrentWorkout,
   alreadyCompletedToday = false,
   onEnd,
 }: {
   workoutId: string | undefined
-  workouts: BackendWorkoutResponse[] | undefined
+  workouts: Workout[] | undefined
   updateCurrentWorkout: (workoutId: number, reasoning?: string) => void
   alreadyCompletedToday?: boolean
   onEnd: () => void
 }) {
+  const { currentWorkout: workout } = useCurrentWorkout()
   const {
     data: session,
     isLoading,
     isError,
     error,
-  } = useCoachCallSession(workoutId)
+  } = useCoachCallSession(workout)
   const { t } = useTranslation()
 
   if (isError) {
@@ -83,7 +83,7 @@ function ReadySessionPage({
 }: {
   session: CoachCallSession
   updateCurrentWorkout: (workoutId: number, reasoning?: string) => void
-  workouts: BackendWorkoutResponse[] | undefined
+  workouts: Workout[] | undefined
   alreadyCompletedToday?: boolean
   onEnd: () => void
 }) {

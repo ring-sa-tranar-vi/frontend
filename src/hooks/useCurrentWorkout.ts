@@ -3,7 +3,7 @@ import { useAuth } from '@clerk/react'
 import { useQuery } from '@tanstack/react-query'
 import { getJson } from '../lib/api/fetcher'
 import useCurrentUser from './useCurrentUser'
-import { type BackendWorkoutResponse } from '../features/session/api'
+import { type Workout } from '../features/session/types'
 
 export const DEBUG = import.meta.env.VITE_DEBUG === 'true'
 export const DEBUG_WORKOUT_ID = import.meta.env.VITE_DEBUG_WORKOUT_ID ?? '1'
@@ -59,6 +59,7 @@ export default function useCurrentWorkout() {
   const [selectedWorkoutId, setSelectedWorkoutId] = useState<
     string | undefined
   >()
+
   const [recommendedWorkoutReasoning, setRecommendedWorkoutReasoning] =
     useState<string | undefined>()
   const [storedProfile, setStoredProfile] =
@@ -82,11 +83,11 @@ export default function useCurrentWorkout() {
   )
 
   const {
-    data: workouts = [] as BackendWorkoutResponse[],
+    data: workouts = [] as Workout[],
     isLoading,
     isError,
     refetch,
-  } = useQuery<BackendWorkoutResponse[]>({
+  } = useQuery<Workout[]>({
     queryKey: ['workouts'],
     queryFn: async () => {
       if (DEBUG) console.debug('[useCurrentWorkout] fetching workouts')
@@ -99,7 +100,7 @@ export default function useCurrentWorkout() {
         )
         throw new Error('Cannot fetch workouts without token')
       }
-      return await getJson<BackendWorkoutResponse[]>(`/api/workouts`, {
+      return await getJson<Workout[]>(`/api/workouts`, {
         token,
       })
     },
@@ -107,6 +108,7 @@ export default function useCurrentWorkout() {
     staleTime: 1000 * 60 * 5,
     retry: 1,
   })
+  const [currentWorkout, setCurrentWorkout] = useState<Workout | null>(null)
 
   const { data: completedTodayData } = useQuery<{ hasCompletedToday: boolean }>(
     {
@@ -213,9 +215,8 @@ export default function useCurrentWorkout() {
   )
   const recommendedWorkoutId = recommendedWorkout?.id.toString()
 
-  // Use the manually selected ID if set; otherwise, fall back to the cached or fetched recommendation.
   const activeWorkoutId = selectedWorkoutId ?? recommendedWorkoutId
-  const currentWorkout = alreadyCompletedToday ? undefined : activeWorkoutId
+  const currentWorkoutId = alreadyCompletedToday ? undefined : activeWorkoutId
 
   useEffect(() => {
     if (selectedWorkoutId !== undefined) return
@@ -223,6 +224,21 @@ export default function useCurrentWorkout() {
       recommendedWorkout ? activeRecommendation?.reasoning : undefined,
     )
   }, [recommendedWorkout, activeRecommendation?.reasoning, selectedWorkoutId])
+
+  useEffect(() => {
+    if (!currentWorkoutId) {
+      setCurrentWorkout(null)
+      return
+    }
+    const workout = workouts.find(
+      (workout) => workout.id.toString() === currentWorkoutId,
+    )
+    if (!workout) {
+      setCurrentWorkout(null)
+      return
+    }
+    setCurrentWorkout(workout)
+  }, [currentWorkoutId, workouts])
 
   const updateCurrentWorkout = (
     workoutId: string | number | undefined,
@@ -238,14 +254,19 @@ export default function useCurrentWorkout() {
     if (DEBUG) {
       console.debug('[useCurrentWorkout] state', {
         userId,
-        currentWorkout,
+        currentWorkoutId,
         recommendedWorkoutReasoning,
         workouts,
       })
     }
-  }, [userId, currentWorkout, recommendedWorkoutReasoning, workouts])
+  }, [userId, currentWorkoutId, recommendedWorkoutReasoning, workouts])
+
+  useEffect(() => {
+    console.log('Selected workout id', selectedWorkoutId)
+  }, [selectedWorkoutId])
 
   return {
+    currentWorkoutId,
     currentWorkout,
     updateCurrentWorkout,
     workouts,
