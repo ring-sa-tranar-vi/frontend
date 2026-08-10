@@ -16,8 +16,11 @@ export function buildUserContext(
   if (last) {
     parts.push(`Senaste pass: ${last.workoutName} (${last.dateLabel}).`)
   }
+  if (session.intensityLevel) {
+    parts.push(`Intensitetsnivå: ${session.intensityLevel}.`)
+  }
   if (session.context?.trim()) {
-    parts.push(`Bakgrund: ${session.context.trim()}`)
+    parts.push(`Bakgrund och context: ${session.context.trim()}`)
   }
   const workoutName = session.workoutName ?? session.name
   if (workoutName) {
