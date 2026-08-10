@@ -8,13 +8,19 @@ import MainWorkoutPage from './MainWorkoutPage'
 import TrainerAdminPage from './TrainerAdminPage'
 import AdminDashboard from './AdminDashboard'
 import CompanyOrganisationAdminPage from './CompanyOrganisationAdminPage'
+import OrganizationApplicationsAdminPage from './OrganizationApplicationsAdminPage'
 import { useAdminPage } from '../../hooks/useAdminPage'
 import { useMyProfile } from '../../hooks/useMyProfile'
 import LanguageSwitcher from '../../components/LanguageSwitcher'
 import { fetchAdminUsers, type AdminUser } from '../../api/admins'
 
 type AdminView =
-  'dashboard' | 'workouts' | 'trainers' | 'feedback' | 'organisations'
+  | 'dashboard'
+  | 'workouts'
+  | 'trainers'
+  | 'feedback'
+  | 'organisations'
+  | 'applications'
 
 function resolveInitialView(): AdminView {
   if (typeof window === 'undefined') return 'dashboard'
@@ -23,6 +29,7 @@ function resolveInitialView(): AdminView {
   if (p.endsWith('/feedback')) return 'feedback'
   if (p.endsWith('/workouts')) return 'workouts'
   if (p.endsWith('/organisations')) return 'organisations'
+  if (p.endsWith('/applications')) return 'applications'
   return 'dashboard'
 }
 
@@ -59,6 +66,13 @@ function IconOrganisation() {
   return (
     <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor">
       <path d="M3 21h18v-2H3v2zm2-4h4V7H5v10zm5 0h4V3h-4v14zm5 0h4V11h-4v6z" />
+    </svg>
+  )
+}
+function IconApplications() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor">
+      <path d="M9 2h6a2 2 0 0 1 2 2h3v18H4V4h3a2 2 0 0 1 2-2Zm0 2v2h6V4H9Zm1 6H7v2h3v-2Zm7 0h-5v2h5v-2Zm-7 5H7v2h3v-2Zm7 0h-5v2h5v-2Z" />
     </svg>
   )
 }
@@ -229,6 +243,11 @@ export default function AdminPage() {
       label: t('admin.nav.organisations'),
       Icon: IconOrganisation,
     },
+    {
+      view: 'applications',
+      label: t('admin.nav.applications'),
+      Icon: IconApplications,
+    },
   ]
 
   const switchView = (view: AdminView) => {
@@ -239,6 +258,7 @@ export default function AdminPage() {
       trainers: '/admin/trainers',
       feedback: '/admin/feedback',
       organisations: '/admin/organisations',
+      applications: '/admin/applications',
     }
     navigate({ to: routes[view] })
   }
@@ -257,6 +277,10 @@ export default function AdminPage() {
     }
     if (q.includes('feedback')) {
       switchView('feedback')
+      return
+    }
+    if (q.includes('ansökan') || q.includes('application')) {
+      switchView('applications')
       return
     }
     if (q.includes('organisation') || q.includes('organization')) {
@@ -427,6 +451,12 @@ export default function AdminPage() {
           {activeView === 'feedback' && <FeedbackAdminPage />}
           {activeView === 'organisations' && (
             <CompanyOrganisationAdminPage searchTerm={searchTerm} />
+          )}
+          {activeView === 'applications' && (
+            <OrganizationApplicationsAdminPage
+              searchTerm={searchTerm}
+              onOpenOrganisations={() => switchView('organisations')}
+            />
           )}
         </main>
       </div>

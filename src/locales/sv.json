@@ -25,7 +25,8 @@
       "workouts": "Pass",
       "trainers": "Tränare",
       "feedback": "Feedback",
-      "organisations": "Företagsorganisation"
+      "organisations": "Företagsorganisation",
+      "applications": "Organisationsansökningar"
     },
     "activeUsers": "Aktiva användare",
     "activeUsersUnavailable": "--",
@@ -104,6 +105,40 @@
       "newEvent": "Nytt event",
       "cancel": "Avbryt",
       "eventCount": "event"
+    },
+    "orgApplications": {
+      "eyebrow": "Företag",
+      "title": "Organisationsansökningar",
+      "description": "Granska företag som vill bli organisationer. Ett godkännande skapar organisationen automatiskt.",
+      "manageOrganisations": "Hantera organisationer & event",
+      "search": "Sök på namn, stad eller beskrivning",
+      "showAll": "Visa alla",
+      "loading": "Laddar ansökningar...",
+      "empty": "Inga ansökningar matchar filtret.",
+      "missingToken": "Inloggning saknas.",
+      "applicationNumber": "Ansökan #{{id}}",
+      "userId": "Användare #{{id}}",
+      "about": "Om organisationen",
+      "motivation": "Varför de vill bli partner",
+      "payment": "Betalningsstatus",
+      "reviewed": "Granskad: {{date}}",
+      "approve": "Godkänn och skapa organisation",
+      "reject": "Avslå ansökan",
+      "createEvents": "Öppna organisationen och skapa event",
+      "approvedToast": "Ansökan godkänd och organisationen skapad.",
+      "rejectedToast": "Ansökan avslogs.",
+      "paymentToast": "Betalningsstatus uppdaterad.",
+      "status": {
+        "pending": "Väntar",
+        "approved": "Godkänd",
+        "rejected": "Avslagen"
+      },
+      "paymentStatus": {
+        "pending": "Väntar på betalning",
+        "paid": "Betald",
+        "not_required": "Ingen betalning krävs",
+        "failed": "Betalning misslyckades"
+      }
     }
   },
   "home": {
