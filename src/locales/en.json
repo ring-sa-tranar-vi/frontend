@@ -25,7 +25,8 @@
       "workouts": "Workouts",
       "trainers": "Trainers",
       "feedback": "Feedback",
-      "organisations": "Company organisations"
+      "organisations": "Company organisations",
+      "applications": "Organisation applications"
     },
     "activeUsers": "Active Users",
     "activeUsersUnavailable": "--",
@@ -104,6 +105,40 @@
       "newEvent": "New event",
       "cancel": "Cancel",
       "eventCount": "events"
+    },
+    "orgApplications": {
+      "eyebrow": "Companies",
+      "title": "Organisation applications",
+      "description": "Review companies that want to become organisations. Approval creates the organisation automatically.",
+      "manageOrganisations": "Manage organisations & events",
+      "search": "Search by name, city or description",
+      "showAll": "Show all",
+      "loading": "Loading applications...",
+      "empty": "No applications match this filter.",
+      "missingToken": "Authentication is missing.",
+      "applicationNumber": "Application #{{id}}",
+      "userId": "User #{{id}}",
+      "about": "About the organisation",
+      "motivation": "Why they want to become a partner",
+      "payment": "Payment status",
+      "reviewed": "Reviewed: {{date}}",
+      "approve": "Approve and create organisation",
+      "reject": "Reject application",
+      "createEvents": "Open organisation and create events",
+      "approvedToast": "Application approved and organisation created.",
+      "rejectedToast": "Application rejected.",
+      "paymentToast": "Payment status updated.",
+      "status": {
+        "pending": "Pending",
+        "approved": "Approved",
+        "rejected": "Rejected"
+      },
+      "paymentStatus": {
+        "pending": "Pending payment",
+        "paid": "Paid",
+        "not_required": "No payment required",
+        "failed": "Payment failed"
+      }
     }
   },
   "home": {
