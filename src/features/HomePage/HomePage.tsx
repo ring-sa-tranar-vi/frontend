@@ -75,7 +75,12 @@ export default function HomePage() {
   )
   const { getToken, isLoaded, isSignedIn, userId } = useAuth()
   const { data: profile } = useMyProfile()
-  const { currentWorkout, alreadyCompletedToday } = useCurrentWorkout()
+  const {
+    currentWorkout,
+    alreadyCompletedToday,
+    workouts,
+    updateCurrentWorkout,
+  } = useCurrentWorkout()
   const { t, i18n } = useTranslation()
 
   useEffect(() => {
@@ -164,7 +169,9 @@ export default function HomePage() {
     return (
       <SessionPage
         workoutId={activeWorkoutId}
+        workouts={workouts}
         alreadyCompletedToday={activeAlreadyCompleted}
+        updateCurrentWorkout={updateCurrentWorkout}
         onEnd={handleEndSession}
       />
     )

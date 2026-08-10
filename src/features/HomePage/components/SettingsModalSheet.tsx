@@ -24,6 +24,7 @@ import {
   AppSheetNotice,
   AppSheetSectionText,
   AppSheetSectionTitle,
+  appSheetInlineActionButtonClass,
   appSheetPrimaryButtonClass,
   appSheetSecondaryButtonClass,
 } from '../../../components/AppSheet'
@@ -135,107 +136,117 @@ function ProfilePreferenceSections({
   const { t, i18n } = useTranslation()
 
   return (
-    <div className="divide-y divide-(--brand-border)/60 border-t border-(--brand-border)/60">
-      <section className="py-6">
-        <div className="mb-2 flex items-center gap-2">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-(--brand-surface) text-(--brand-primary-deep)">
-            <User size={20} />
+    <div className="space-y-4 border-t border-(--brand-border)/60 pt-6 pb-4">
+      <section className="rounded-2xl border border-(--menu-category-border) bg-(--menu-category-bg) p-5">
+        <div className="rounded-xl bg-(--menu-content-bg) p-4">
+          <div className="mb-2 flex items-center gap-2">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-(--menu-choice-bg) text-(--brand-primary-deep)">
+              <User size={20} />
+            </div>
+            <label htmlFor="fullName">
+              <AppSheetSectionTitle>
+                {t('settings.fullName')}
+              </AppSheetSectionTitle>
+            </label>
           </div>
-          <label htmlFor="fullName">
-            <AppSheetSectionTitle>
-              {t('settings.fullName')}
-            </AppSheetSectionTitle>
-          </label>
+
+          <AppSheetSectionText>
+            {t('settings.fullNameDescription')}
+          </AppSheetSectionText>
+
+          <input
+            id="fullName"
+            name="fullName"
+            type="text"
+            autoComplete="off"
+            value={fullName}
+            onChange={(event) => setFullName(event.target.value)}
+            placeholder={t('settings.fullNamePlaceholder')}
+            className="mt-3 w-full rounded-2xl border border-(--menu-control-border) bg-(--menu-control-bg) px-4 py-3.5 text-[length:var(--text-base)] font-semibold text-(--brand-ink) transition placeholder:text-(--brand-muted) focus-visible:border-(--brand-border-strong) focus-visible:ring-2 focus-visible:ring-(--brand-border-strong) focus-visible:ring-offset-2 focus-visible:outline-none"
+          />
+
+          <p className="mt-2 text-[length:var(--text-xs)] leading-snug font-semibold text-(--brand-body-ink)">
+            {fullName.trim()
+              ? t('settings.fullNameFound')
+              : t('settings.noFullNameFound')}
+          </p>
         </div>
-
-        <AppSheetSectionText>
-          {t('settings.fullNameDescription')}
-        </AppSheetSectionText>
-
-        <input
-          id="fullName"
-          name="fullName"
-          type="text"
-          autoComplete="off"
-          value={fullName}
-          onChange={(event) => setFullName(event.target.value)}
-          placeholder={t('settings.fullNamePlaceholder')}
-          className="mt-3 w-full rounded-2xl border border-(--brand-border-field) bg-(--brand-control) px-4 py-3.5 text-[length:var(--text-base)] font-semibold text-(--brand-ink) transition placeholder:text-(--brand-muted) focus-visible:border-(--brand-border-strong) focus-visible:ring-2 focus-visible:ring-(--brand-border-strong) focus-visible:ring-offset-2 focus-visible:outline-none"
-        />
-
-        <p className="mt-2 text-[length:var(--text-xs)] leading-snug font-semibold text-(--brand-body-ink)">
-          {fullName.trim()
-            ? t('settings.fullNameFound')
-            : t('settings.noFullNameFound')}
-        </p>
       </section>
 
-      <section className="py-6">
+      <section className="rounded-2xl border border-(--menu-category-border) bg-(--menu-category-bg) p-5">
         <TrainerSelectionModal
           selectedTrainerId={selectedTrainerId}
           onTrainerSelect={setSelectedTrainerId}
         />
       </section>
 
-      <section className="py-6">
+      <section className="rounded-2xl border border-(--menu-category-border) bg-(--menu-category-bg) p-5">
         <IntensitySlider value={intensityLevel} onChange={setIntensityLevel} />
       </section>
 
-      <section className="py-6">
+      <section className="rounded-2xl border border-(--menu-category-border) bg-(--menu-category-bg) p-5">
         <ContextModel value={context} onChange={setContext} />
       </section>
 
-      <section className="py-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-(--brand-surface) text-(--brand-primary-deep)">
-              <Globe size={20} />
+      <section className="rounded-2xl border border-(--menu-category-border) bg-(--menu-category-bg) p-5">
+        <div className="rounded-xl bg-(--menu-content-bg) p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-(--menu-choice-bg) text-(--brand-primary-deep)">
+                <Globe size={20} />
+              </div>
+              <AppSheetSectionTitle>
+                {t('settings.language')}
+              </AppSheetSectionTitle>
             </div>
-            <AppSheetSectionTitle>
-              {t('settings.language')}
-            </AppSheetSectionTitle>
+            <LanguageSwitcher
+              value={i18n.language}
+              onChange={(language: string) => i18n.changeLanguage(language)}
+            />
           </div>
-          <LanguageSwitcher
-            value={i18n.language}
-            onChange={(language: string) => i18n.changeLanguage(language)}
-          />
         </div>
       </section>
 
-      <section className="py-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-(--brand-surface) text-(--brand-primary-deep)">
-              <CircleHelp size={20} />
+      <section className="rounded-2xl border border-(--menu-category-border) bg-(--menu-category-bg) p-5">
+        <div className="rounded-xl bg-(--menu-content-bg) p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-(--menu-choice-bg) text-(--brand-primary-deep)">
+                <CircleHelp size={20} />
+              </div>
+              <AppSheetSectionTitle>
+                {t('settings.getHelp')}
+              </AppSheetSectionTitle>
             </div>
-            <AppSheetSectionTitle>{t('settings.getHelp')}</AppSheetSectionTitle>
+            <button
+              className={appSheetInlineActionButtonClass}
+              onClick={() => setSupportOpen(true)}
+            >
+              {t('settings.getHelpButton')}
+            </button>
           </div>
-          <button
-            className="rounded-full bg-(--brand-primary) px-4 py-2 text-[length:var(--text-sm)] font-extrabold text-white transition hover:opacity-95"
-            onClick={() => setSupportOpen(true)}
-          >
-            {t('settings.getHelpButton')}
-          </button>
         </div>
       </section>
 
-      <section className="py-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-(--brand-surface) text-(--brand-primary-deep)">
-              <ShieldCheck size={20} />
+      <section className="rounded-2xl border border-(--menu-category-border) bg-(--menu-category-bg) p-5">
+        <div className="rounded-xl bg-(--menu-content-bg) p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-(--menu-choice-bg) text-(--brand-primary-deep)">
+                <ShieldCheck size={20} />
+              </div>
+              <AppSheetSectionTitle>
+                {t('settings.privacyPolicy')}
+              </AppSheetSectionTitle>
             </div>
-            <AppSheetSectionTitle>
-              {t('settings.privacyPolicy')}
-            </AppSheetSectionTitle>
+            <button
+              type="button"
+              className={appSheetInlineActionButtonClass}
+              onClick={() => setPrivacyOpen(true)}
+            >
+              {t('settings.readPolicy')}
+            </button>
           </div>
-          <button
-            type="button"
-            className="rounded-full bg-(--brand-primary) px-4 py-2 text-[length:var(--text-sm)] font-extrabold text-white transition hover:opacity-95"
-            onClick={() => setPrivacyOpen(true)}
-          >
-            {t('settings.readPolicy')}
-          </button>
         </div>
       </section>
     </div>
@@ -272,7 +283,7 @@ function DeleteAccountSheet({
           ) : null}
           <button
             type="button"
-            className="w-full rounded-full bg-red-600 px-4 py-4 text-[length:var(--text-base)] font-extrabold text-white transition hover:bg-red-700 active:scale-[0.985] disabled:cursor-not-allowed disabled:opacity-70"
+            className="w-full rounded-full bg-(--brand-danger) px-4 py-4 text-[length:var(--text-base)] font-extrabold text-(--brand-on-danger) transition hover:bg-(--brand-danger-hover) active:scale-[0.985] disabled:cursor-not-allowed disabled:opacity-70"
             disabled={isDeleting}
             onClick={onConfirm}
           >
@@ -567,7 +578,7 @@ function SettingsModalBody({
             </SignOutButton>
             <button
               type="button"
-              className="w-full rounded-xl px-4 py-3 text-[length:var(--text-sm)] font-bold text-red-600 transition hover:bg-red-50 focus-visible:ring-2 focus-visible:ring-red-300 focus-visible:outline-none"
+              className="w-full rounded-xl px-4 py-3 text-[length:var(--text-sm)] font-bold text-(--brand-danger) transition hover:bg-(--brand-danger-surface) focus-visible:ring-2 focus-visible:ring-(--brand-danger-border) focus-visible:outline-none"
               onClick={() => {
                 setDeleteAccountError(null)
                 setDeleteAccountOpen(true)

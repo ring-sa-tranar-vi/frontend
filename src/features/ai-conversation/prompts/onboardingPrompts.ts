@@ -115,8 +115,29 @@ export const ONBOARDING_TOOLS: ToolListUnion = [
         description: 'Call this when the workout is completed.',
       },
       {
+        name: 'get_workouts',
+        parameters: {
+          type: Type.OBJECT,
+        },
+        description: 'Call this to get the list of workouts available.',
+      },
+      {
         name: 'change_workout',
-        description: 'Call this when the user wants to change the workout.',
+        parameters: {
+          type: Type.OBJECT,
+          properties: {
+            workout_id: {
+              type: Type.INTEGER,
+              description: 'The ID of the workout the user wants to change to.',
+            },
+            reasoning: {
+              type: Type.STRING,
+              description:
+                "The reasoning for changing the workout and why this fits the user's request.",
+            },
+          },
+        },
+        description: 'Call this to change the current workout.',
       },
     ],
   },

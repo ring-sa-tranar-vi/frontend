@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useCoachSession } from '../ai-conversation'
+import type { BackendWorkoutResponse } from './api'
 import { SessionCall } from './components/SessionCall'
 import { useCoachCallSession } from './query'
 import type { CoachCallSession, SessionPanel } from './types'
@@ -12,10 +13,14 @@ const LOADING_SESSION: CoachCallSession = {
 
 export function SessionPage({
   workoutId,
+  workouts,
+  updateCurrentWorkout,
   alreadyCompletedToday = false,
   onEnd,
 }: {
   workoutId: string | undefined
+  workouts: BackendWorkoutResponse[] | undefined
+  updateCurrentWorkout: (workoutId: number, reasoning?: string) => void
   alreadyCompletedToday?: boolean
   onEnd: () => void
 }) {
@@ -61,7 +66,9 @@ export function SessionPage({
   return (
     <ReadySessionPage
       session={session}
+      workouts={workouts}
       alreadyCompletedToday={alreadyCompletedToday}
+      updateCurrentWorkout={updateCurrentWorkout}
       onEnd={onEnd}
     />
   )
@@ -69,10 +76,14 @@ export function SessionPage({
 
 function ReadySessionPage({
   session,
+  workouts,
+  updateCurrentWorkout,
   alreadyCompletedToday = false,
   onEnd,
 }: {
   session: CoachCallSession
+  updateCurrentWorkout: (workoutId: number, reasoning?: string) => void
+  workouts: BackendWorkoutResponse[] | undefined
   alreadyCompletedToday?: boolean
   onEnd: () => void
 }) {
@@ -99,9 +110,11 @@ function ReadySessionPage({
     captionHistory,
   } = useCoachSession({
     session,
+    workouts,
     trainerId: session.trainer?.id ? String(session.trainer.id) : undefined,
     autoStart: true,
     alreadyCompletedToday,
+    updateCurrentWorkout,
   })
 
   const isAiSpeaking =

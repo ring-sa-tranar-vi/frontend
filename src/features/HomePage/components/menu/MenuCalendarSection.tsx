@@ -77,9 +77,9 @@ function getWeekdayLabels(locale: string): string[] {
 }
 
 function getActivityColorClass(kind: CalendarActivity['kind']): string {
-  if (kind === 'workout') return 'bg-emerald-600'
+  if (kind === 'workout') return 'bg-(--brand-success)'
   if (kind === 'event') return 'bg-(--brand-primary)'
-  return 'bg-amber-700'
+  return 'bg-(--brand-warning)'
 }
 
 function isUpcomingActivity(activity: CalendarActivity): boolean {
@@ -199,7 +199,10 @@ export default function MenuCalendarSection({
   }
 
   return (
-    <section aria-labelledby="menu-calendar-title">
+    <section
+      aria-labelledby="menu-calendar-title"
+      className="rounded-2xl border border-(--menu-category-border) bg-(--menu-category-bg) p-4"
+    >
       <div id="menu-calendar-title">
         <MenuSectionHeader
           icon={<CalendarDays size={20} strokeWidth={2.2} />}
@@ -208,7 +211,7 @@ export default function MenuCalendarSection({
         />
       </div>
 
-      <div className="mt-4 rounded-2xl border border-(--brand-border-light) bg-white/55 p-4">
+      <div className="mt-4 rounded-xl bg-(--menu-content-bg) p-4">
         {/* Month Navigation */}
         <div className="flex items-center justify-between">
           <button
@@ -270,7 +273,7 @@ export default function MenuCalendarSection({
                 aria-pressed={isSelected}
                 className={`relative mx-auto flex h-10 w-full max-w-10 items-center justify-center rounded-xl text-[length:var(--text-xs)] font-extrabold transition focus-visible:ring-2 focus-visible:ring-(--brand-border-strong) focus-visible:ring-offset-1 focus-visible:outline-none active:scale-95 ${
                   isSelected
-                    ? 'bg-(--brand-primary) text-white'
+                    ? 'bg-(--brand-primary) text-(--brand-on-primary)'
                     : isToday
                       ? 'text-(--brand-primary) ring-2 ring-(--brand-primary)'
                       : cell.isCurrentMonth
@@ -286,7 +289,9 @@ export default function MenuCalendarSection({
                       <span
                         key={kind}
                         className={`h-1 w-1 rounded-full transition-colors ${
-                          isSelected ? 'bg-white' : getActivityColorClass(kind)
+                          isSelected
+                            ? 'bg-(--brand-on-primary)'
+                            : getActivityColorClass(kind)
                         }`}
                       />
                     ))}
@@ -300,7 +305,7 @@ export default function MenuCalendarSection({
         {/* Legend */}
         <div className="mt-4 flex flex-wrap gap-x-4 gap-y-2 border-b border-(--brand-border-light) pb-4">
           <span className="flex items-center gap-2 text-[length:var(--text-xs)] font-bold text-(--brand-body-ink)">
-            <span className="h-2.5 w-2.5 rounded-full bg-emerald-600" />
+            <span className="h-2.5 w-2.5 rounded-full bg-(--brand-success)" />
             {t('menu.calendar.workout')}
           </span>
           <span className="flex items-center gap-2 text-[length:var(--text-xs)] font-bold text-(--brand-body-ink)">
@@ -308,7 +313,7 @@ export default function MenuCalendarSection({
             {t('menu.calendar.event')}
           </span>
           <span className="flex items-center gap-2 text-[length:var(--text-xs)] font-bold text-(--brand-body-ink)">
-            <span className="h-2.5 w-2.5 rounded-full bg-amber-700" />
+            <span className="h-2.5 w-2.5 rounded-full bg-(--brand-warning)" />
             {t('menu.calendar.callback')}
           </span>
         </div>
@@ -367,7 +372,7 @@ export default function MenuCalendarSection({
                   return (
                     <div
                       key={act.id}
-                      className="flex items-center justify-between rounded-xl border border-(--brand-border-light) bg-white/70 p-3 shadow-xs"
+                      className="flex items-center justify-between rounded-xl border border-(--brand-border-light) bg-(--menu-control-bg) p-3"
                     >
                       <div className="flex min-w-0 items-center gap-3">
                         <span
@@ -405,7 +410,7 @@ export default function MenuCalendarSection({
                               ? 'menu.calendar.cancelCallback'
                               : 'menu.calendar.cancelEvent',
                           )}
-                          className="ml-3 flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-red-700 transition hover:bg-red-50 focus-visible:ring-2 focus-visible:ring-red-300 focus-visible:ring-offset-2 focus-visible:outline-none active:scale-95"
+                          className="ml-3 flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-(--brand-danger) transition hover:bg-(--brand-danger-surface) focus-visible:ring-2 focus-visible:ring-(--brand-danger-border) focus-visible:ring-offset-2 focus-visible:outline-none active:scale-95"
                         >
                           <X size={19} strokeWidth={2.6} aria-hidden="true" />
                         </button>
@@ -425,11 +430,11 @@ export default function MenuCalendarSection({
             {cancellationTarget ? (
               <section
                 aria-labelledby="cancel-calendar-event-title"
-                className="mt-3 rounded-2xl border border-red-200 bg-red-50/80 p-4"
+                className="mt-3 rounded-2xl border border-(--brand-danger-border) bg-(--brand-danger-surface) p-4"
               >
                 <h5
                   id="cancel-calendar-event-title"
-                  className="text-[length:var(--text-sm)] font-extrabold text-red-950"
+                  className="text-[length:var(--text-sm)] font-extrabold text-(--brand-danger-ink)"
                 >
                   {t(
                     cancellationTarget.kind === 'callback'
@@ -437,7 +442,7 @@ export default function MenuCalendarSection({
                       : 'menu.calendar.cancelEventTitle',
                   )}
                 </h5>
-                <p className="mt-1 text-[length:var(--text-xs)] leading-relaxed font-semibold text-red-950/80">
+                <p className="mt-1 text-[length:var(--text-xs)] leading-relaxed font-semibold text-(--brand-danger-ink)">
                   {t(
                     cancellationTarget.kind === 'callback'
                       ? 'menu.calendar.cancelCallbackText'
@@ -452,7 +457,7 @@ export default function MenuCalendarSection({
 
                 {cancellationError ? (
                   <p
-                    className="mt-3 text-[length:var(--text-xs)] font-bold text-red-800"
+                    className="mt-3 text-[length:var(--text-xs)] font-bold text-(--brand-danger-ink-muted)"
                     role="status"
                   >
                     {t(
@@ -467,7 +472,7 @@ export default function MenuCalendarSection({
                   <button
                     type="button"
                     onClick={closeCancellation}
-                    className="rounded-xl border border-red-200 bg-white px-3 py-2.5 text-[length:var(--text-xs)] font-extrabold text-red-900 transition hover:bg-red-100 focus-visible:ring-2 focus-visible:ring-red-300 focus-visible:outline-none"
+                    className="rounded-xl border border-(--brand-danger-border) bg-(--menu-control-bg) px-3 py-2.5 text-[length:var(--text-xs)] font-extrabold text-(--brand-danger-ink) transition hover:bg-(--brand-danger-surface) focus-visible:ring-2 focus-visible:ring-(--brand-danger-border) focus-visible:outline-none"
                   >
                     {t('menu.calendar.keepEvent')}
                   </button>
@@ -482,7 +487,7 @@ export default function MenuCalendarSection({
 
                       onCancelEvent?.(cancellationTarget)
                     }}
-                    className="rounded-xl bg-red-700 px-3 py-2.5 text-[length:var(--text-xs)] font-extrabold text-white transition hover:bg-red-800 focus-visible:ring-2 focus-visible:ring-red-300 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-70"
+                    className="rounded-xl bg-(--brand-danger) px-3 py-2.5 text-[length:var(--text-xs)] font-extrabold text-(--brand-on-danger) transition hover:bg-(--brand-danger-hover) focus-visible:ring-2 focus-visible:ring-(--brand-danger-border) focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-70"
                   >
                     {cancellingActivityId === cancellationTarget.id
                       ? t(

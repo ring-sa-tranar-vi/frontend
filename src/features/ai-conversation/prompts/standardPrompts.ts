@@ -29,19 +29,31 @@ export const SESSION_TOOLS: ToolListUnion = [
         name: 'workout_completed',
         description: 'Call this when the workout is completed.',
       },
+
+      {
+        name: 'get_workouts',
+        parameters: {
+          type: Type.OBJECT,
+        },
+        description: 'Call this to get the list of workouts available.',
+      },
       {
         name: 'change_workout',
         parameters: {
           type: Type.OBJECT,
           properties: {
-            userInput: {
+            workout_id: {
+              type: Type.INTEGER,
+              description: 'The ID of the workout the user wants to change to.',
+            },
+            reasoning: {
               type: Type.STRING,
               description:
-                'The user input that indicates they want to change the workout. This can be a request for a different workout, a specific workout name, or any other relevant input.',
+                "The reasoning for changing the workout and why this fits the user's request.",
             },
           },
         },
-        description: 'Call this when the user wants to change the workout.',
+        description: 'Call this to change the current workout.',
       },
       {
         name: 'finish_session',
