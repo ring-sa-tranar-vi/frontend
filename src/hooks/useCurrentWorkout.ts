@@ -124,14 +124,16 @@ export default function useCurrentWorkout() {
     ? recommendation?.reasoning
     : undefined
 
-  if (DEBUG) {
-    console.debug('[useCurrentWorkout] state', {
-      userId,
-      currentWorkout,
-      recommendedWorkoutReasoning,
-      workouts,
-    })
-  }
+  useEffect(() => {
+    if (DEBUG) {
+      console.debug('[useCurrentWorkout] state', {
+        userId,
+        currentWorkout,
+        recommendedWorkoutReasoning,
+        workouts,
+      })
+    }
+  }, [userId, currentWorkout, recommendedWorkoutReasoning, workouts])
 
   return {
     currentWorkout,
