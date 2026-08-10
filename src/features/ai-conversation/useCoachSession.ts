@@ -33,10 +33,6 @@ import { buildSessionInstruction } from './setupSessionInstruction'
 import { getSessionTools } from './tools/setupSessionTools'
 import { dispatchToolCall } from './tools/toolRegistry'
 
-//──────────────────────
-// Build system instruction
-//──────────────────────
-
 function mergeCaptionFragments(previous: string, next: string) {
   const current = normalizeCaptionText(previous)
   const incoming = normalizeCaptionText(next)
