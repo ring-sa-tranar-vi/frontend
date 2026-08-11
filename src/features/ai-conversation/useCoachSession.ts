@@ -410,7 +410,7 @@ export function useCoachSession(
 
     addDebugEvent('get_workouts', workoutsPrompt)
     sendCoachPrompt(workoutsPrompt)
-  }, [addDebugEvent, sendCoachPrompt, workouts])
+  }, [addDebugEvent, sendCoachPrompt, workouts, session.level])
 
   //──────────────────────
   // Workout completed
@@ -419,7 +419,7 @@ export function useCoachSession(
   const workoutCompleted = useCallback(() => {
     addDebugEvent('workout completed')
     workoutCompletedRef.current = true
-  }, [])
+  }, [addDebugEvent])
 
   //──────────────────────
   // Start session
@@ -469,6 +469,7 @@ export function useCoachSession(
     )
     sendCoachPrompt('Starta samtalet.')
   }, [
+    session.onboarding,
     addDebugEvent,
     geminiConnect,
     loadToken,
@@ -549,7 +550,7 @@ export function useCoachSession(
     setSessionStep('waiting_instruction_approval')
     addDebugEvent('onboarding-complete')
     sendCoachPrompt('Jag är redo att höra instruktionerna.')
-  }, [addDebugEvent, sendCoachPrompt, updateProfile])
+  }, [addDebugEvent, sendCoachPrompt, updateProfile, setSessionStep])
 
   //──────────────────────
   // Finalize session
@@ -633,6 +634,8 @@ export function useCoachSession(
       queryClient,
       updateProfile,
       userId,
+      isSignedIn,
+      setSessionStep,
     ],
   )
 
