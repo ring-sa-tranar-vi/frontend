@@ -5,12 +5,11 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import '@testing-library/jest-dom/vitest'
 
-// --- Helper wrapper for React Query ---
 const createTestQueryClient = () =>
   new QueryClient({
     defaultOptions: {
       queries: {
-        retry: false, // Turn off retries in tests to fail fast
+        retry: false,
         gcTime: 0,
       },
     },
