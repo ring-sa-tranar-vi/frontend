@@ -17,6 +17,7 @@ import { Route as AdminWorkoutsRouteImport } from './routes/admin.workouts'
 import { Route as AdminTrainersRouteImport } from './routes/admin.trainers'
 import { Route as AdminOrganisationsRouteImport } from './routes/admin.organisations'
 import { Route as AdminFeedbackRouteImport } from './routes/admin.feedback'
+import { Route as AdminApplicationsRouteImport } from './routes/admin.applications'
 import { Route as CompanyOrganisationMeRouteImport } from './routes/company.organisation.me'
 
 const AdminRoute = AdminRouteImport.update({
@@ -59,6 +60,11 @@ const AdminFeedbackRoute = AdminFeedbackRouteImport.update({
   path: '/feedback',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminApplicationsRoute = AdminApplicationsRouteImport.update({
+  id: '/applications',
+  path: '/applications',
+  getParentRoute: () => AdminRoute,
+} as any)
 const CompanyOrganisationMeRoute = CompanyOrganisationMeRouteImport.update({
   id: '/me',
   path: '/me',
@@ -68,6 +74,7 @@ const CompanyOrganisationMeRoute = CompanyOrganisationMeRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
+  '/admin/applications': typeof AdminApplicationsRoute
   '/admin/feedback': typeof AdminFeedbackRoute
   '/admin/organisations': typeof AdminOrganisationsRoute
   '/admin/trainers': typeof AdminTrainersRoute
@@ -79,6 +86,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
+  '/admin/applications': typeof AdminApplicationsRoute
   '/admin/feedback': typeof AdminFeedbackRoute
   '/admin/organisations': typeof AdminOrganisationsRoute
   '/admin/trainers': typeof AdminTrainersRoute
@@ -91,6 +99,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
+  '/admin/applications': typeof AdminApplicationsRoute
   '/admin/feedback': typeof AdminFeedbackRoute
   '/admin/organisations': typeof AdminOrganisationsRoute
   '/admin/trainers': typeof AdminTrainersRoute
@@ -104,6 +113,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/admin'
+    | '/admin/applications'
     | '/admin/feedback'
     | '/admin/organisations'
     | '/admin/trainers'
@@ -115,6 +125,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/admin'
+    | '/admin/applications'
     | '/admin/feedback'
     | '/admin/organisations'
     | '/admin/trainers'
@@ -126,6 +137,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/admin'
+    | '/admin/applications'
     | '/admin/feedback'
     | '/admin/organisations'
     | '/admin/trainers'
@@ -200,6 +212,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminFeedbackRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/applications': {
+      id: '/admin/applications'
+      path: '/applications'
+      fullPath: '/admin/applications'
+      preLoaderRoute: typeof AdminApplicationsRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/company/organisation/me': {
       id: '/company/organisation/me'
       path: '/me'
@@ -211,6 +230,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AdminRouteChildren {
+  AdminApplicationsRoute: typeof AdminApplicationsRoute
   AdminFeedbackRoute: typeof AdminFeedbackRoute
   AdminOrganisationsRoute: typeof AdminOrganisationsRoute
   AdminTrainersRoute: typeof AdminTrainersRoute
@@ -218,6 +238,7 @@ interface AdminRouteChildren {
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
+  AdminApplicationsRoute: AdminApplicationsRoute,
   AdminFeedbackRoute: AdminFeedbackRoute,
   AdminOrganisationsRoute: AdminOrganisationsRoute,
   AdminTrainersRoute: AdminTrainersRoute,
