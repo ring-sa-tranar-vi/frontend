@@ -9,40 +9,40 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteImport } from './routes/admin'
-import { Route as AdminApplicationsRouteImport } from './routes/admin.applications'
-import { Route as AdminFeedbackRouteImport } from './routes/admin.feedback'
-import { Route as AdminOrganisationsRouteImport } from './routes/admin.organisations'
-import { Route as AdminTrainersRouteImport } from './routes/admin.trainers'
-import { Route as AdminWorkoutsRouteImport } from './routes/admin.workouts'
-import { Route as CompanyOrganisationRouteImport } from './routes/company.organisation'
+import { Route as IndexRouteImport } from './routes/index'
 import { Route as CompanyOrganisationsRouteImport } from './routes/company.organisations'
+import { Route as CompanyOrganisationRouteImport } from './routes/company.organisation'
+import { Route as AdminWorkoutsRouteImport } from './routes/admin.workouts'
+import { Route as AdminTrainersRouteImport } from './routes/admin.trainers'
+import { Route as AdminOrganisationsRouteImport } from './routes/admin.organisations'
+import { Route as AdminFeedbackRouteImport } from './routes/admin.feedback'
+import { Route as AdminApplicationsRouteImport } from './routes/admin.applications'
 import { Route as CompanyOrganisationMeRouteImport } from './routes/company.organisation.me'
 
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AdminRoute = AdminRouteImport.update({
   id: '/admin',
   path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AdminApplicationsRoute = AdminApplicationsRouteImport.update({
-  id: '/applications',
-  path: '/applications',
-  getParentRoute: () => AdminRoute,
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const AdminFeedbackRoute = AdminFeedbackRouteImport.update({
-  id: '/feedback',
-  path: '/feedback',
-  getParentRoute: () => AdminRoute,
+const CompanyOrganisationsRoute = CompanyOrganisationsRouteImport.update({
+  id: '/company/organisations',
+  path: '/company/organisations',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const AdminOrganisationsRoute = AdminOrganisationsRouteImport.update({
-  id: '/organisations',
-  path: '/organisations',
+const CompanyOrganisationRoute = CompanyOrganisationRouteImport.update({
+  id: '/company/organisation',
+  path: '/company/organisation',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminWorkoutsRoute = AdminWorkoutsRouteImport.update({
+  id: '/workouts',
+  path: '/workouts',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminTrainersRoute = AdminTrainersRouteImport.update({
@@ -50,20 +50,20 @@ const AdminTrainersRoute = AdminTrainersRouteImport.update({
   path: '/trainers',
   getParentRoute: () => AdminRoute,
 } as any)
-const AdminWorkoutsRoute = AdminWorkoutsRouteImport.update({
-  id: '/workouts',
-  path: '/workouts',
+const AdminOrganisationsRoute = AdminOrganisationsRouteImport.update({
+  id: '/organisations',
+  path: '/organisations',
   getParentRoute: () => AdminRoute,
 } as any)
-const CompanyOrganisationRoute = CompanyOrganisationRouteImport.update({
-  id: '/company/organisation',
-  path: '/company/organisation',
-  getParentRoute: () => rootRouteImport,
+const AdminFeedbackRoute = AdminFeedbackRouteImport.update({
+  id: '/feedback',
+  path: '/feedback',
+  getParentRoute: () => AdminRoute,
 } as any)
-const CompanyOrganisationsRoute = CompanyOrganisationsRouteImport.update({
-  id: '/company/organisations',
-  path: '/company/organisations',
-  getParentRoute: () => rootRouteImport,
+const AdminApplicationsRoute = AdminApplicationsRouteImport.update({
+  id: '/applications',
+  path: '/applications',
+  getParentRoute: () => AdminRoute,
 } as any)
 const CompanyOrganisationMeRoute = CompanyOrganisationMeRouteImport.update({
   id: '/me',
@@ -156,13 +156,6 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/admin': {
       id: '/admin'
       path: '/admin'
@@ -170,25 +163,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/admin/applications': {
-      id: '/admin/applications'
-      path: '/applications'
-      fullPath: '/admin/applications'
-      preLoaderRoute: typeof AdminApplicationsRouteImport
-      parentRoute: typeof AdminRoute
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/admin/feedback': {
-      id: '/admin/feedback'
-      path: '/feedback'
-      fullPath: '/admin/feedback'
-      preLoaderRoute: typeof AdminFeedbackRouteImport
-      parentRoute: typeof AdminRoute
+    '/company/organisations': {
+      id: '/company/organisations'
+      path: '/company/organisations'
+      fullPath: '/company/organisations'
+      preLoaderRoute: typeof CompanyOrganisationsRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/admin/organisations': {
-      id: '/admin/organisations'
-      path: '/organisations'
-      fullPath: '/admin/organisations'
-      preLoaderRoute: typeof AdminOrganisationsRouteImport
+    '/company/organisation': {
+      id: '/company/organisation'
+      path: '/company/organisation'
+      fullPath: '/company/organisation'
+      preLoaderRoute: typeof CompanyOrganisationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/workouts': {
+      id: '/admin/workouts'
+      path: '/workouts'
+      fullPath: '/admin/workouts'
+      preLoaderRoute: typeof AdminWorkoutsRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/trainers': {
@@ -198,26 +198,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminTrainersRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/admin/workouts': {
-      id: '/admin/workouts'
-      path: '/workouts'
-      fullPath: '/admin/workouts'
-      preLoaderRoute: typeof AdminWorkoutsRouteImport
+    '/admin/organisations': {
+      id: '/admin/organisations'
+      path: '/organisations'
+      fullPath: '/admin/organisations'
+      preLoaderRoute: typeof AdminOrganisationsRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/company/organisation': {
-      id: '/company/organisation'
-      path: '/company/organisation'
-      fullPath: '/company/organisation'
-      preLoaderRoute: typeof CompanyOrganisationRouteImport
-      parentRoute: typeof rootRouteImport
+    '/admin/feedback': {
+      id: '/admin/feedback'
+      path: '/feedback'
+      fullPath: '/admin/feedback'
+      preLoaderRoute: typeof AdminFeedbackRouteImport
+      parentRoute: typeof AdminRoute
     }
-    '/company/organisations': {
-      id: '/company/organisations'
-      path: '/company/organisations'
-      fullPath: '/company/organisations'
-      preLoaderRoute: typeof CompanyOrganisationsRouteImport
-      parentRoute: typeof rootRouteImport
+    '/admin/applications': {
+      id: '/admin/applications'
+      path: '/applications'
+      fullPath: '/admin/applications'
+      preLoaderRoute: typeof AdminApplicationsRouteImport
+      parentRoute: typeof AdminRoute
     }
     '/company/organisation/me': {
       id: '/company/organisation/me'

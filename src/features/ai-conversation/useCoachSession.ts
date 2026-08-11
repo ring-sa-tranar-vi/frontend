@@ -29,8 +29,7 @@ import {
   type ProfileSuggestions,
   type UseCoachSessionOptions,
 } from './helpers'
-import { COACH_PROMPTS } from './prompts/setupPrompts'
-import { buildSessionInstruction } from './setupSessionInstruction'
+import { buildSessionInstruction, COACH_PROMPTS } from './prompts/setupPrompts'
 import { getSessionTools } from './tools/setupSessionTools'
 import { dispatchToolCall } from './tools/toolRegistry'
 
