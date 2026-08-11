@@ -94,6 +94,7 @@ describe('EventListCard', () => {
     canSaveEditedEvent: true,
     updateEvent: vi.fn(),
     isUpdatingEvent: false,
+    deletingEventId: null,
     stopEditingEvent: vi.fn(),
     startEditingEvent: vi.fn(),
     deleteEvent: vi.fn(),

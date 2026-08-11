@@ -15,6 +15,7 @@ import { useVoicePlayer } from '../../../hooks/useVoicePlayer'
 import { useTranslation } from 'react-i18next'
 import {
   appSheetFieldClass,
+  appSheetFormFieldClass,
   appSheetContentClass,
   AppSheetNotice,
   AppSheetSectionText,
@@ -98,8 +99,6 @@ export default function TrainerSelectionModal({
   const [activeLanguages, setActiveLanguages] = useState<string[]>(
     () => getStoredLanguageFilter() ?? [],
   )
-  const [filterOpen, setFilterOpen] = useState(false)
-  const filterRef = useRef<HTMLDivElement>(null)
 
   // Carousel state
   const [centerIndex, setCenterIndex] = useState(0)
@@ -127,27 +126,24 @@ export default function TrainerSelectionModal({
     if (allLanguages.length === 0 || hasInitialisedFilter.current) return
     hasInitialisedFilter.current = true
     const stored = getStoredLanguageFilter()
-    if (stored !== null && stored.length > 0) {
-      const valid = stored.filter((l) => allLanguages.includes(l))
-      setActiveLanguages(valid.length > 0 ? valid : allLanguages)
-    } else {
-      const defaults = allLanguages.filter((l) =>
-        /sv|svenska|en|english|engelska/i.test(l),
-      )
-      setActiveLanguages(defaults.length > 0 ? defaults : allLanguages)
-    }
-  }, [allLanguages])
+    const selectedTrainerLanguage = trainers.find(
+      (trainer) => trainer.id === selectedTrainerId,
+    )?.language
+    const storedLanguage = stored?.find((language) =>
+      allLanguages.includes(language),
+    )
+    const defaultLanguage = allLanguages.find((language) =>
+      /sv|svenska|en|english|engelska/i.test(language),
+    )
+    const nextLanguage =
+      selectedTrainerLanguage ??
+      storedLanguage ??
+      defaultLanguage ??
+      allLanguages[0]
 
-  useEffect(() => {
-    if (!filterOpen) return
-    const handleClickOutside = (e: MouseEvent) => {
-      if (filterRef.current && !filterRef.current.contains(e.target as Node)) {
-        setFilterOpen(false)
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [filterOpen])
+    setActiveLanguages([nextLanguage])
+    setStoredLanguageFilter([nextLanguage])
+  }, [allLanguages, selectedTrainerId, trainers])
 
   const filteredTrainers = useMemo(() => {
     if (activeLanguages.length === 0) return trainers as TrainerSelectionItem[]
@@ -204,15 +200,9 @@ export default function TrainerSelectionModal({
     })
   }
 
-  const toggleLanguage = (lang: string) => {
-    setActiveLanguages((prev) => {
-      let next = prev.includes(lang)
-        ? prev.filter((l) => l !== lang)
-        : [...prev, lang]
-      if (next.length === 0) next = allLanguages
-      setStoredLanguageFilter(next)
-      return next
-    })
+  const selectLanguage = (language: string) => {
+    setActiveLanguages([language])
+    setStoredLanguageFilter([language])
   }
 
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -305,60 +295,27 @@ export default function TrainerSelectionModal({
             </div>
           </div>
 
-          {/* Language filter — summary + popover */}
+          {/* Language filter */}
           {allLanguages.length > 1 && (
-            <div ref={filterRef} className="relative mt-2 ml-[52px]">
-              <p className="mb-1 text-[length:var(--text-sm)] font-extrabold text-(--brand-title-ink)">
+            <div className="mt-3 ml-[52px]">
+              <label
+                htmlFor="trainer-language-filter"
+                className="mb-2 block text-[length:var(--text-sm)] font-extrabold text-(--brand-title-ink)"
+              >
                 {t('trainerSelection.trainerLanguages')}
-              </p>
-              <div className="flex items-center gap-2">
-                <span className="text-[length:var(--text-sm)] font-semibold text-(--brand-body-ink)">
-                  {activeLanguages.length > 0
-                    ? activeLanguages
-                        .map((l) => t(`languages.${l}`, { defaultValue: l }))
-                        .join(', ')
-                    : t('trainerSelection.allLanguages')}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setFilterOpen((prev) => !prev)}
-                  className="min-h-11 rounded-xl border border-(--menu-control-border) bg-(--menu-control-bg) px-3 py-2 text-[length:var(--text-sm)] font-extrabold text-(--brand-primary) transition hover:bg-(--brand-soft) active:scale-95"
-                >
-                  {t('trainerSelection.changeFilter')}
-                </button>
-              </div>
-
-              {filterOpen && (
-                <div className="absolute top-full left-0 z-10 mt-2 min-w-[180px] space-y-1 rounded-2xl border border-(--menu-control-border) bg-(--menu-content-bg) p-3">
-                  {allLanguages.map((lang) => (
-                    <button
-                      key={lang}
-                      type="button"
-                      onClick={() => toggleLanguage(lang)}
-                      className="flex min-h-11 w-full items-center gap-2.5 rounded-xl px-2 py-2 text-left transition hover:bg-(--brand-soft) active:scale-[0.98]"
-                    >
-                      <div
-                        className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-[5px] border-2 transition ${
-                          activeLanguages.includes(lang)
-                            ? 'border-(--brand-primary) bg-(--brand-primary)'
-                            : 'border-(--menu-control-border) bg-(--menu-control-bg)'
-                        }`}
-                      >
-                        {activeLanguages.includes(lang) && (
-                          <Check
-                            size={11}
-                            strokeWidth={3}
-                            className="text-(--brand-on-primary)"
-                          />
-                        )}
-                      </div>
-                      <span className="text-[length:var(--text-sm)] font-semibold text-(--brand-title-ink)">
-                        {t(`languages.${lang}`, { defaultValue: lang })}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              )}
+              </label>
+              <select
+                id="trainer-language-filter"
+                value={activeLanguages[0] ?? ''}
+                onChange={(event) => selectLanguage(event.target.value)}
+                className={appSheetFormFieldClass}
+              >
+                {allLanguages.map((language) => (
+                  <option key={language} value={language}>
+                    {t(`languages.${language}`, { defaultValue: language })}
+                  </option>
+                ))}
+              </select>
             </div>
           )}
 

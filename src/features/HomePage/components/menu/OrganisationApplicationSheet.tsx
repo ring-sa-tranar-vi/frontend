@@ -13,7 +13,6 @@ import {
   AppSheet,
   AppSheetNotice,
   appSheetCategoryClass,
-  appSheetContentClass,
   appSheetFormFieldClass,
   appSheetFormLabelClass,
   appSheetPrimaryButtonClass,
@@ -21,6 +20,7 @@ import {
 } from '../../../../components/AppSheet'
 import {
   createOrganizationApplication,
+  type ApplicationStatus,
   fetchMyOrganizationApplication,
   OrganizationApplicationError,
 } from '../../../../api/organizationApplications'
@@ -45,6 +45,27 @@ const MOTIVATION_MAX_LENGTH = 600
 const fieldClass = `${appSheetFormFieldClass} transition placeholder:text-(--brand-muted)`
 const applicationTextareaClass =
   'w-full resize-none border-none bg-transparent px-1 py-0.5 text-[length:var(--text-base)] leading-relaxed font-medium text-(--brand-ink) outline-none placeholder:text-(--brand-muted)'
+
+const applicationStatusTone: Record<
+  ApplicationStatus,
+  { card: string; icon: string; badge: string }
+> = {
+  PENDING: {
+    card: '!border-amber-200 !bg-amber-50',
+    icon: 'bg-amber-100 text-amber-700',
+    badge: 'border-amber-200 bg-white/80 text-amber-700',
+  },
+  APPROVED: {
+    card: '!border-emerald-200 !bg-emerald-50',
+    icon: 'bg-emerald-100 text-emerald-700',
+    badge: 'border-emerald-200 bg-white/80 text-emerald-700',
+  },
+  REJECTED: {
+    card: '!border-red-200 !bg-red-50',
+    icon: 'bg-red-100 text-red-700',
+    badge: 'border-red-200 bg-white/80 text-red-700',
+  },
+}
 
 function formatDate(value: string, locale: string) {
   const date = new Date(value)
@@ -110,6 +131,9 @@ export default function OrganisationApplicationSheet({
     !showNewApplicationForm &&
     myApplicationQuery.isLoading &&
     !applicationMutation.isSuccess
+  const statusTone = existingApplication
+    ? applicationStatusTone[existingApplication.status]
+    : null
 
   function updateField(field: keyof OrganisationApplication, value: string) {
     setForm((current) => ({ ...current, [field]: value }))
@@ -176,40 +200,44 @@ export default function OrganisationApplicationSheet({
       }
     >
       {isCheckingApplication ? (
-        <div className={`${appSheetCategoryClass} min-h-52`}>
-          <div
-            className={`${appSheetContentClass} flex min-h-44 flex-col items-center justify-center px-5 text-center`}
-          >
-            <Clock3
-              size={30}
-              className="text-(--brand-primary-deep)"
-              aria-hidden="true"
-            />
-            <p className="mt-4 text-[length:var(--text-sm)] font-bold text-(--brand-body-ink)">
-              {t('menu.events.application.checkingStatus')}
-            </p>
-          </div>
+        <div
+          className={`${appSheetCategoryClass} flex min-h-52 flex-col items-center justify-center px-5 text-center`}
+        >
+          <Clock3
+            size={30}
+            className="text-(--brand-primary-deep)"
+            aria-hidden="true"
+          />
+          <p className="mt-4 text-[length:var(--text-sm)] font-bold text-(--brand-body-ink)">
+            {t('menu.events.application.checkingStatus')}
+          </p>
         </div>
       ) : applicationMutation.isSuccess ? (
-        <div className={`${appSheetCategoryClass} min-h-52`}>
-          <div
-            className={`${appSheetContentClass} flex min-h-44 flex-col items-center justify-center px-5 text-center`}
-          >
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-(--brand-soft) text-(--brand-primary-deep)">
-              <Building2 size={28} strokeWidth={2.2} aria-hidden="true" />
-            </div>
-            <h3 className="mt-4 text-[length:var(--text-lg)] font-extrabold text-(--brand-title-ink)">
-              {t('menu.events.application.successTitle')}
-            </h3>
-            <p className="mt-1.5 max-w-sm text-[length:var(--text-sm)] leading-relaxed font-semibold text-(--brand-body-ink)">
-              {t('menu.events.application.successText')}
-            </p>
+        <div
+          role="status"
+          aria-live="polite"
+          className={`${appSheetCategoryClass} flex min-h-52 flex-col items-center justify-center !border-amber-200 !bg-amber-50 px-5 text-center`}
+        >
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-100 text-amber-700">
+            <Building2 size={28} strokeWidth={2.2} aria-hidden="true" />
           </div>
+          <h3 className="mt-4 text-[length:var(--text-lg)] font-extrabold text-(--brand-title-ink)">
+            {t('menu.events.application.successTitle')}
+          </h3>
+          <p className="mt-1.5 max-w-sm text-[length:var(--text-sm)] leading-relaxed font-semibold text-(--brand-body-ink)">
+            {t('menu.events.application.successText')}
+          </p>
         </div>
       ) : showingApplicationStatus ? (
-        <div className={appSheetCategoryClass}>
+        <div
+          role="status"
+          aria-live="polite"
+          className={`${appSheetCategoryClass} ${statusTone?.card ?? ''}`}
+        >
           <div className="flex items-start gap-3">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-(--brand-soft) text-(--brand-primary-deep)">
+            <div
+              className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${statusTone?.icon ?? ''}`}
+            >
               <FileCheck2 size={22} strokeWidth={2.3} aria-hidden="true" />
             </div>
             <div>
@@ -226,14 +254,14 @@ export default function OrganisationApplicationSheet({
             </div>
           </div>
 
-          <dl
-            className={`mt-4 space-y-3 text-[length:var(--text-sm)] ${appSheetContentClass}`}
-          >
+          <dl className="mt-4 space-y-3 text-[length:var(--text-sm)]">
             <div className="flex items-center justify-between gap-4">
               <dt className="font-bold text-(--brand-muted)">
                 {t('menu.events.application.statusLabel')}
               </dt>
-              <dd className="font-extrabold text-(--brand-title-ink)">
+              <dd
+                className={`rounded-full border px-2.5 py-1 font-extrabold ${statusTone?.badge ?? ''}`}
+              >
                 {t(
                   `menu.events.application.status.${existingApplication.status.toLowerCase()}`,
                 )}
@@ -316,7 +344,7 @@ export default function OrganisationApplicationSheet({
             </div>
           </div>
 
-          <div className={`mt-3 space-y-3 ${appSheetContentClass}`}>
+          <div className="mt-3 space-y-3">
             <div>
               <label
                 htmlFor="organisation-application-name"

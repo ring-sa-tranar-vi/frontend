@@ -149,6 +149,7 @@
   "menu": {
     "title": "Menu",
     "subtitle": "Everything in one place",
+    "progress": "Menu progress",
     "activity": {
       "title": "Your activity",
       "description": "Follow your training streak without giving every day its own circle.",
@@ -192,6 +193,7 @@
           "week": "This week"
         },
         "upcomingEvents": "Upcoming events",
+        "online": "Online",
         "resultCount": "{{count}} events",
         "organisationsIntro": "Follow organisations that offer activities together with Ring så tränar vi.",
         "allOrganisations": "All organisations",
@@ -315,7 +317,7 @@
       "hour": "Hour",
       "minute": "Minute",
       "repeat": "Repeat",
-      "repeatNever": "Never",
+      "repeatNever": "Once",
       "repeatWeekly": "Every week",
       "confirm": "Confirm callback",
       "confirming": "Confirming…",
@@ -343,6 +345,7 @@
     "privacyComingSoon": "Privacy policy coming soon",
     "privacyPolicy": "Privacy policy",
     "fullName": "Name",
+    "changeName": "Edit",
     "fullNameDescription": "The name is used by the coach during the session.",
     "fullNamePlaceholder": "Your first name",
     "fullNameFound": "The name is taken from your profile.",

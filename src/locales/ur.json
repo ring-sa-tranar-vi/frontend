@@ -76,6 +76,7 @@
   "menu": {
     "title": "مینو",
     "subtitle": "سب کچھ ایک جگہ",
+    "progress": "مینو کی پیش رفت",
     "activity": {
       "title": "آپ کی سرگرمی",
       "description": "ہر دن کے لیے الگ دائرے کے بغیر اپنی ٹریننگ کا تسلسل دیکھیں۔",
@@ -116,6 +117,7 @@
           "week": "اس ہفتے"
         },
         "upcomingEvents": "آنے والی تقریبات",
+        "online": "آن لائن",
         "resultCount": "{{count}} تقریبات",
         "organisationsIntro": "ان تنظیموں کو فالو کریں جو Ring så tränar vi کے ساتھ سرگرمیاں پیش کرتی ہیں۔",
         "allOrganisations": "تمام تنظیمیں",
@@ -181,7 +183,7 @@
       "hour": "گھنٹہ",
       "minute": "منٹ",
       "repeat": "دہرائیں",
-      "repeatNever": "کبھی نہیں",
+      "repeatNever": "ایک بار",
       "repeatWeekly": "ہر ہفتے",
       "confirm": "کال کی تصدیق کریں",
       "confirming": "تصدیق ہو رہی ہے…",
@@ -207,6 +209,7 @@
     "getHelpButton": "مدد حاصل کریں",
     "privacyComingSoon": "رازداری کی پالیسی جلد آ رہی ہے",
     "fullName": "نام",
+    "changeName": "تبدیل کریں",
     "fullNameDescription": "یہ نام کوچ سیشن کے دوران استعمال کرے گا۔",
     "fullNamePlaceholder": "آپ کا پہلا نام",
     "fullNameFound": "نام آپ کے پروفائل سے لیا گیا ہے۔",

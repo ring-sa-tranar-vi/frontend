@@ -76,6 +76,7 @@ const IntensitySlider = ({ value, onChange }: IntensitySliderProps) => {
           <div className="relative z-30 grid grid-cols-5 items-center">
             {steps.map((label, stepValue) => {
               const isCurrentStep = stepValue === safeValue
+              const isPastStep = stepValue < safeValue
 
               return (
                 <button
@@ -91,7 +92,9 @@ const IntensitySlider = ({ value, onChange }: IntensitySliderProps) => {
                     className={`block rounded-full transition-all duration-150 ${
                       isCurrentStep
                         ? 'h-9 w-9 border-4 border-(--brand-primary) bg-(--brand-primary) ring-2 ring-(--brand-selection) ring-offset-2 ring-offset-(--menu-content-bg)'
-                        : 'h-7 w-7 border-[3px] border-(--brand-primary) bg-(--menu-content-bg)'
+                        : isPastStep
+                          ? 'h-7 w-7 border-[3px] border-(--brand-primary-deep) bg-(--menu-content-bg)'
+                          : 'h-7 w-7 border-[3px] border-(--brand-border) bg-(--menu-content-bg)'
                     }`}
                     aria-hidden="true"
                   />

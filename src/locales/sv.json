@@ -149,6 +149,7 @@
   "menu": {
     "title": "Meny",
     "subtitle": "Allt samlat på ett ställe",
+    "progress": "Position i menyn",
     "activity": {
       "title": "Din aktivitet",
       "description": "Följ din träningssvit utan att varje dag behöver en egen cirkel.",
@@ -168,20 +169,20 @@
       "retry": "Försök igen"
     },
     "events": {
-      "title": "Event och organisationer",
+      "title": "Event & Organisation",
       "eyebrow": "Aktiviteter på plats",
       "headline": "Träna tillsammans",
       "description": "Hitta event och organisationer som ordnar aktiviteter.",
       "cta": "Se event och organisationer",
       "notConnected": "Eventsökningen är inte tillgänglig ännu.",
       "directory": {
-        "title": "Event och organisationer",
+        "title": "Event & Organisation",
         "subtitle": "Hitta aktiviteter och arrangörer",
         "back": "Tillbaka till menyn",
-        "tabsLabel": "Event och organisationer",
+        "tabsLabel": "Event & Organisation",
         "tabs": {
           "events": "Event",
-          "organisations": "Organisationer"
+          "organisations": "Organisation"
         },
         "searchEvents": "Sök event",
         "searchOrganisations": "Sök organisation",
@@ -192,6 +193,7 @@
           "week": "Den här veckan"
         },
         "upcomingEvents": "Kommande event",
+        "online": "Online",
         "resultCount": "{{count}} event",
         "organisationsIntro": "Följ organisationer som erbjuder aktiviteter tillsammans med Ring så tränar vi.",
         "allOrganisations": "Alla organisationer",
@@ -317,7 +319,7 @@
       "hour": "Timme",
       "minute": "Minut",
       "repeat": "Upprepa",
-      "repeatNever": "Aldrig",
+      "repeatNever": "En gång",
       "repeatWeekly": "Varje vecka",
       "confirm": "Bekräfta uppringning",
       "confirming": "Bekräftar…",
@@ -345,6 +347,7 @@
     "privacyComingSoon": "Integritetspolicy kommer snart",
     "privacyPolicy": "Integritetspolicy",
     "fullName": "Namn",
+    "changeName": "Ändra",
     "fullNameDescription": "Namnet används av coachen under samtalet.",
     "fullNamePlaceholder": "Ditt förnamn",
     "fullNameFound": "Namnet är hämtat från din profil.",
