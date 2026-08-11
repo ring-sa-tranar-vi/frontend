@@ -116,7 +116,7 @@ export default function EditWorkoutPage({
     if (!form.description)
       nextErrors.push(t('workoutsAdmin.validation.descriptionRequired'))
     if (!form.type) nextErrors.push(t('workoutsAdmin.validation.typeRequired'))
-    if (form.level < 0 || form.level > 4)
+    if (form.level < 1 || form.level > 5)
       nextErrors.push(t('workoutsAdmin.validation.levelRange'))
     if (!isValidUrl(form.image)) {
       nextErrors.push(t('workoutsAdmin.validation.workoutImageUrl'))

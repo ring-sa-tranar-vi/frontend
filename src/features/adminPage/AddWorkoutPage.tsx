@@ -66,7 +66,7 @@ export default function AddWorkoutPage({ onBack, onStatusChange }: Props) {
     if (!form.description)
       newErrors.push(t('workoutsAdmin.validation.descriptionRequired'))
     if (!form.type) newErrors.push(t('workoutsAdmin.validation.typeRequired'))
-    if (form.level < 0 || form.level > 4)
+    if (form.level < 1 || form.level > 5)
       newErrors.push(t('workoutsAdmin.validation.levelRange'))
     if (!isValidUrl(form.image))
       newErrors.push(t('workoutsAdmin.validation.workoutImageUrl'))
