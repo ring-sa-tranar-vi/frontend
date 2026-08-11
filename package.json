@@ -45,6 +45,7 @@
     "@tanstack/router-plugin": "^1.167.33",
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.3",
     "@types/babel__core": "^7.20.5",
     "@types/node": "^24.13.2",
     "@types/react": "^19.2.17",
