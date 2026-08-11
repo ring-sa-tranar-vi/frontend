@@ -1,15 +1,29 @@
 import { useAuth } from '@clerk/react'
-import { useMutation } from '@tanstack/react-query'
-import { ArrowLeft, Building2 } from 'lucide-react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import {
+  ArrowLeft,
+  Building2,
+  Clock3,
+  CreditCard,
+  FileCheck2,
+} from 'lucide-react'
 import { type FormEvent, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   AppSheet,
   AppSheetNotice,
+  appSheetCategoryClass,
+  appSheetContentClass,
+  appSheetFormFieldClass,
+  appSheetFormLabelClass,
   appSheetPrimaryButtonClass,
   appSheetSecondaryButtonClass,
 } from '../../../../components/AppSheet'
-import { getApiBaseUrl } from '../../../../lib/apiBaseUrl'
+import {
+  createOrganizationApplication,
+  fetchMyOrganizationApplication,
+  OrganizationApplicationError,
+} from '../../../../api/organizationApplications'
 
 type OrganisationApplication = {
   organizationName: string
@@ -25,8 +39,21 @@ const emptyApplication: OrganisationApplication = {
   motivation: '',
 }
 
-const fieldClass =
-  'mt-2 w-full rounded-2xl border border-(--menu-control-border) bg-(--menu-control-bg) px-4 py-3.5 text-[length:var(--text-base)] font-semibold text-(--brand-ink) transition placeholder:text-(--brand-muted) focus-visible:border-(--brand-border-strong) focus-visible:ring-2 focus-visible:ring-(--brand-border-strong) focus-visible:ring-offset-2 focus-visible:outline-none'
+const DESCRIPTION_MAX_LENGTH = 600
+const MOTIVATION_MAX_LENGTH = 600
+
+const fieldClass = `${appSheetFormFieldClass} transition placeholder:text-(--brand-muted)`
+const applicationTextareaClass =
+  'w-full resize-none border-none bg-transparent px-1 py-0.5 text-[length:var(--text-base)] leading-relaxed font-medium text-(--brand-ink) outline-none placeholder:text-(--brand-muted)'
+
+function formatDate(value: string, locale: string) {
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return value
+
+  return new Intl.DateTimeFormat(locale, {
+    dateStyle: 'medium',
+  }).format(date)
+}
 
 export default function OrganisationApplicationSheet({
   open,
@@ -37,9 +64,22 @@ export default function OrganisationApplicationSheet({
   onBack: () => void
   onClose: () => void
 }) {
-  const { t } = useTranslation()
-  const { getToken } = useAuth()
+  const { t, i18n } = useTranslation()
+  const { getToken, isLoaded, isSignedIn, userId } = useAuth()
+  const queryClient = useQueryClient()
   const [form, setForm] = useState<OrganisationApplication>(emptyApplication)
+  const [showNewApplicationForm, setShowNewApplicationForm] = useState(false)
+
+  const myApplicationQuery = useQuery({
+    queryKey: ['organisation-application', 'me', userId],
+    queryFn: async () => {
+      const token = await getToken()
+      if (!token) throw new Error('Missing Clerk token')
+      return fetchMyOrganizationApplication(token)
+    },
+    enabled: open && isLoaded && Boolean(isSignedIn) && Boolean(userId),
+    retry: false,
+  })
 
   const applicationMutation = useMutation({
     mutationFn: async (application: OrganisationApplication) => {
@@ -49,27 +89,27 @@ export default function OrganisationApplicationSheet({
         throw new Error('Missing Clerk token')
       }
 
-      const response = await fetch(
-        `${getApiBaseUrl()}/api/organization-applications`,
-        {
-          method: 'POST',
-          headers: {
-            Accept: 'application/json',
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(application),
-        },
-      )
-
-      if (!response.ok) {
-        const message = await response.text().catch(() => '')
-        throw new Error(message || `Request failed (${response.status})`)
-      }
+      await createOrganizationApplication(application, token)
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ['organisation-application', 'me', userId],
+      })
     },
   })
 
   const isComplete = Object.values(form).every((value) => value.trim())
+  const hasNoPreviousApplication =
+    myApplicationQuery.error instanceof OrganizationApplicationError &&
+    myApplicationQuery.error.status === 404
+  const existingApplication = myApplicationQuery.data
+  const showingApplicationStatus =
+    !showNewApplicationForm && existingApplication != null
+  const isCheckingApplication =
+    open &&
+    !showNewApplicationForm &&
+    myApplicationQuery.isLoading &&
+    !applicationMutation.isSuccess
 
   function updateField(field: keyof OrganisationApplication, value: string) {
     setForm((current) => ({ ...current, [field]: value }))
@@ -91,6 +131,7 @@ export default function OrganisationApplicationSheet({
   function returnToOrganisations() {
     applicationMutation.reset()
     setForm(emptyApplication)
+    setShowNewApplicationForm(false)
     onBack()
   }
 
@@ -105,8 +146,9 @@ export default function OrganisationApplicationSheet({
       onClose={onClose}
       height="large"
       fillHeight
+      motion="instant"
       footer={
-        applicationMutation.isSuccess ? (
+        applicationMutation.isSuccess || showingApplicationStatus ? (
           <button
             type="button"
             className={appSheetSecondaryButtonClass}
@@ -119,7 +161,12 @@ export default function OrganisationApplicationSheet({
             type="submit"
             form="organisation-application-form"
             className={appSheetPrimaryButtonClass}
-            disabled={!isComplete || applicationMutation.isPending}
+            disabled={
+              !isComplete ||
+              applicationMutation.isPending ||
+              isCheckingApplication ||
+              (myApplicationQuery.isError && !hasNoPreviousApplication)
+            }
           >
             {applicationMutation.isPending
               ? t('menu.events.application.submitting')
@@ -128,91 +175,254 @@ export default function OrganisationApplicationSheet({
         )
       }
     >
-      {applicationMutation.isSuccess ? (
-        <div className="flex min-h-72 flex-col items-center justify-center rounded-2xl border border-(--menu-category-border) bg-(--menu-category-bg) px-5 text-center">
-          <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-(--brand-soft) text-(--brand-primary-deep)">
-            <Building2 size={30} strokeWidth={2.2} aria-hidden="true" />
+      {isCheckingApplication ? (
+        <div className={`${appSheetCategoryClass} min-h-52`}>
+          <div
+            className={`${appSheetContentClass} flex min-h-44 flex-col items-center justify-center px-5 text-center`}
+          >
+            <Clock3
+              size={30}
+              className="text-(--brand-primary-deep)"
+              aria-hidden="true"
+            />
+            <p className="mt-4 text-[length:var(--text-sm)] font-bold text-(--brand-body-ink)">
+              {t('menu.events.application.checkingStatus')}
+            </p>
           </div>
-          <h3 className="mt-5 text-[length:var(--text-xl)] font-extrabold text-(--brand-title-ink)">
-            {t('menu.events.application.successTitle')}
-          </h3>
-          <p className="mt-2 max-w-sm text-[length:var(--text-sm)] leading-relaxed font-semibold text-(--brand-body-ink)">
-            {t('menu.events.application.successText')}
-          </p>
+        </div>
+      ) : applicationMutation.isSuccess ? (
+        <div className={`${appSheetCategoryClass} min-h-52`}>
+          <div
+            className={`${appSheetContentClass} flex min-h-44 flex-col items-center justify-center px-5 text-center`}
+          >
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-(--brand-soft) text-(--brand-primary-deep)">
+              <Building2 size={28} strokeWidth={2.2} aria-hidden="true" />
+            </div>
+            <h3 className="mt-4 text-[length:var(--text-lg)] font-extrabold text-(--brand-title-ink)">
+              {t('menu.events.application.successTitle')}
+            </h3>
+            <p className="mt-1.5 max-w-sm text-[length:var(--text-sm)] leading-relaxed font-semibold text-(--brand-body-ink)">
+              {t('menu.events.application.successText')}
+            </p>
+          </div>
+        </div>
+      ) : showingApplicationStatus ? (
+        <div className={appSheetCategoryClass}>
+          <div className="flex items-start gap-3">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-(--brand-soft) text-(--brand-primary-deep)">
+              <FileCheck2 size={22} strokeWidth={2.3} aria-hidden="true" />
+            </div>
+            <div>
+              <h3 className="text-[length:var(--text-xl)] font-extrabold text-(--brand-title-ink)">
+                {t(
+                  `menu.events.application.statusTitle.${existingApplication.status.toLowerCase()}`,
+                )}
+              </h3>
+              <p className="mt-1 text-[length:var(--text-sm)] leading-relaxed font-semibold text-(--brand-body-ink)">
+                {t(
+                  `menu.events.application.statusText.${existingApplication.status.toLowerCase()}`,
+                )}
+              </p>
+            </div>
+          </div>
+
+          <dl
+            className={`mt-4 space-y-3 text-[length:var(--text-sm)] ${appSheetContentClass}`}
+          >
+            <div className="flex items-center justify-between gap-4">
+              <dt className="font-bold text-(--brand-muted)">
+                {t('menu.events.application.statusLabel')}
+              </dt>
+              <dd className="font-extrabold text-(--brand-title-ink)">
+                {t(
+                  `menu.events.application.status.${existingApplication.status.toLowerCase()}`,
+                )}
+              </dd>
+            </div>
+            <div className="flex items-center justify-between gap-4">
+              <dt className="font-bold text-(--brand-muted)">
+                {t('menu.events.application.submitted')}
+              </dt>
+              <dd className="font-extrabold text-(--brand-title-ink)">
+                {formatDate(existingApplication.createdAt, i18n.language)}
+              </dd>
+            </div>
+            {existingApplication.reviewedAt ? (
+              <div className="flex items-center justify-between gap-4">
+                <dt className="font-bold text-(--brand-muted)">
+                  {t('menu.events.application.reviewed')}
+                </dt>
+                <dd className="font-extrabold text-(--brand-title-ink)">
+                  {formatDate(existingApplication.reviewedAt, i18n.language)}
+                </dd>
+              </div>
+            ) : null}
+            <div className="flex items-center justify-between gap-4">
+              <dt className="flex items-center gap-1.5 font-bold text-(--brand-muted)">
+                <CreditCard size={15} aria-hidden="true" />
+                {t('menu.events.application.payment')}
+              </dt>
+              <dd className="text-right font-extrabold text-(--brand-title-ink)">
+                {t(
+                  `menu.events.application.paymentStatus.${existingApplication.paymentStatus.toLowerCase()}`,
+                )}
+              </dd>
+            </div>
+          </dl>
+
+          {existingApplication.status === 'REJECTED' ? (
+            <button
+              type="button"
+              onClick={() => setShowNewApplicationForm(true)}
+              className="mt-5 w-full rounded-2xl border border-(--brand-btn-secondary-border) bg-(--brand-btn-secondary-bg) px-4 py-3.5 text-[length:var(--text-sm)] font-extrabold text-(--brand-btn-secondary-text) transition hover:bg-(--brand-btn-secondary-hover)"
+            >
+              {t('menu.events.application.submitNew')}
+            </button>
+          ) : null}
         </div>
       ) : (
         <form
           id="organisation-application-form"
-          className="space-y-5 rounded-2xl border border-(--menu-category-border) bg-(--menu-category-bg) p-4"
+          className={appSheetCategoryClass}
           onSubmit={submitApplication}
         >
-          {applicationMutation.isError ? (
-            <AppSheetNotice tone="danger">
-              {t('menu.events.application.error')}
-            </AppSheetNotice>
+          {applicationMutation.isError ||
+          (myApplicationQuery.isError && !hasNoPreviousApplication) ? (
+            <div className="mb-3 space-y-2">
+              {applicationMutation.isError ? (
+                <AppSheetNotice tone="danger">
+                  {t('menu.events.application.error')}
+                </AppSheetNotice>
+              ) : null}
+              {myApplicationQuery.isError && !hasNoPreviousApplication ? (
+                <AppSheetNotice tone="danger">
+                  {t('menu.events.application.statusError')}
+                </AppSheetNotice>
+              ) : null}
+            </div>
           ) : null}
 
-          <label className="block text-[length:var(--text-sm)] font-extrabold text-(--brand-title-ink)">
-            {t('menu.events.application.name')}
-            <span aria-hidden="true"> *</span>
-            <input
-              required
-              maxLength={100}
-              autoComplete="organization"
-              value={form.organizationName}
-              onChange={(event) =>
-                updateField('organizationName', event.target.value)
-              }
-              className={fieldClass}
-              placeholder={t('menu.events.application.namePlaceholder')}
-            />
-          </label>
+          <div className="flex items-center gap-2.5 px-1">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-(--menu-content-bg) text-(--brand-primary)">
+              <Building2 size={18} strokeWidth={2.3} aria-hidden="true" />
+            </div>
+            <div className="min-w-0">
+              <h2 className="text-[length:var(--text-lg)] leading-tight font-extrabold tracking-tight text-(--brand-ink)">
+                {t('menu.events.application.subtitle')}
+              </h2>
+              <p className="mt-0.5 text-[length:var(--text-sm)] leading-snug font-semibold text-(--brand-body-ink)">
+                {t('menu.events.application.cardText')}
+              </p>
+            </div>
+          </div>
 
-          <label className="block text-[length:var(--text-sm)] font-extrabold text-(--brand-title-ink)">
-            {t('menu.events.application.description')}
-            <span aria-hidden="true"> *</span>
-            <textarea
-              required
-              maxLength={300}
-              rows={4}
-              value={form.description}
-              onChange={(event) =>
-                updateField('description', event.target.value)
-              }
-              className={`${fieldClass} resize-none`}
-              placeholder={t('menu.events.application.descriptionPlaceholder')}
-            />
-          </label>
+          <div className={`mt-3 space-y-3 ${appSheetContentClass}`}>
+            <div>
+              <label
+                htmlFor="organisation-application-name"
+                className={appSheetFormLabelClass}
+              >
+                {t('menu.events.application.name')}
+                <span aria-hidden="true"> *</span>
+              </label>
+              <input
+                id="organisation-application-name"
+                required
+                maxLength={100}
+                autoComplete="organization"
+                value={form.organizationName}
+                onChange={(event) =>
+                  updateField('organizationName', event.target.value)
+                }
+                className={fieldClass}
+                placeholder={t('menu.events.application.namePlaceholder')}
+              />
+            </div>
 
-          <label className="block text-[length:var(--text-sm)] font-extrabold text-(--brand-title-ink)">
-            {t('menu.events.application.city')}
-            <span aria-hidden="true"> *</span>
-            <input
-              required
-              maxLength={100}
-              autoComplete="address-level2"
-              value={form.city}
-              onChange={(event) => updateField('city', event.target.value)}
-              className={fieldClass}
-              placeholder={t('menu.events.application.cityPlaceholder')}
-            />
-          </label>
+            <div>
+              <label
+                htmlFor="organisation-application-description"
+                className={appSheetFormLabelClass}
+              >
+                {t('menu.events.application.description')}
+                <span aria-hidden="true"> *</span>
+              </label>
+              <div className="menu-field-shell rounded-2xl border border-(--menu-control-border) p-3 focus-within:border-(--brand-border-strong) focus-within:ring-2 focus-within:ring-(--brand-selection)">
+                <textarea
+                  id="organisation-application-description"
+                  required
+                  maxLength={DESCRIPTION_MAX_LENGTH}
+                  rows={4}
+                  value={form.description}
+                  onChange={(event) =>
+                    updateField('description', event.target.value)
+                  }
+                  className={applicationTextareaClass}
+                  placeholder={t(
+                    'menu.events.application.descriptionPlaceholder',
+                  )}
+                />
+                <span
+                  aria-live="polite"
+                  className="mt-1 block text-right text-[length:var(--text-xs)] font-semibold text-(--brand-muted) tabular-nums"
+                >
+                  {form.description.length}/{DESCRIPTION_MAX_LENGTH}
+                </span>
+              </div>
+            </div>
 
-          <label className="block text-[length:var(--text-sm)] font-extrabold text-(--brand-title-ink)">
-            {t('menu.events.application.motivation')}
-            <span aria-hidden="true"> *</span>
-            <textarea
-              required
-              maxLength={600}
-              rows={5}
-              value={form.motivation}
-              onChange={(event) =>
-                updateField('motivation', event.target.value)
-              }
-              className={`${fieldClass} resize-none`}
-              placeholder={t('menu.events.application.motivationPlaceholder')}
-            />
-          </label>
+            <div>
+              <label
+                htmlFor="organisation-application-city"
+                className={appSheetFormLabelClass}
+              >
+                {t('menu.events.application.city')}
+                <span aria-hidden="true"> *</span>
+              </label>
+              <input
+                id="organisation-application-city"
+                required
+                maxLength={100}
+                autoComplete="address-level2"
+                value={form.city}
+                onChange={(event) => updateField('city', event.target.value)}
+                className={fieldClass}
+                placeholder={t('menu.events.application.cityPlaceholder')}
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="organisation-application-motivation"
+                className={appSheetFormLabelClass}
+              >
+                {t('menu.events.application.motivation')}
+                <span aria-hidden="true"> *</span>
+              </label>
+              <div className="menu-field-shell rounded-2xl border border-(--menu-control-border) p-3 focus-within:border-(--brand-border-strong) focus-within:ring-2 focus-within:ring-(--brand-selection)">
+                <textarea
+                  id="organisation-application-motivation"
+                  required
+                  maxLength={MOTIVATION_MAX_LENGTH}
+                  rows={4}
+                  value={form.motivation}
+                  onChange={(event) =>
+                    updateField('motivation', event.target.value)
+                  }
+                  className={applicationTextareaClass}
+                  placeholder={t(
+                    'menu.events.application.motivationPlaceholder',
+                  )}
+                />
+                <span
+                  aria-live="polite"
+                  className="mt-1 block text-right text-[length:var(--text-xs)] font-semibold text-(--brand-muted) tabular-nums"
+                >
+                  {form.motivation.length}/{MOTIVATION_MAX_LENGTH}
+                </span>
+              </div>
+            </div>
+          </div>
         </form>
       )}
     </AppSheet>

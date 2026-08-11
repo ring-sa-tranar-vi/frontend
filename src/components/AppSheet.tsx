@@ -2,16 +2,27 @@ import { X } from 'lucide-react'
 import {
   type ReactNode,
   useEffect,
+  useId,
   useLayoutEffect,
   useRef,
   useState,
 } from 'react'
 
 export const appSheetFieldClass =
-  'rounded-2xl border border-(--menu-control-border) bg-(--menu-control-bg)'
+  'rounded-2xl border border-(--menu-control-border) bg-(--menu-field-bg)'
 
-export const appSheetCardClass =
-  'rounded-2xl border border-(--brand-border-light) bg-(--menu-content-bg) p-4'
+export const appSheetFormLabelClass =
+  'mb-1.5 block text-[length:var(--text-sm)] font-semibold text-(--brand-ink-soft)'
+
+export const appSheetFormFieldClass = `${appSheetFieldClass} min-h-11 w-full rounded-xl px-3 py-2 text-[length:var(--text-base)] font-semibold text-(--brand-ink) outline-none focus:border-(--brand-border-strong) focus:ring-2 focus:ring-(--brand-selection)`
+
+export const appSheetFormTextareaClass = `${appSheetFieldClass} w-full resize-none rounded-xl px-3 py-2.5 text-[length:var(--text-base)] leading-relaxed font-medium text-(--brand-ink) outline-none focus:border-(--brand-border-strong) focus:ring-2 focus:ring-(--brand-selection)`
+
+export const appSheetCategoryClass = 'menu-category-card'
+
+export const appSheetContentClass = 'menu-content-card'
+
+export const appSheetCardClass = 'menu-item-card'
 
 export const appSheetPrimaryButtonClass =
   'w-full rounded-full bg-(--brand-primary) px-4 py-4 text-[length:var(--text-base)] font-extrabold text-(--brand-on-primary) transition hover:bg-(--brand-primary-strong) active:scale-[0.985] disabled:cursor-not-allowed disabled:opacity-70'
@@ -34,6 +45,7 @@ type AppSheetProps = {
   backLabel?: string
   height?: 'compact' | 'default' | 'large'
   fillHeight?: boolean
+  motion?: 'slide' | 'instant'
 }
 
 const maxHeightClass = {
@@ -60,10 +72,14 @@ export function AppSheet({
   backLabel,
   height = 'default',
   fillHeight = false,
+  motion = 'slide',
 }: AppSheetProps) {
   const sectionRef = useRef<HTMLElement>(null)
   const backdropRef = useRef<HTMLDivElement>(null)
   const scrollBodyRef = useRef<HTMLDivElement>(null)
+  const closeButtonRef = useRef<HTMLButtonElement>(null)
+  const previouslyFocusedElementRef = useRef<HTMLElement | null>(null)
+  const onCloseRef = useRef(onClose)
   const touchStartY = useRef<number | null>(null)
   const mouseStartY = useRef<number | null>(null)
   // Drag position stored in a ref – no re-render needed during drag.
@@ -74,6 +90,78 @@ export function AppSheet({
   // Only pointer-events use React state; opacity/blur are driven via DOM refs
   // so transitions are always in sync with the sheet position.
   const [backdropVisible, setBackdropVisible] = useState(false)
+  const titleId = useId()
+  const subtitleId = useId()
+
+  useEffect(() => {
+    onCloseRef.current = onClose
+  }, [onClose])
+
+  useEffect(() => {
+    if (!open) {
+      const previouslyFocused = previouslyFocusedElementRef.current
+
+      if (previouslyFocused) {
+        requestAnimationFrame(() =>
+          previouslyFocused.focus({ preventScroll: true }),
+        )
+        previouslyFocusedElementRef.current = null
+      }
+
+      return
+    }
+
+    previouslyFocusedElementRef.current =
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null
+
+    const focusTimer = window.setTimeout(
+      () => closeButtonRef.current?.focus({ preventScroll: true }),
+      0,
+    )
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        onCloseRef.current()
+        return
+      }
+
+      if (event.key !== 'Tab') return
+
+      const focusableElements =
+        sectionRef.current?.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        )
+      const focusable = focusableElements
+        ? Array.from(focusableElements).filter(
+            (element) => element.offsetParent !== null,
+          )
+        : []
+
+      if (focusable.length === 0) {
+        event.preventDefault()
+        return
+      }
+
+      const first = focusable[0]
+      const last = focusable[focusable.length - 1]
+
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault()
+        last.focus({ preventScroll: true })
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault()
+        first.focus({ preventScroll: true })
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    return () => {
+      window.clearTimeout(focusTimer)
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [open])
 
   function applyBackdrop(fraction: number, animated: boolean) {
     const bd = backdropRef.current
@@ -93,6 +181,12 @@ export function AppSheet({
     if (open) {
       hasEverBeenOpen.current = true
       setBackdropVisible(true)
+      if (motion === 'instant') {
+        el.style.transition = 'none'
+        el.style.transform = 'translateY(0)'
+        applyBackdrop(0, false)
+        return
+      }
       // Snap to bottom (no transition) so the browser commits that position,
       // then animate up.  getBoundingClientRect() forces a synchronous style-
       // flush so the browser treats translateY(100%) as the CSS "from" state.
@@ -108,6 +202,14 @@ export function AppSheet({
       // StrictMode double-invoke: second run overwrites the first before any
       // browser paint, so the net result is still one correct animation.
     } else {
+      if (motion === 'instant') {
+        dragY.current = 0
+        el.style.transition = 'none'
+        el.style.transform = 'translateY(100%)'
+        applyBackdrop(1, false)
+        setBackdropVisible(false)
+        return
+      }
       if (!hasEverBeenOpen.current) {
         // Initial mount in closed state – just snap off-screen, no animation.
         el.style.transition = 'none'
@@ -130,7 +232,7 @@ export function AppSheet({
       }, 350)
       return () => clearTimeout(tid)
     }
-  }, [open])
+  }, [motion, open])
 
   function handleWheel(event: React.WheelEvent<HTMLElement>) {
     const scrollBody = scrollBodyRef.current
@@ -184,18 +286,19 @@ export function AppSheet({
       if (touchStartY.current == null) return
       const delta = e.touches[0].clientY - touchStartY.current
 
-      if (delta > 0) {
-        // Downward – only intercept when scroll body is at top.
-        const scrollBody = scrollBodyRef.current
-        if (scrollBody && scrollBody.scrollTop > 0) return
-      }
+      if (delta <= 0) return
+
+      // Downward – only intercept when scroll body is at top.
+      const scrollBody = scrollBodyRef.current
+      if (scrollBody && scrollBody.scrollTop > 0) return
 
       e.preventDefault()
       if (!el) return
       el.style.transition = 'none'
 
-      // Upward drag is dampened (⅓, max 60 px); downward is uncapped.
-      const newY = delta > 0 ? delta : Math.max(delta / 3, -60)
+      // The sheet only follows a downward close gesture. Upward movement is
+      // reserved for scrolling the content and must never lift the dialog.
+      const newY = Math.max(0, delta)
       dragY.current = newY
       el.style.transform = `translateY(${newY}px)`
 
@@ -214,10 +317,11 @@ export function AppSheet({
     function handleMouseMove(e: MouseEvent) {
       if (mouseStartY.current == null) return
       const delta = e.clientY - mouseStartY.current
+      if (delta <= 0) return
       const el = sectionRef.current
       if (!el) return
       el.style.transition = 'none'
-      const newY = delta > 0 ? delta : Math.max(delta / 3, -60)
+      const newY = Math.max(0, delta)
       dragY.current = newY
       el.style.transform = `translateY(${newY}px)`
       const sheetHeight = el.offsetHeight || 1
@@ -233,7 +337,7 @@ export function AppSheet({
       if (!el) return
       el.style.transition = 'transform 300ms ease-out'
       if (dragged > 120) {
-        onClose()
+        onCloseRef.current()
       } else {
         el.style.transform = 'translateY(0)'
         applyBackdrop(0, true)
@@ -246,7 +350,7 @@ export function AppSheet({
       document.removeEventListener('mousemove', handleMouseMove)
       document.removeEventListener('mouseup', handleMouseUp)
     }
-  }, [open, onClose])
+  }, [open])
 
   function onTouchEnd() {
     if (touchStartY.current == null) return
@@ -263,7 +367,7 @@ export function AppSheet({
     if (dragged > 120) {
       // The close effect will animate translateY(100%) from wherever the sheet
       // currently is (the drag release point).
-      onClose()
+      onCloseRef.current()
     } else {
       // Snap back to fully open.
       el.style.transform = 'translateY(0)'
@@ -284,6 +388,10 @@ export function AppSheet({
 
       <section
         ref={sectionRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        aria-describedby={subtitle ? subtitleId : undefined}
         aria-hidden={!open}
         inert={!open}
         onWheel={handleWheel}
@@ -328,19 +436,26 @@ export function AppSheet({
                   </div>
                 ) : null}
 
-                <h2 className="text-[length:var(--text-2xl)] leading-none font-extrabold tracking-tight text-(--brand-title-ink)">
+                <h2
+                  id={titleId}
+                  className="text-[length:var(--text-2xl)] leading-none font-extrabold tracking-tight text-(--brand-title-ink)"
+                >
                   {title}
                 </h2>
               </div>
 
               {subtitle ? (
-                <p className="mt-1.5 text-[length:var(--text-sm)] leading-snug font-semibold text-(--brand-muted)">
+                <p
+                  id={subtitleId}
+                  className="mt-1.5 text-[length:var(--text-sm)] leading-snug font-semibold text-(--brand-muted)"
+                >
                   {subtitle}
                 </p>
               ) : null}
             </div>
 
             <button
+              ref={closeButtonRef}
               type="button"
               onClick={onClose}
               className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-(--brand-soft) text-(--brand-primary) transition focus-visible:ring-2 focus-visible:ring-(--brand-border-strong) focus-visible:ring-offset-2 focus-visible:outline-none active:scale-95"

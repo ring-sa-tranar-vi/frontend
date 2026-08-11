@@ -10,7 +10,7 @@ export const callbackWeekdays = [
 
 export type CallbackWeekday = (typeof callbackWeekdays)[number]
 
-export type CallbackRepeat = 'never' | 'weekly' | 'everyOtherWeek'
+export type CallbackRepeat = 'never' | 'weekly'
 
 export type CallbackRequest = {
   weekday: CallbackWeekday
@@ -45,8 +45,4 @@ export type CalendarEventDto = {
   description?: string | null
   time: string
   completed: boolean
-}
-
-export type MenuPlaceholderData = {
-  callback: CallbackRequest
 }

@@ -12,22 +12,22 @@ export default function CompanyOrganisationHeader({
   onClose,
 }: Props) {
   return (
-    <header className="mb-2 rounded-2xl border border-[#ebe4ff] bg-[#fcfbff] p-3 md:mb-4 md:p-5">
-      <div className="relative flex min-h-[98px] items-start justify-center">
+    <header className="mb-5 border-b border-(--brand-border)/60 pb-4">
+      <div className="relative flex min-h-10 items-start justify-center">
         <button
           type="button"
           aria-label="Tillbaka"
           onClick={onBack}
-          className="absolute top-0 left-0 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#f2edff] text-[#5f49d6]"
+          className="absolute top-0 left-0 flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-(--brand-soft) text-(--brand-primary) transition focus-visible:ring-2 focus-visible:ring-(--brand-border-strong) focus-visible:outline-none active:scale-95"
         >
           <ChevronLeft size={18} />
         </button>
 
-        <div className="w-full max-w-[270px] px-9 text-center sm:max-w-[320px] sm:px-12">
-          <h1 className="text-[1.85rem] leading-tight font-extrabold text-[#100b2f] md:text-4xl">
+        <div className="w-full max-w-[270px] px-10 text-center">
+          <h1 className="text-[1.5rem] leading-tight font-extrabold tracking-tight text-(--brand-title-ink)">
             Din organisation
           </h1>
-          <p className="mt-1 text-sm leading-5 text-[#6f6a93] md:leading-6">
+          <p className="mt-1 text-[length:var(--text-sm)] leading-5 text-(--brand-muted)">
             Hantera din organisationsprofil och event
           </p>
         </div>
@@ -36,14 +36,14 @@ export default function CompanyOrganisationHeader({
           type="button"
           aria-label="Stäng"
           onClick={onClose}
-          className="absolute top-0 right-0 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#f2edff] text-[#5f49d6]"
+          className="absolute top-0 right-0 flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-(--brand-soft) text-(--brand-primary) transition focus-visible:ring-2 focus-visible:ring-(--brand-border-strong) focus-visible:outline-none active:scale-95"
         >
           <X size={17} />
         </button>
       </div>
 
       {statusMessage ? (
-        <div className="mt-3 rounded-xl bg-[#f3efff] px-3 py-2 text-center text-xs font-semibold text-[#3b2f7f] md:text-sm md:font-medium">
+        <div className="mt-3 rounded-xl bg-(--brand-soft) px-3 py-2 text-center text-[length:var(--text-sm)] font-bold text-(--brand-primary)">
           {statusMessage}
         </div>
       ) : null}

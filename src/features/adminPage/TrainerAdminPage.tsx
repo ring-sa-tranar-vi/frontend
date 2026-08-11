@@ -348,7 +348,6 @@ export default function TrainerAdminPage({ searchTerm = '' }: Props) {
           open={true}
           title={t('trainerAdmin.deleteTitle')}
           body={t('trainerAdmin.deleteBody', { name: selectedTrainer.name })}
-          requireTyping="DELETE"
           confirmLabel={t('trainerAdmin.deleteConfirm')}
           cancelLabel={t('trainerAdmin.cancel')}
           onConfirm={() => {

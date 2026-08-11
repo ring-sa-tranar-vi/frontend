@@ -32,8 +32,8 @@ export function SessionInfoPanel({
       >
         {session.isAuthenticated ? (
           <TrainingSuitePanel
-            streakDays={session.currentStreak}
-            items={session.completedWorkouts}
+            streakDays={session.currentStreak ?? undefined}
+            items={session.completedWorkouts ?? undefined}
           />
         ) : (
           <AppSheetNotice>{t('sessionCall.notLoggedIn')}</AppSheetNotice>

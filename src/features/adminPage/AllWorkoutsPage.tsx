@@ -105,7 +105,6 @@ export default function AllWorkoutsPage({
           body={t('workoutsAdmin.deleteBody', {
             name: confirmModal.workout.name,
           })}
-          requireTyping={'DELETE'}
           confirmLabel={t('workoutsAdmin.deleteConfirm')}
           cancelLabel={t('workoutsAdmin.cancel')}
           onConfirm={onConfirmDelete}

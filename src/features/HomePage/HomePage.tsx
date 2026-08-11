@@ -183,7 +183,7 @@ export default function HomePage() {
   }
 
   return (
-    <div className="home-stage relative h-full w-full overflow-hidden bg-(--brand-page-start) text-(--brand-ink)">
+    <div className="home-stage relative h-full w-full overflow-clip bg-(--brand-page-start) text-(--brand-ink)">
       {/* Background inside phone stage */}
       <img
         src={assets.background}

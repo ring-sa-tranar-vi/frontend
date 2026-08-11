@@ -1,10 +1,36 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 export function useVoicePlayer() {
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
   const [loadingId, setLoadingId] = useState<string | null>(null)
   const [playingId, setPlayingId] = useState<string | null>(null)
+
+  const stop = () => {
+    if (audioRef.current) {
+      const audio = audioRef.current
+      try {
+        audio.oncanplay = null
+        audio.oncanplaythrough = null
+        audio.onended = null
+        audio.onerror = null
+        audio.pause()
+        audio.removeAttribute('src')
+        audio.load()
+      } catch (error) {
+        console.error('Error stopping audio:', error)
+      }
+      audioRef.current = null
+    }
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current)
+      timeoutRef.current = null
+    }
+    setPlayingId(null)
+    setLoadingId(null)
+  }
+
+  useEffect(() => stop, [])
 
   const play = (id: string, url?: string | null) => {
     if (!url) {
@@ -15,19 +41,7 @@ export function useVoicePlayer() {
     console.log('Playing voice for trainer', id, 'URL:', url)
 
     // Stop existing
-    if (audioRef.current) {
-      try {
-        audioRef.current.pause()
-        audioRef.current.src = ''
-      } catch (e) {
-        console.error('Error stopping audio:', e)
-      }
-    }
-
-    // Clear any pending timeout
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current)
-    }
+    stop()
 
     setLoadingId(id)
     const audio = new Audio()
@@ -50,14 +64,21 @@ export function useVoicePlayer() {
     // which would cause the second play() to trigger onerror, clearing onended.
     let started = false
     const startPlayback = () => {
-      if (started) return
+      if (started || audioRef.current !== audio) return
       started = true
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current)
+        timeoutRef.current = null
+      }
       setLoadingId(null)
       setPlayingId(id)
       audio.play().catch((err) => {
+        if (audioRef.current !== audio) return
         console.error('Error playing audio:', err)
         setLoadingId(null)
         setPlayingId(null)
+        audioRef.current = null
+        cleanUp()
       })
     }
 
@@ -65,41 +86,33 @@ export function useVoicePlayer() {
     audio.oncanplaythrough = startPlayback
 
     audio.onended = () => {
+      if (audioRef.current !== audio) return
       setPlayingId(null)
+      audioRef.current = null
       cleanUp()
     }
 
     audio.onerror = (e) => {
+      if (audioRef.current !== audio) return
       console.error('Audio load error:', e)
       setLoadingId(null)
       setPlayingId(null)
+      audioRef.current = null
       cleanUp()
     }
 
     // Timeout after 10 seconds if audio doesn't load
     timeoutRef.current = setTimeout(() => {
+      if (audioRef.current !== audio) return
       console.warn('Audio load timeout for trainer', id)
-      setLoadingId(null)
       cleanUp()
-    }, 10000)
-  }
-
-  const stop = () => {
-    if (audioRef.current) {
-      try {
-        audioRef.current.pause()
-        audioRef.current.src = ''
-      } catch (e) {
-        console.error('Error stopping audio:', e)
-      }
+      audio.pause()
+      audio.removeAttribute('src')
+      audio.load()
+      setLoadingId(null)
+      setPlayingId(null)
       audioRef.current = null
-    }
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current)
-      timeoutRef.current = null
-    }
-    setPlayingId(null)
-    setLoadingId(null)
+    }, 10000)
   }
 
   return { play, stop, loadingId, playingId } as const

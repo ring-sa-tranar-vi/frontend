@@ -3,6 +3,9 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   AppSheetNotice,
+  appSheetCategoryClass,
+  appSheetContentClass,
+  appSheetFormFieldClass,
   appSheetPrimaryButtonClass,
 } from '../../../../components/AppSheet'
 import MenuSectionHeader from './MenuSectionHeader'
@@ -14,6 +17,7 @@ import {
 } from './types'
 
 const WEEKDAY_DATE = new Date(Date.UTC(2026, 6, 13))
+const callbackMinuteValues = ['00', '15', '30', '45'] as const
 
 function getWeekdayLabels(locale: string) {
   const shortFormatter = new Intl.DateTimeFormat(locale, {
@@ -40,20 +44,23 @@ export default function CallbackSchedulerSection({
   initialRequest,
   onConfirm,
 }: {
-  initialRequest: CallbackRequest
+  initialRequest?: CallbackRequest
   onConfirm?: (request: CallbackRequest) => void | Promise<void>
 }) {
   const { t, i18n } = useTranslation()
-  const [weekday, setWeekday] = useState<CallbackWeekday>(
-    initialRequest.weekday,
+  const [weekday, setWeekday] = useState<CallbackWeekday | null>(
+    initialRequest?.weekday ?? null,
   )
-  const [time, setTime] = useState(initialRequest.time)
-  const [repeat, setRepeat] = useState<CallbackRepeat>(initialRequest.repeat)
+  const [time, setTime] = useState(initialRequest?.time ?? '')
+  const [repeat, setRepeat] = useState<CallbackRepeat | null>(
+    initialRequest?.repeat ?? null,
+  )
   const [feedback, setFeedback] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const locale = i18n.resolvedLanguage ?? i18n.language
   const weekdayLabels = getWeekdayLabels(locale)
-  const [hour, minute] = time.split(':')
+  const [hour = '', minute = ''] = time.split(':')
+  const hasCompleteTime = hour !== '' && minute !== ''
 
   function updateTime(nextHour: string, nextMinute: string) {
     setTime(`${nextHour}:${nextMinute}`)
@@ -61,6 +68,8 @@ export default function CallbackSchedulerSection({
   }
 
   async function handleConfirm() {
+    if (!weekday || !hasCompleteTime || !repeat) return
+
     const request: CallbackRequest = { weekday, time, repeat }
 
     if (!onConfirm) {
@@ -85,7 +94,7 @@ export default function CallbackSchedulerSection({
   return (
     <section
       aria-labelledby="menu-callback-title"
-      className="rounded-2xl border border-(--menu-category-border) bg-(--menu-category-bg) p-4"
+      className={appSheetCategoryClass}
     >
       <div id="menu-callback-title">
         <MenuSectionHeader
@@ -95,7 +104,7 @@ export default function CallbackSchedulerSection({
         />
       </div>
 
-      <div className="mt-4 rounded-xl bg-(--menu-content-bg) p-4">
+      <div className={`mt-4 ${appSheetContentClass}`}>
         <fieldset>
           <legend className="sr-only">{t('menu.callback.chooseDay')}</legend>
           <div className="grid grid-cols-7 gap-1.5">
@@ -123,7 +132,7 @@ export default function CallbackSchedulerSection({
               )
             })}
           </div>
-          <div className="mt-2 flex items-center justify-between text-[0.65rem] font-bold text-(--brand-muted)">
+          <div className="mt-2 flex items-center justify-between text-[length:var(--text-xs)] font-bold text-(--brand-muted)">
             <span>{weekdayLabels[0].long}</span>
             <span>{weekdayLabels[6].long}</span>
           </div>
@@ -141,8 +150,11 @@ export default function CallbackSchedulerSection({
             name="callbackHour"
             value={hour}
             onChange={(event) => updateTime(event.target.value, minute)}
-            className="h-12 w-[112px] rounded-xl border border-(--brand-primary) bg-(--brand-primary) px-4 text-center text-xl font-extrabold text-(--brand-on-primary) focus-visible:ring-2 focus-visible:ring-(--brand-border-strong) focus-visible:ring-offset-2 focus-visible:outline-none"
+            className="h-12 w-[112px] rounded-xl border border-(--menu-control-border) bg-(--menu-field-bg) px-4 text-center text-xl font-extrabold text-(--brand-ink) focus-visible:border-(--brand-border-strong) focus-visible:ring-2 focus-visible:ring-(--brand-selection) focus-visible:outline-none"
           >
+            <option value="" disabled>
+              --
+            </option>
             {Array.from({ length: 24 }, (_, index) =>
               String(index).padStart(2, '0'),
             ).map((value) => (
@@ -162,11 +174,12 @@ export default function CallbackSchedulerSection({
             name="callbackMinute"
             value={minute}
             onChange={(event) => updateTime(hour, event.target.value)}
-            className="h-12 w-[112px] rounded-xl border border-(--brand-primary) bg-(--brand-primary) px-4 text-center text-xl font-extrabold text-(--brand-on-primary) focus-visible:ring-2 focus-visible:ring-(--brand-border-strong) focus-visible:ring-offset-2 focus-visible:outline-none"
+            className="h-12 w-[112px] rounded-xl border border-(--menu-control-border) bg-(--menu-field-bg) px-4 text-center text-xl font-extrabold text-(--brand-ink) focus-visible:border-(--brand-border-strong) focus-visible:ring-2 focus-visible:ring-(--brand-selection) focus-visible:outline-none"
           >
-            {Array.from({ length: 60 }, (_, index) =>
-              String(index).padStart(2, '0'),
-            ).map((value) => (
+            <option value="" disabled>
+              --
+            </option>
+            {callbackMinuteValues.map((value) => (
               <option key={value} value={value}>
                 {value}
               </option>
@@ -182,25 +195,25 @@ export default function CallbackSchedulerSection({
             id="callback-repeat"
             name="callbackRepeat"
             aria-label={t('menu.callback.repeat')}
-            value={repeat}
+            value={repeat ?? ''}
             onChange={(event) => {
               setRepeat(event.target.value as CallbackRepeat)
               setFeedback(null)
             }}
-            className="w-full rounded-2xl border border-(--menu-control-border) bg-(--menu-control-bg) px-4 py-3.5 text-[length:var(--text-base)] font-bold text-(--brand-ink) focus-visible:border-(--brand-border-strong) focus-visible:ring-2 focus-visible:ring-(--brand-border-strong) focus-visible:ring-offset-2 focus-visible:outline-none"
+            className={appSheetFormFieldClass}
           >
+            <option value="" disabled>
+              --
+            </option>
             <option value="never">{t('menu.callback.repeatNever')}</option>
             <option value="weekly">{t('menu.callback.repeatWeekly')}</option>
-            <option value="everyOtherWeek">
-              {t('menu.callback.repeatEveryOtherWeek')}
-            </option>
           </select>
         </label>
 
         <button
           type="button"
           onClick={() => void handleConfirm()}
-          disabled={isSubmitting}
+          disabled={isSubmitting || !weekday || !hasCompleteTime || !repeat}
           className={`${appSheetPrimaryButtonClass} mt-5 focus-visible:ring-2 focus-visible:ring-(--brand-border-strong) focus-visible:ring-offset-2 focus-visible:outline-none`}
         >
           {isSubmitting
