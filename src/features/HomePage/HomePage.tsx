@@ -1,16 +1,12 @@
 import { useEffect, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { LogIn, Phone, Settings } from 'lucide-react'
+import { LogIn, Menu, Phone } from 'lucide-react'
 import { SessionPage } from '../session/SessionPage'
 import { primeSessionAudio } from '../ai-conversation/audio/sessionAudio'
-import {
-  startRingback,
-  stopGymAmbience,
-} from '../ai-conversation/audio/ringback'
+import { stopGymAmbience } from '../ai-conversation/audio/ringback'
 import { coachCallSessionQueryOptions } from '../session/query'
 import { SignInButton, useAuth } from '@clerk/react'
 import SettingsModalSheet from './components/SettingsModalSheet'
-import { useMyProfile } from '../../hooks/useMyProfile'
 import useCurrentWorkout from '../../hooks/useCurrentWorkout'
 import { useTranslation } from 'react-i18next'
 import {
@@ -18,6 +14,7 @@ import {
   getStoredTrainerId,
   setStoredTrainerId,
 } from './trainerPreference'
+import useCurrentUser from '../../hooks/useCurrentUser'
 
 const assets = {
   background: '/start-page/background.webp',
@@ -77,8 +74,15 @@ export default function HomePage() {
     getStoredTrainerId(),
   )
   const { getToken, isLoaded, isSignedIn, userId } = useAuth()
-  const { data: profile } = useMyProfile()
-  const { currentWorkout, alreadyCompletedToday } = useCurrentWorkout()
+  const { user: profile } = useCurrentUser()
+  const { currentWorkout: workout } = useCurrentWorkout()
+
+  const {
+    currentWorkoutId,
+    alreadyCompletedToday,
+    workouts,
+    updateCurrentWorkout,
+  } = useCurrentWorkout()
   const { t, i18n } = useTranslation()
 
   useEffect(() => {
@@ -95,12 +99,15 @@ export default function HomePage() {
     if (typeof profile?.trainerId !== 'number') {
       return
     }
+    if (!profile.trainerId) {
+      return
+    }
     // Avoid synchronous cascading renders by only updating state when it differs
     if (profile.trainerId === cachedTrainerId) return
 
     queueMicrotask(() => {
       setCachedTrainerId(profile.trainerId)
-      setStoredTrainerId(profile.trainerId)
+      setStoredTrainerId(profile.trainerId!)
     })
   }, [profile?.trainerId, cachedTrainerId])
 
@@ -110,7 +117,7 @@ export default function HomePage() {
       ? (profile?.trainerId ?? cachedTrainerId ?? DEFAULT_TRAINER_ID)
       : DEFAULT_TRAINER_ID
   const selectedWorkoutId = isSignedIn
-    ? currentWorkout
+    ? currentWorkoutId
     : DEFAULT_GUEST_WORKOUT_ID
 
   const activeTrainer = getHomepageTrainer(activeTrainerId)
@@ -126,7 +133,7 @@ export default function HomePage() {
 
       // Keep AI conversation aligned with the workout selected from user level/trainer.
       await queryClient.prefetchQuery(
-        coachCallSessionQueryOptions(selectedWorkoutId, token, userId),
+        coachCallSessionQueryOptions(profile, workout, token, userId),
       )
     })()
   }, [getToken, isLoaded, isSignedIn, queryClient, selectedWorkoutId, userId])
@@ -156,7 +163,6 @@ export default function HomePage() {
     if (!selectedWorkoutId && !alreadyCompletedToday) {
       return
     }
-    startRingback()
     void primeSessionAudio()
     void primeMicrophonePermission()
     setActiveAlreadyCompleted(alreadyCompletedToday)
@@ -168,7 +174,9 @@ export default function HomePage() {
     return (
       <SessionPage
         workoutId={activeWorkoutId}
+        workouts={workouts}
         alreadyCompletedToday={activeAlreadyCompleted}
+        updateCurrentWorkout={updateCurrentWorkout}
         onEnd={handleEndSession}
       />
     )
@@ -221,35 +229,33 @@ export default function HomePage() {
               {t('home.callTrainer')}
             </button>
 
-            {isLoaded ? (
-              isSignedIn ? (
+            <div className="flex items-center justify-center gap-2">
+              {isLoaded && isSignedIn ? (
                 <button
                   type="button"
                   onClick={() => setOpen(true)}
-                  className="flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold text-(--brand-muted) transition hover:text-(--brand-primary) active:scale-[0.98]"
+                  className="flex items-center gap-2 rounded-xl px-3 py-1.5 text-sm font-semibold text-(--brand-muted) transition hover:text-(--brand-primary) active:scale-[0.98]"
                 >
-                  <Settings size={16} strokeWidth={2.2} />
+                  <Menu size={16} strokeWidth={2.2} />
                   {t('home.settings')}
                 </button>
-              ) : (
+              ) : isLoaded ? (
                 <SignInButton>
                   <button
                     type="button"
-                    className="flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold text-(--brand-muted) transition hover:text-(--brand-primary) active:scale-[0.98]"
+                    className="flex items-center gap-2 rounded-xl px-3 py-1.5 text-sm font-semibold text-(--brand-muted) transition hover:text-(--brand-primary) active:scale-[0.98]"
                   >
                     <LogIn size={16} strokeWidth={2.2} />
                     {t('auth.login')}
                   </button>
                 </SignInButton>
-              )
-            ) : null}
+              ) : null}
+            </div>
           </div>
         </div>
       </footer>
 
-      {isLoaded && isSignedIn ? (
-        <SettingsModalSheet open={open} setOpen={setOpen} />
-      ) : null}
+      <SettingsModalSheet open={open} setOpen={setOpen} />
     </div>
   )
 }

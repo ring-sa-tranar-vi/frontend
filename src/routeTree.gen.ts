@@ -11,9 +11,14 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as CompanyOrganisationsRouteImport } from './routes/company.organisations'
+import { Route as CompanyOrganisationRouteImport } from './routes/company.organisation'
 import { Route as AdminWorkoutsRouteImport } from './routes/admin.workouts'
 import { Route as AdminTrainersRouteImport } from './routes/admin.trainers'
+import { Route as AdminOrganisationsRouteImport } from './routes/admin.organisations'
 import { Route as AdminFeedbackRouteImport } from './routes/admin.feedback'
+import { Route as AdminApplicationsRouteImport } from './routes/admin.applications'
+import { Route as CompanyOrganisationMeRouteImport } from './routes/company.organisation.me'
 
 const AdminRoute = AdminRouteImport.update({
   id: '/admin',
@@ -23,6 +28,16 @@ const AdminRoute = AdminRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CompanyOrganisationsRoute = CompanyOrganisationsRouteImport.update({
+  id: '/company/organisations',
+  path: '/company/organisations',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CompanyOrganisationRoute = CompanyOrganisationRouteImport.update({
+  id: '/company/organisation',
+  path: '/company/organisation',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminWorkoutsRoute = AdminWorkoutsRouteImport.update({
@@ -35,52 +50,108 @@ const AdminTrainersRoute = AdminTrainersRouteImport.update({
   path: '/trainers',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminOrganisationsRoute = AdminOrganisationsRouteImport.update({
+  id: '/organisations',
+  path: '/organisations',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminFeedbackRoute = AdminFeedbackRouteImport.update({
   id: '/feedback',
   path: '/feedback',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminApplicationsRoute = AdminApplicationsRouteImport.update({
+  id: '/applications',
+  path: '/applications',
+  getParentRoute: () => AdminRoute,
+} as any)
+const CompanyOrganisationMeRoute = CompanyOrganisationMeRouteImport.update({
+  id: '/me',
+  path: '/me',
+  getParentRoute: () => CompanyOrganisationRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
+  '/admin/applications': typeof AdminApplicationsRoute
   '/admin/feedback': typeof AdminFeedbackRoute
+  '/admin/organisations': typeof AdminOrganisationsRoute
   '/admin/trainers': typeof AdminTrainersRoute
   '/admin/workouts': typeof AdminWorkoutsRoute
+  '/company/organisation': typeof CompanyOrganisationRouteWithChildren
+  '/company/organisations': typeof CompanyOrganisationsRoute
+  '/company/organisation/me': typeof CompanyOrganisationMeRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
+  '/admin/applications': typeof AdminApplicationsRoute
   '/admin/feedback': typeof AdminFeedbackRoute
+  '/admin/organisations': typeof AdminOrganisationsRoute
   '/admin/trainers': typeof AdminTrainersRoute
   '/admin/workouts': typeof AdminWorkoutsRoute
+  '/company/organisation': typeof CompanyOrganisationRouteWithChildren
+  '/company/organisations': typeof CompanyOrganisationsRoute
+  '/company/organisation/me': typeof CompanyOrganisationMeRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
+  '/admin/applications': typeof AdminApplicationsRoute
   '/admin/feedback': typeof AdminFeedbackRoute
+  '/admin/organisations': typeof AdminOrganisationsRoute
   '/admin/trainers': typeof AdminTrainersRoute
   '/admin/workouts': typeof AdminWorkoutsRoute
+  '/company/organisation': typeof CompanyOrganisationRouteWithChildren
+  '/company/organisations': typeof CompanyOrganisationsRoute
+  '/company/organisation/me': typeof CompanyOrganisationMeRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/admin' | '/admin/feedback' | '/admin/trainers' | '/admin/workouts'
+    | '/'
+    | '/admin'
+    | '/admin/applications'
+    | '/admin/feedback'
+    | '/admin/organisations'
+    | '/admin/trainers'
+    | '/admin/workouts'
+    | '/company/organisation'
+    | '/company/organisations'
+    | '/company/organisation/me'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/admin' | '/admin/feedback' | '/admin/trainers' | '/admin/workouts'
+  to:
+    | '/'
+    | '/admin'
+    | '/admin/applications'
+    | '/admin/feedback'
+    | '/admin/organisations'
+    | '/admin/trainers'
+    | '/admin/workouts'
+    | '/company/organisation'
+    | '/company/organisations'
+    | '/company/organisation/me'
   id:
     | '__root__'
     | '/'
     | '/admin'
+    | '/admin/applications'
     | '/admin/feedback'
+    | '/admin/organisations'
     | '/admin/trainers'
     | '/admin/workouts'
+    | '/company/organisation'
+    | '/company/organisations'
+    | '/company/organisation/me'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRouteWithChildren
+  CompanyOrganisationRoute: typeof CompanyOrganisationRouteWithChildren
+  CompanyOrganisationsRoute: typeof CompanyOrganisationsRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -99,6 +170,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/company/organisations': {
+      id: '/company/organisations'
+      path: '/company/organisations'
+      fullPath: '/company/organisations'
+      preLoaderRoute: typeof CompanyOrganisationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/company/organisation': {
+      id: '/company/organisation'
+      path: '/company/organisation'
+      fullPath: '/company/organisation'
+      preLoaderRoute: typeof CompanyOrganisationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/workouts': {
       id: '/admin/workouts'
       path: '/workouts'
@@ -113,6 +198,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminTrainersRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/organisations': {
+      id: '/admin/organisations'
+      path: '/organisations'
+      fullPath: '/admin/organisations'
+      preLoaderRoute: typeof AdminOrganisationsRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/feedback': {
       id: '/admin/feedback'
       path: '/feedback'
@@ -120,26 +212,57 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminFeedbackRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/applications': {
+      id: '/admin/applications'
+      path: '/applications'
+      fullPath: '/admin/applications'
+      preLoaderRoute: typeof AdminApplicationsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/company/organisation/me': {
+      id: '/company/organisation/me'
+      path: '/me'
+      fullPath: '/company/organisation/me'
+      preLoaderRoute: typeof CompanyOrganisationMeRouteImport
+      parentRoute: typeof CompanyOrganisationRoute
+    }
   }
 }
 
 interface AdminRouteChildren {
+  AdminApplicationsRoute: typeof AdminApplicationsRoute
   AdminFeedbackRoute: typeof AdminFeedbackRoute
+  AdminOrganisationsRoute: typeof AdminOrganisationsRoute
   AdminTrainersRoute: typeof AdminTrainersRoute
   AdminWorkoutsRoute: typeof AdminWorkoutsRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
+  AdminApplicationsRoute: AdminApplicationsRoute,
   AdminFeedbackRoute: AdminFeedbackRoute,
+  AdminOrganisationsRoute: AdminOrganisationsRoute,
   AdminTrainersRoute: AdminTrainersRoute,
   AdminWorkoutsRoute: AdminWorkoutsRoute,
 }
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
+interface CompanyOrganisationRouteChildren {
+  CompanyOrganisationMeRoute: typeof CompanyOrganisationMeRoute
+}
+
+const CompanyOrganisationRouteChildren: CompanyOrganisationRouteChildren = {
+  CompanyOrganisationMeRoute: CompanyOrganisationMeRoute,
+}
+
+const CompanyOrganisationRouteWithChildren =
+  CompanyOrganisationRoute._addFileChildren(CompanyOrganisationRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
+  CompanyOrganisationRoute: CompanyOrganisationRouteWithChildren,
+  CompanyOrganisationsRoute: CompanyOrganisationsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

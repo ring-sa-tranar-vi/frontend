@@ -2,10 +2,7 @@ import { useAuth } from '@clerk/react'
 import { useQuery } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import {
-  fetchRecentAdminFeedbacksWithToken,
-  fetchWorkoutFeedbackSummaryWithToken,
-} from '../../api/feedbacks'
+import { fetchWorkoutFeedbackSummaryWithToken } from '../../api/feedbacks'
 
 type FeedbackSummaryRow = {
   workoutId: number
@@ -15,19 +12,6 @@ type FeedbackSummaryRow = {
   dislikeRate: number
   tooHardRate: number
   status: 'GOOD' | 'NEEDS_REVIEW' | 'BAD'
-}
-
-type RecentFeedbackRow = {
-  id: number
-  userId: number
-  workoutId: number
-  workoutName: string
-  activityLogId: number | null
-  difficulty: string | null
-  liked: boolean | null
-  rating: number | null
-  comment: string | null
-  createdAt: string | null
 }
 
 const barWidth = (value: number) => `${Math.max(0, Math.min(100, value))}%`
@@ -50,7 +34,7 @@ function SkeletonRow() {
 
 export default function FeedbackAdminPage() {
   const { getToken } = useAuth()
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
   const [searchTerm, setSearchTerm] = useState('')
   const [filterStatus, setFilterStatus] = useState<
     '' | 'GOOD' | 'NEEDS_REVIEW' | 'BAD'
@@ -59,7 +43,6 @@ export default function FeedbackAdminPage() {
     'status' | 'rating' | 'feedback' | 'name'
   >('status')
   const [currentPage, setCurrentPage] = useState(1)
-  const [expandedWorkoutIds, setExpandedWorkoutIds] = useState<number[]>([])
 
   const {
     data: summary = [],
@@ -75,30 +58,8 @@ export default function FeedbackAdminPage() {
     },
   })
 
-  const { data: recentFeedbacks = [], isLoading: isRecentLoading } = useQuery({
-    queryKey: ['admin-recent-feedbacks'],
-    queryFn: async () => {
-      const token = await getToken()
-      if (!token) throw new Error('Missing Clerk token')
-      return fetchRecentAdminFeedbacksWithToken(token)
-    },
-  })
-
   const rows = summary as FeedbackSummaryRow[]
   const totalFeedbacks = rows.reduce((sum, row) => sum + row.feedbackCount, 0)
-  const recentRows = recentFeedbacks as RecentFeedbackRow[]
-
-  const feedbackByWorkout = useMemo(() => {
-    const grouped = new Map<number, RecentFeedbackRow[]>()
-
-    for (const feedback of recentRows) {
-      const list = grouped.get(feedback.workoutId) ?? []
-      list.push(feedback)
-      grouped.set(feedback.workoutId, list)
-    }
-
-    return grouped
-  }, [recentRows])
 
   const filtered = useMemo(() => {
     let result = [...rows]
@@ -171,14 +132,6 @@ export default function FeedbackAdminPage() {
 
   if (isError) {
     return <p className="text-sm text-red-500">{(error as Error).message}</p>
-  }
-
-  const toggleWorkoutComments = (workoutId: number) => {
-    setExpandedWorkoutIds((current) =>
-      current.includes(workoutId)
-        ? current.filter((id) => id !== workoutId)
-        : [...current, workoutId],
-    )
   }
 
   return (
@@ -380,21 +333,6 @@ export default function FeedbackAdminPage() {
                       >
                         <span>{cfg.icon}</span> {cfg.label}
                       </span>
-                      <button
-                        type="button"
-                        onClick={() => toggleWorkoutComments(row.workoutId)}
-                        className="rounded-full border border-[#ece5ff] bg-[#faf8ff] px-3 py-1.5 text-xs font-semibold text-[#5836d6] transition hover:bg-[#f0ebff]"
-                      >
-                        {expandedWorkoutIds.includes(row.workoutId)
-                          ? t('feedbackAdmin.hideComments')
-                          : t('feedbackAdmin.showComments', {
-                              count:
-                                feedbackByWorkout
-                                  .get(row.workoutId)
-                                  ?.filter((item) => item.comment?.trim())
-                                  .length ?? 0,
-                            })}
-                      </button>
                     </div>
                   </div>
 
@@ -450,86 +388,6 @@ export default function FeedbackAdminPage() {
                       </div>
                     </div>
                   </div>
-
-                  {expandedWorkoutIds.includes(row.workoutId) && (
-                    <div className="mt-4 border-t border-[#f0ebff] pt-4">
-                      <div className="flex items-center justify-between gap-3">
-                        <p className="text-xs font-bold tracking-wider text-[#b0a8d0] uppercase">
-                          {t('feedbackAdmin.recentComments')}
-                        </p>
-                        <p className="text-xs text-[#9b96b8]">
-                          {t('feedbackAdmin.newestFirst')}
-                        </p>
-                      </div>
-
-                      {isRecentLoading ? (
-                        <p className="mt-3 text-sm text-[#6f6a93]">
-                          {t('feedbackAdmin.loadingComments')}
-                        </p>
-                      ) : (
-                        (() => {
-                          const comments = (
-                            feedbackByWorkout.get(row.workoutId) ?? []
-                          ).filter(
-                            (item) =>
-                              item.comment && item.comment.trim().length > 0,
-                          )
-
-                          if (comments.length === 0) {
-                            return (
-                              <p className="mt-3 rounded-xl bg-[#faf8ff] px-3 py-3 text-sm text-[#9b96b8]">
-                                {t('feedbackAdmin.noWrittenComments')}
-                              </p>
-                            )
-                          }
-
-                          return (
-                            <div className="mt-3 space-y-3">
-                              {comments.slice(0, 3).map((feedback) => (
-                                <div
-                                  key={feedback.id}
-                                  className="rounded-xl bg-[#faf8ff] px-3 py-3"
-                                >
-                                  <p className="text-sm leading-6 text-[#100b2f]">
-                                    {feedback.comment}
-                                  </p>
-
-                                  <div className="mt-2 flex flex-wrap gap-2 text-[10px] font-semibold text-[#6f6a93]">
-                                    {feedback.rating != null && (
-                                      <span className="rounded-full bg-white px-2 py-1">
-                                        {t('feedbackAdmin.ratingValue', {
-                                          value: feedback.rating,
-                                        })}
-                                      </span>
-                                    )}
-                                    {feedback.liked != null && (
-                                      <span className="rounded-full bg-white px-2 py-1">
-                                        {feedback.liked
-                                          ? t('feedbackAdmin.liked')
-                                          : t('feedbackAdmin.disliked')}
-                                      </span>
-                                    )}
-                                    {feedback.difficulty && (
-                                      <span className="rounded-full bg-white px-2 py-1">
-                                        {feedback.difficulty}
-                                      </span>
-                                    )}
-                                    {feedback.createdAt && (
-                                      <span className="rounded-full bg-white px-2 py-1">
-                                        {new Date(
-                                          feedback.createdAt,
-                                        ).toLocaleString(i18n.language)}
-                                      </span>
-                                    )}
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          )
-                        })()
-                      )}
-                    </div>
-                  )}
                 </article>
               )
             })}

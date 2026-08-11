@@ -17,7 +17,7 @@ const ContextModel = ({ value, onChange }: ContextModelProps) => {
   return (
     <div>
       <div className="mb-2 flex items-center gap-2">
-        <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-(--brand-surface) text-(--brand-primary)">
+        <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-(--menu-choice-bg) text-(--brand-primary)">
           <FileText size={20} />
         </div>
 
@@ -26,7 +26,7 @@ const ContextModel = ({ value, onChange }: ContextModelProps) => {
 
       <AppSheetSectionText>{t('context.description')}</AppSheetSectionText>
 
-      <div className="mt-3 rounded-2xl border border-(--brand-border-field) bg-(--brand-field-bg) p-3">
+      <div className="mt-3 rounded-2xl border border-(--menu-control-border) bg-(--menu-control-bg) p-3">
         <textarea
           value={value}
           onChange={(e) => onChange(e.target.value.slice(0, MAX_CHARS))}

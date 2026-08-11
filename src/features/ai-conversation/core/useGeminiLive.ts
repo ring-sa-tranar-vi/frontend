@@ -42,6 +42,66 @@ interface DebugStats {
   totalBytesSent: number
 }
 
+interface TokenUsageTotals {
+  promptTokenCount: number
+  responseTokenCount: number
+  cachedContentTokenCount: number
+  toolUsePromptTokenCount: number
+  thoughtsTokenCount: number
+  totalTokenCount: number
+  // per-modality (e.g. AUDIO vs TEXT) breakdown — pricing differs by modality
+  promptByModality: Record<string, number>
+  responseByModality: Record<string, number>
+}
+
+function emptyTokenUsageTotals(): TokenUsageTotals {
+  return {
+    promptTokenCount: 0,
+    responseTokenCount: 0,
+    cachedContentTokenCount: 0,
+    toolUsePromptTokenCount: 0,
+    thoughtsTokenCount: 0,
+    totalTokenCount: 0,
+    promptByModality: {},
+    responseByModality: {},
+  }
+}
+
+function accumulateModalityTokens(
+  target: Record<string, number>,
+  details?: { modality?: string; tokenCount?: number }[],
+) {
+  for (const detail of details ?? []) {
+    const key = detail.modality ?? 'UNSPECIFIED'
+    target[key] = (target[key] ?? 0) + (detail.tokenCount ?? 0)
+  }
+}
+
+// USD per 1M tokens for gemini-3.1-flash-live-preview — update if pricing changes.
+const PRICING_USD_PER_MILLION_TOKENS: Record<
+  string,
+  { input: number; output: number }
+> = {
+  TEXT: { input: 0.75, output: 4.5 },
+  AUDIO: { input: 3.0, output: 12.0 },
+}
+
+function estimateCostUsd(usage: TokenUsageTotals): number {
+  let costUsd = 0
+
+  for (const [modality, tokens] of Object.entries(usage.promptByModality)) {
+    const perMillion = PRICING_USD_PER_MILLION_TOKENS[modality]?.input
+    if (perMillion !== undefined) costUsd += (tokens / 1_000_000) * perMillion
+  }
+
+  for (const [modality, tokens] of Object.entries(usage.responseByModality)) {
+    const perMillion = PRICING_USD_PER_MILLION_TOKENS[modality]?.output
+    if (perMillion !== undefined) costUsd += (tokens / 1_000_000) * perMillion
+  }
+
+  return costUsd
+}
+
 function pcm16ToBase64(buffer: ArrayBuffer): string {
   const bytes = new Uint8Array(buffer)
   let binary = ''
@@ -88,6 +148,7 @@ export const useGeminiLive = ({
   const voiceRef = useRef<string | null>(voice ?? null)
   const microphoneEnabledRef = useRef(true)
   const speakerMutedRef = useRef(false)
+  const tokenUsageRef = useRef<TokenUsageTotals>(emptyTokenUsageTotals())
 
   useEffect(() => {
     // Keep async callers reading the latest values without mutating refs during render.
@@ -174,6 +235,7 @@ export const useGeminiLive = ({
     // If a manual connect is requested, allow auto-reconnect again.
     autoReconnectDisabledRef.current = false
     firstAiAudioFiredRef.current = false
+    tokenUsageRef.current = emptyTokenUsageTotals()
 
     // Prevent parallel connects
     if (connectingRef.current) {
@@ -319,6 +381,49 @@ export const useGeminiLive = ({
           }
         }
 
+        if (message.usageMetadata) {
+          const usage = message.usageMetadata
+          tokenUsageRef.current = {
+            promptTokenCount:
+              tokenUsageRef.current.promptTokenCount +
+              (usage.promptTokenCount ?? 0),
+            responseTokenCount:
+              tokenUsageRef.current.responseTokenCount +
+              (usage.responseTokenCount ?? 0),
+            cachedContentTokenCount:
+              tokenUsageRef.current.cachedContentTokenCount +
+              (usage.cachedContentTokenCount ?? 0),
+            toolUsePromptTokenCount:
+              tokenUsageRef.current.toolUsePromptTokenCount +
+              (usage.toolUsePromptTokenCount ?? 0),
+            thoughtsTokenCount:
+              tokenUsageRef.current.thoughtsTokenCount +
+              (usage.thoughtsTokenCount ?? 0),
+            totalTokenCount:
+              tokenUsageRef.current.totalTokenCount +
+              (usage.totalTokenCount ?? 0),
+            promptByModality: tokenUsageRef.current.promptByModality,
+            responseByModality: tokenUsageRef.current.responseByModality,
+          }
+          accumulateModalityTokens(
+            tokenUsageRef.current.promptByModality,
+            usage.promptTokensDetails,
+          )
+          accumulateModalityTokens(
+            tokenUsageRef.current.responseByModality,
+            usage.responseTokensDetails,
+          )
+          console.debug('[GeminiLive] usage (this message):', usage)
+          console.debug(
+            '[GeminiLive] usage (session total):',
+            tokenUsageRef.current,
+          )
+          console.debug(
+            '[GeminiLive] usage (estimated cost so far): $' +
+              estimateCostUsd(tokenUsageRef.current).toFixed(4),
+          )
+        }
+
         const functionCalls = message.toolCall?.functionCalls ?? []
         if (functionCalls.length > 0) {
           await handleToolCalls(functionCalls)
@@ -398,6 +503,7 @@ export const useGeminiLive = ({
     playingUntilWallMsRef.current = 0
     reconnectAttemptsRef.current = 0
     connectingRef.current = false
+    tokenUsageRef.current = emptyTokenUsageTotals()
   }
 
   function getCurrentRms() {

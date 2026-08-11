@@ -3,6 +3,7 @@ import type { CoachCallSession } from '../session/types'
 
 export type CoachSessionStep =
   | 'idle'
+  | 'onboarding'
   | 'live_intro'
   | 'waiting_instruction_approval'
   | 'playing_instructions'
@@ -185,4 +186,38 @@ export async function waitForAIToFinishSpeaking(
   // If we hit the timeout, we return false so the caller can decide to proceed anyway
   console.warn('[GeminiLive] waitForAIToFinishSpeaking timed out.')
   return false
+}
+export function messageHasEventType(
+  msg: unknown,
+): msg is { event_type?: string } {
+  return typeof msg === 'object' && msg !== null && 'event_type' in msg
+}
+export function normalizeCaptionText(text?: string | null): string {
+  return text?.replace(/\s+/g, ' ').trim() ?? ''
+}
+
+export function mergeCaptionFragments(previous: string, next: string): string {
+  const current = normalizeCaptionText(previous)
+  const incoming = normalizeCaptionText(next)
+
+  if (!current) return incoming
+  if (!incoming) return current
+  if (incoming === current) return current
+  if (incoming.startsWith(current)) return incoming
+  if (current.startsWith(incoming)) return current
+  if (current.endsWith(incoming)) return current
+  if (incoming.endsWith(current)) return incoming
+  return `${current} ${incoming}`.replace(/\s+/g, ' ').trim()
+}
+
+export function splitCaptionParagraphs(text?: string | null): string[] {
+  return normalizeCaptionText(text)
+    .split(/\n{2,}/)
+    .map((part) => part.trim())
+    .filter(Boolean)
+}
+
+export function normalizeLiveVoice(voiceName?: string | null): string | null {
+  const value = voiceName?.trim()
+  return value ? value.toLowerCase() : null
 }

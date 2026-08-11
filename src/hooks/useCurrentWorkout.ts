@@ -1,35 +1,106 @@
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useAuth } from '@clerk/react'
 import { useQuery } from '@tanstack/react-query'
 import { getJson } from '../lib/api/fetcher'
-import type { BackendWorkoutResponse } from '../features/ai-conversation/tools/workout/workoutTypes'
 import useCurrentUser from './useCurrentUser'
+import { type Workout } from '../features/session/types'
 
 export const DEBUG = import.meta.env.VITE_DEBUG === 'true'
 export const DEBUG_WORKOUT_ID = import.meta.env.VITE_DEBUG_WORKOUT_ID ?? '1'
 const DAILY_WORKOUT_LIMIT_ENABLED = true
+
+const CURRENT_WORKOUT_PROFILE_KEY = 'ringv2.currentWorkout.profile'
+const CURRENT_WORKOUT_RECOMMENDATION_KEY =
+  'ringv2.currentWorkout.recommendation'
 
 type RecommendedWorkoutResponse = {
   workoutId: number
   reasoning: string
 }
 
+type WorkoutProfileSnapshot = {
+  userId: string | null
+  level: number | null
+  context: string | null
+}
+
+function readLocalStorageJson<T>(key: string): T | null {
+  if (typeof window === 'undefined') return null
+
+  try {
+    const raw = window.localStorage.getItem(key)
+    return raw ? (JSON.parse(raw) as T) : null
+  } catch {
+    return null
+  }
+}
+
+function writeLocalStorageJson<T>(key: string, value: T) {
+  if (typeof window === 'undefined') return
+
+  try {
+    window.localStorage.setItem(key, JSON.stringify(value))
+  } catch {
+    // ignore storage errors
+  }
+}
+
+function sameProfile(
+  a: WorkoutProfileSnapshot | null,
+  b: WorkoutProfileSnapshot,
+) {
+  if (!a) return false
+  return a.userId === b.userId && a.level === b.level && a.context === b.context
+}
+
 export default function useCurrentWorkout() {
   const { getToken, isSignedIn } = useAuth()
-  const { trainerId, level, userId } = useCurrentUser()
+  const { level, userId, context } = useCurrentUser()
+  const [selectedWorkoutId, setSelectedWorkoutId] = useState<
+    string | undefined
+  >()
+
+  const [recommendedWorkoutReasoning, setRecommendedWorkoutReasoning] =
+    useState<string | undefined>()
+  const [storedProfile, setStoredProfile] =
+    useState<WorkoutProfileSnapshot | null>(() =>
+      readLocalStorageJson<WorkoutProfileSnapshot>(CURRENT_WORKOUT_PROFILE_KEY),
+    )
+  const [storedRecommendation, setStoredRecommendation] =
+    useState<RecommendedWorkoutResponse | null>(() =>
+      readLocalStorageJson<RecommendedWorkoutResponse>(
+        CURRENT_WORKOUT_RECOMMENDATION_KEY,
+      ),
+    )
+
+  const currentProfile = useMemo<WorkoutProfileSnapshot>(
+    () => ({
+      userId,
+      level,
+      context,
+    }),
+    [userId, level, context],
+  )
 
   const {
-    data: workouts = [] as BackendWorkoutResponse[],
+    data: workouts = [] as Workout[],
     isLoading,
     isError,
     refetch,
-  } = useQuery<BackendWorkoutResponse[]>({
+  } = useQuery<Workout[]>({
     queryKey: ['workouts'],
     queryFn: async () => {
       if (DEBUG) console.debug('[useCurrentWorkout] fetching workouts')
       const rawToken = isSignedIn ? await getToken() : undefined
       const token: string | undefined = rawToken ?? undefined
-      return await getJson<BackendWorkoutResponse[]>(`/api/workouts`, {
+      if (!token) {
+        console.log(
+          '[useCurrentWorkout] Missing required parameters for workouts',
+          { token },
+        )
+        throw new Error('Cannot fetch workouts without token')
+      }
+      return await getJson<Workout[]>(`/api/workouts`, {
         token,
       })
     },
@@ -37,40 +108,7 @@ export default function useCurrentWorkout() {
     staleTime: 1000 * 60 * 5,
     retry: 1,
   })
-
-  const filteredWorkouts = useMemo(() => {
-    if (!trainerId || level == null) return []
-    const desiredLevel = Number(level)
-
-    const byTrainer = (workouts ?? []).filter(
-      (w: BackendWorkoutResponse) => w.trainer?.id === trainerId,
-    )
-
-    const exact = byTrainer.filter((w) => Number(w.level) === desiredLevel)
-    if (exact.length > 0) return exact
-
-    if (byTrainer.length === 0) return []
-
-    const levels = Array.from(
-      new Set(
-        byTrainer.map((w) => Number(w.level)).filter((n) => Number.isFinite(n)),
-      ),
-    ).sort((a, b) => a - b)
-
-    const lower = levels.filter((l) => l < desiredLevel)
-    if (lower.length > 0) {
-      const chosen = lower[lower.length - 1]
-      return byTrainer.filter((w) => Number(w.level) === chosen)
-    }
-
-    const higher = levels.filter((l) => l > desiredLevel)
-    if (higher.length > 0) {
-      const chosen = higher[0]
-      return byTrainer.filter((w) => Number(w.level) === chosen)
-    }
-
-    return []
-  }, [workouts, trainerId, level])
+  const [currentWorkout, setCurrentWorkout] = useState<Workout | null>(null)
 
   const { data: completedTodayData } = useQuery<{ hasCompletedToday: boolean }>(
     {
@@ -78,6 +116,12 @@ export default function useCurrentWorkout() {
       queryFn: async () => {
         const rawToken = isSignedIn ? await getToken() : undefined
         const token: string | undefined = rawToken ?? undefined
+        if (!token) {
+          throw new Error('Cannot fetch completed today without token')
+        }
+        if (!userId) {
+          throw new Error('Cannot fetch completed today without userId')
+        }
         return await getJson<{ hasCompletedToday: boolean }>(
           `/api/activity-logs/users/${userId}/has-completed-today`,
           { token },
@@ -93,69 +137,139 @@ export default function useCurrentWorkout() {
     ? (completedTodayData?.hasCompletedToday ?? false)
     : false
 
+  const shouldFetchRecommendation =
+    isSignedIn &&
+    !!userId &&
+    level != null &&
+    (!DAILY_WORKOUT_LIMIT_ENABLED || !alreadyCompletedToday) &&
+    !sameProfile(storedProfile, currentProfile)
+
   const { data: recommendation } = useQuery<RecommendedWorkoutResponse>({
-    queryKey: ['recommended-workout', trainerId, userId, level],
+    queryKey: ['recommended-workout', userId, level, context],
     queryFn: async () => {
       if (DEBUG) {
         console.debug('[useCurrentWorkout] fetching recommendation', {
-          trainerId,
           userId,
           level,
+          context,
         })
+      }
+      if (!userId || level == null) {
+        console.log(
+          '[useCurrentWorkout] Missing required parameters for recommendation',
+          { userId, level, context },
+        )
+        throw new Error('Cannot fetch recommendation without userId and level')
       }
 
       const rawToken = isSignedIn ? await getToken() : undefined
       const token: string | undefined = rawToken ?? undefined
+      if (!token) {
+        throw new Error('Cannot fetch recommendation without token')
+      }
       return await getJson<RecommendedWorkoutResponse>(
-        `/api/trainers/trainer/${trainerId}/recommend-for/${userId}`,
+        `/api/trainers/recommend-for/${userId}`,
         { token },
       )
     },
-    enabled:
-      isSignedIn &&
-      !!trainerId &&
-      !!userId &&
-      level != null &&
-      (!DAILY_WORKOUT_LIMIT_ENABLED || !alreadyCompletedToday),
+    enabled: shouldFetchRecommendation,
     staleTime: 1000 * 60 * 5,
     retry: 1,
   })
+
   useEffect(() => {
-    if (DEBUG && recommendation) {
+    if (!recommendation || !userId || level == null) return
+
+    const nextProfile: WorkoutProfileSnapshot = {
+      userId,
+      level,
+      context,
+    }
+
+    setStoredProfile(nextProfile)
+    setStoredRecommendation(recommendation)
+
+    writeLocalStorageJson(CURRENT_WORKOUT_PROFILE_KEY, nextProfile)
+    writeLocalStorageJson(CURRENT_WORKOUT_RECOMMENDATION_KEY, recommendation)
+
+    if (DEBUG) {
       console.debug('[useCurrentWorkout] got recommendation', recommendation)
     }
-  }, [recommendation])
+  }, [recommendation, userId, level, context])
 
-  // Only accept recommendations inside the stable trainer + intensity bucket.
-  // When already completed today: no workout at all (session uses getAlreadyCompletedSession).
-  // Otherwise: AI recommendation, then trainer's first workout, then nothing.
-  const recommendedWorkout = filteredWorkouts.find(
-    (workout) => workout.id === recommendation?.workoutId,
+  useEffect(() => {
+    if (DEBUG) {
+      console.log(
+        '[useCurrentWorkout] shouldFetchRecommendation',
+        shouldFetchRecommendation,
+      )
+    }
+  }, [shouldFetchRecommendation])
+
+  const activeRecommendation = sameProfile(storedProfile, currentProfile)
+    ? storedRecommendation
+    : recommendation
+
+  const recommendedWorkout = workouts.find(
+    (workout) => workout.id === activeRecommendation?.workoutId,
   )
   const recommendedWorkoutId = recommendedWorkout?.id.toString()
-  const trainerFallbackId = filteredWorkouts[0]?.id?.toString()
-  const currentWorkout = alreadyCompletedToday
-    ? undefined
-    : (recommendedWorkoutId ?? trainerFallbackId)
-  const recommendedWorkoutReasoning = recommendedWorkout
-    ? recommendation?.reasoning
-    : undefined
 
-  if (DEBUG) {
-    console.debug('[useCurrentWorkout] state', {
-      trainerId,
-      userId,
-      currentWorkout,
-      recommendedWorkoutReasoning,
-      workouts,
-      filteredWorkouts,
-    })
+  const activeWorkoutId = selectedWorkoutId ?? recommendedWorkoutId
+  const currentWorkoutId = alreadyCompletedToday ? undefined : activeWorkoutId
+
+  useEffect(() => {
+    if (selectedWorkoutId !== undefined) return
+    setRecommendedWorkoutReasoning(
+      recommendedWorkout ? activeRecommendation?.reasoning : undefined,
+    )
+  }, [recommendedWorkout, activeRecommendation?.reasoning, selectedWorkoutId])
+
+  useEffect(() => {
+    if (!currentWorkoutId) {
+      setCurrentWorkout(null)
+      return
+    }
+    const workout = workouts.find(
+      (workout) => workout.id.toString() === currentWorkoutId,
+    )
+    if (!workout) {
+      setCurrentWorkout(null)
+      return
+    }
+    setCurrentWorkout(workout)
+  }, [currentWorkoutId, workouts])
+
+  const updateCurrentWorkout = (
+    workoutId: string | number | undefined,
+    reasoning?: string,
+  ) => {
+    setSelectedWorkoutId(
+      workoutId !== undefined ? String(workoutId) : undefined,
+    )
+    setRecommendedWorkoutReasoning(reasoning)
   }
 
+  useEffect(() => {
+    if (DEBUG) {
+      console.debug('[useCurrentWorkout] state', {
+        userId,
+        currentWorkoutId,
+        recommendedWorkoutReasoning,
+        workouts,
+      })
+    }
+  }, [userId, currentWorkoutId, recommendedWorkoutReasoning, workouts])
+
+  useEffect(() => {
+    console.log('Selected workout id', selectedWorkoutId)
+  }, [selectedWorkoutId])
+
   return {
+    currentWorkoutId,
     currentWorkout,
+    updateCurrentWorkout,
     workouts,
-    filteredWorkouts,
     isLoading,
     isError,
     refetch,

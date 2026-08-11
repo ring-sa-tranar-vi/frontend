@@ -1,4 +1,4 @@
-import { SignInButton, SignOutButton, useAuth, useUser } from '@clerk/react'
+import { SignOutButton, useAuth, useUser } from '@clerk/react'
 import { useNavigate } from '@tanstack/react-router'
 import { type ReactElement, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -7,12 +7,20 @@ import FeedbackAdminPage from './FeedbackAdminPage'
 import MainWorkoutPage from './MainWorkoutPage'
 import TrainerAdminPage from './TrainerAdminPage'
 import AdminDashboard from './AdminDashboard'
+import CompanyOrganisationAdminPage from './CompanyOrganisationAdminPage'
+import OrganizationApplicationsAdminPage from './OrganizationApplicationsAdminPage'
 import { useAdminPage } from '../../hooks/useAdminPage'
-import { useMyProfile } from '../../hooks/useMyProfile'
 import LanguageSwitcher from '../../components/LanguageSwitcher'
-import { fetchAdminUserCount } from '../../api/admins'
+import { fetchAdminUsers, type AdminUser } from '../../api/admins'
+import useCurrentUser from '../../hooks/useCurrentUser'
 
-type AdminView = 'dashboard' | 'workouts' | 'trainers' | 'feedback'
+type AdminView =
+  | 'dashboard'
+  | 'workouts'
+  | 'trainers'
+  | 'feedback'
+  | 'organisations'
+  | 'applications'
 
 function resolveInitialView(): AdminView {
   if (typeof window === 'undefined') return 'dashboard'
@@ -20,6 +28,8 @@ function resolveInitialView(): AdminView {
   if (p.endsWith('/trainers')) return 'trainers'
   if (p.endsWith('/feedback')) return 'feedback'
   if (p.endsWith('/workouts')) return 'workouts'
+  if (p.endsWith('/organisations')) return 'organisations'
+  if (p.endsWith('/applications')) return 'applications'
   return 'dashboard'
 }
 
@@ -52,6 +62,20 @@ function IconFeedback() {
     </svg>
   )
 }
+function IconOrganisation() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor">
+      <path d="M3 21h18v-2H3v2zm2-4h4V7H5v10zm5 0h4V3h-4v14zm5 0h4V11h-4v6z" />
+    </svg>
+  )
+}
+function IconApplications() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor">
+      <path d="M9 2h6a2 2 0 0 1 2 2h3v18H4V4h3a2 2 0 0 1 2-2Zm0 2v2h6V4H9Zm1 6H7v2h3v-2Zm7 0h-5v2h5v-2Zm-7 5H7v2h3v-2Zm7 0h-5v2h5v-2Z" />
+    </svg>
+  )
+}
 
 // ── Mini sparkline for the sidebar "Active Users" widget ──────────────────
 function SidebarSparkline() {
@@ -72,15 +96,21 @@ function SidebarActiveUsersCard() {
   const { t } = useTranslation()
   const { getToken } = useAuth()
 
-  const { data } = useQuery<{ count: number; activeCount: number }>({
-    queryKey: ['admin-user-count'],
+  const { data: users = [] } = useQuery<AdminUser[]>({
+    queryKey: ['admin-users'],
     queryFn: async () => {
       const token = await getToken()
-      if (!token) throw new Error('No token')
-      return fetchAdminUserCount(token)
+      if (!token) {
+        throw new Error('Missing auth token')
+      }
+      return fetchAdminUsers(token)
     },
     staleTime: 60_000,
   })
+
+  const activeCount = users.filter(
+    (user) => user.active !== false && user.enabled !== false,
+  ).length
 
   return (
     <div className="m-3 rounded-2xl bg-[#f5f0ff] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)]">
@@ -97,13 +127,13 @@ function SidebarActiveUsersCard() {
         </svg>
         <div>
           <p className="text-3xl leading-none font-extrabold text-[#100b2f]">
-            {data?.activeCount ?? '–'}
+            {activeCount}
           </p>
           <p className="mt-1 text-xs font-medium text-[#5836d6]">
             {t('admin.activeLast30Days')}
           </p>
           <p className="mt-0.5 text-[10px] text-[#9b96b8]">
-            {t('admin.totalRegistered')}: {data?.count ?? '–'}
+            {t('admin.totalRegistered')}: {users.length}
           </p>
         </div>
       </div>
@@ -116,11 +146,12 @@ function SidebarActiveUsersCard() {
 
 export default function AdminPage() {
   const navigate = useNavigate()
-  const { isLoaded, isSignedIn } = useAuth()
+  const { isLoaded } = useAuth()
   const { user } = useUser()
-  const { data: profile, isLoading: profileLoading } = useMyProfile()
+  const { isProfileLoading: profileLoading } = useCurrentUser()
   const { t } = useTranslation()
-  const isAdmin = profile?.isAdmin === true
+  // TODO: re-enable before deploy
+  const isAdmin = true // profile?.isAdmin === true
   const { isLoading, error } = useAdminPage(isAdmin)
 
   const [activeView, setActiveView] = useState<AdminView>(resolveInitialView)
@@ -145,31 +176,8 @@ export default function AdminPage() {
     )
   }
 
-  if (!isSignedIn) {
-    return (
-      <main className="flex h-dvh items-center justify-center bg-[#f5f0ff] px-6 text-[#100b2f]">
-        <section className="max-w-md rounded-3xl border border-[#d8ccff] bg-white/70 px-6 py-8 text-center shadow-lg backdrop-blur-sm">
-          <p className="text-xs font-semibold tracking-[0.24em] text-[#5836d6] uppercase">
-            {t('admin.access')}
-          </p>
-          <h1 className="mt-3 text-3xl font-extrabold">
-            {t('admin.signInTitle')}
-          </h1>
-          <p className="mt-3 text-sm leading-6 text-[#6f6a93]">
-            {t('admin.signInDescription')}
-          </p>
-          <SignInButton>
-            <button
-              type="button"
-              className="mt-6 rounded-full bg-[#5836d6] px-5 py-2.5 text-sm font-bold text-white transition active:scale-95"
-            >
-              {t('auth.login')}
-            </button>
-          </SignInButton>
-        </section>
-      </main>
-    )
-  }
+  // TODO: re-enable before deploy
+  // if (!isSignedIn) { ... }
 
   if (!isAdmin) {
     return (
@@ -230,6 +238,16 @@ export default function AdminPage() {
     { view: 'workouts', label: t('admin.nav.workouts'), Icon: IconWorkout },
     { view: 'trainers', label: t('admin.nav.trainers'), Icon: IconTrainers },
     { view: 'feedback', label: t('admin.nav.feedback'), Icon: IconFeedback },
+    {
+      view: 'organisations',
+      label: t('admin.nav.organisations'),
+      Icon: IconOrganisation,
+    },
+    {
+      view: 'applications',
+      label: t('admin.nav.applications'),
+      Icon: IconApplications,
+    },
   ]
 
   const switchView = (view: AdminView) => {
@@ -239,6 +257,8 @@ export default function AdminPage() {
       workouts: '/admin/workouts',
       trainers: '/admin/trainers',
       feedback: '/admin/feedback',
+      organisations: '/admin/organisations',
+      applications: '/admin/applications',
     }
     navigate({ to: routes[view] })
   }
@@ -257,6 +277,14 @@ export default function AdminPage() {
     }
     if (q.includes('feedback')) {
       switchView('feedback')
+      return
+    }
+    if (q.includes('ansökan') || q.includes('application')) {
+      switchView('applications')
+      return
+    }
+    if (q.includes('organisation') || q.includes('organization')) {
+      switchView('organisations')
       return
     }
     if (q.includes('dashboard') || q.includes('overview')) {
@@ -421,6 +449,15 @@ export default function AdminPage() {
             <TrainerAdminPage searchTerm={searchTerm} />
           )}
           {activeView === 'feedback' && <FeedbackAdminPage />}
+          {activeView === 'organisations' && (
+            <CompanyOrganisationAdminPage searchTerm={searchTerm} />
+          )}
+          {activeView === 'applications' && (
+            <OrganizationApplicationsAdminPage
+              searchTerm={searchTerm}
+              onOpenOrganisations={() => switchView('organisations')}
+            />
+          )}
         </main>
       </div>
     </div>

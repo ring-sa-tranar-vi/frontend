@@ -3,29 +3,33 @@ import { useTranslation } from 'react-i18next'
 import { useCoachSession } from '../ai-conversation'
 import { SessionCall } from './components/SessionCall'
 import { useCoachCallSession } from './query'
-import type { CoachCallSession, SessionPanel } from './types'
+import type { CoachCallSession, SessionPanel, Workout } from './types'
+import useCurrentWorkout from '../../hooks/useCurrentWorkout'
 
 const LOADING_SESSION: CoachCallSession = {
   id: '',
   isAuthenticated: false,
-  durationSeconds: 0,
 }
 
 export function SessionPage({
-  workoutId,
+  workouts,
+  updateCurrentWorkout,
   alreadyCompletedToday = false,
   onEnd,
 }: {
   workoutId: string | undefined
+  workouts: Workout[] | undefined
+  updateCurrentWorkout: (workoutId: number, reasoning?: string) => void
   alreadyCompletedToday?: boolean
   onEnd: () => void
 }) {
+  const { currentWorkout: workout } = useCurrentWorkout()
   const {
     data: session,
     isLoading,
     isError,
     error,
-  } = useCoachCallSession(workoutId)
+  } = useCoachCallSession(workout)
   const { t } = useTranslation()
 
   if (isError) {
@@ -62,7 +66,9 @@ export function SessionPage({
   return (
     <ReadySessionPage
       session={session}
+      workouts={workouts}
       alreadyCompletedToday={alreadyCompletedToday}
+      updateCurrentWorkout={updateCurrentWorkout}
       onEnd={onEnd}
     />
   )
@@ -70,10 +76,14 @@ export function SessionPage({
 
 function ReadySessionPage({
   session,
+  workouts,
+  updateCurrentWorkout,
   alreadyCompletedToday = false,
   onEnd,
 }: {
   session: CoachCallSession
+  updateCurrentWorkout: (workoutId: number, reasoning?: string) => void
+  workouts: Workout[] | undefined
   alreadyCompletedToday?: boolean
   onEnd: () => void
 }) {
@@ -95,15 +105,16 @@ function ReadySessionPage({
     toggleSpeakerMuted,
     caption,
     captionDraft,
-    playbackSubtitle,
     captionsEnabled,
     toggleCaptions,
     captionHistory,
   } = useCoachSession({
     session,
+    workouts,
     trainerId: session.trainer?.id ? String(session.trainer.id) : undefined,
     autoStart: true,
     alreadyCompletedToday,
+    updateCurrentWorkout,
   })
 
   const isAiSpeaking =
@@ -166,7 +177,6 @@ function ReadySessionPage({
       onToggleSpeakerMuted={toggleSpeakerMuted}
       caption={caption}
       captionDraft={captionDraft}
-      playbackSubtitle={playbackSubtitle}
       captionsEnabled={captionsEnabled}
       onToggleCaptions={toggleCaptions}
       captionHistory={captionHistory}

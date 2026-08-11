@@ -3,21 +3,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import ConfirmModal from '../../components/ConfirmModal'
 import { useTranslation } from 'react-i18next'
-import type { ToastType } from '../../hooks/useToast'
 import { fetchWorkouts, deleteWorkout } from '../../api/workouts'
-
-type Workout = {
-  id: number
-  name: string
-  type?: string
-  level?: number
-  durationSeconds?: number
-}
-
-type StatusFn = (
-  message: string,
-  options?: { type?: ToastType; duration?: number },
-) => void
+import type { StatusFn, Workout } from './types.ts'
 
 type Props = {
   onEdit: (workoutId: number) => void
@@ -150,8 +137,7 @@ export default function AllWorkoutsPage({
             <div>
               <p className="font-semibold">{workout.name}</p>
               <p className="text-xs text-(--brand-muted)">
-                {workout.type ?? 'No type'} • Level {workout.level ?? '-'} •{' '}
-                {workout.durationSeconds ?? '-'} sec
+                {workout.type ?? 'No type'} • Level {workout.level ?? '-'}
               </p>
             </div>
 

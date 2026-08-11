@@ -34,5 +34,5 @@ export async function apiFetch(path: string, options?: ApiFetchOptions) {
 
 export async function getJson<T>(path: string, options?: ApiFetchOptions) {
   const response = await apiFetch(path, options)
-  return response.json() as Promise<T>
+  return (await response.json()) as Promise<T>
 }

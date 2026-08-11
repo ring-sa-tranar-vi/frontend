@@ -2,69 +2,7 @@ import { useEffect, useState } from 'react'
 import { useAuth } from '@clerk/react'
 import { useTranslation } from 'react-i18next'
 import { fetchWorkoutById, updateWorkout } from '../../api/workouts'
-import { fetchTrainersWithToken } from '../../api/trainers'
-import type { ToastType } from '../../hooks/useToast'
-
-type TrainerOption = {
-  id: number
-  name: string
-}
-
-type WorkoutForm = {
-  name: string
-  description: string
-  dashboardName: string
-  dashboardDescription: string
-  subtitleText: string
-  instructionsSubtitleText: string
-  level: number
-  type: string
-  durationSeconds: number
-  instructionsAudio: string
-  workoutAudio: string
-  instructionsImage: string
-  workoutImage: string
-  instructionsVideo: string
-  instructionsVideoStart: string
-  instructionsVideoStop: string
-  kneeFriendly: boolean
-  lowImpact: boolean
-  seated: boolean
-  beginnerFriendly: boolean
-  trainerId: string
-}
-
-type WorkoutResponse = {
-  id: number
-  name?: string
-  description?: string
-  dashboardName?: string | null
-  dashboardDescription?: string | null
-  subtitleText?: string | null
-  instructionsSubtitleText?: string | null
-  level?: number
-  type?: string
-  durationSeconds?: number
-  instructionsAudio?: string
-  workoutAudio?: string
-  instructionsImage?: string
-  workoutImage?: string
-  instructionsVideo?: string | null
-  instructionsVideoStart?: number | null
-  instructionsVideoStop?: number | null
-  kneeFriendly?: boolean
-  lowImpact?: boolean
-  seated?: boolean
-  beginnerFriendly?: boolean
-  trainer?: {
-    id?: number
-  } | null
-}
-
-type StatusFn = (
-  message: string,
-  options?: { type?: ToastType; duration?: number },
-) => void
+import type { StatusFn, WorkoutForm, WorkoutResponse } from './types.ts'
 
 type Props = {
   workoutId: number
@@ -73,6 +11,7 @@ type Props = {
 }
 
 const isValidUrl = (url: string): boolean => {
+  if (!url) return true
   try {
     new URL(url)
     return true
@@ -86,23 +25,12 @@ const emptyForm: WorkoutForm = {
   description: '',
   dashboardName: '',
   dashboardDescription: '',
-  subtitleText: '',
-  instructionsSubtitleText: '',
+  instructions: '',
+  guidance: '',
   level: 2,
   type: '',
-  durationSeconds: 0,
-  instructionsAudio: '',
-  workoutAudio: '',
-  instructionsImage: '',
-  workoutImage: '',
-  instructionsVideo: '',
-  instructionsVideoStart: '',
-  instructionsVideoStop: '',
-  kneeFriendly: false,
-  lowImpact: false,
-  seated: false,
-  beginnerFriendly: false,
-  trainerId: '',
+  image: '',
+  video: '',
 }
 
 export default function EditWorkoutPage({
@@ -114,7 +42,6 @@ export default function EditWorkoutPage({
   const { t } = useTranslation()
   const [form, setForm] = useState<WorkoutForm>(emptyForm)
   const [errors, setErrors] = useState<string[]>([])
-  const [trainers, setTrainers] = useState<TrainerOption[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
 
@@ -130,47 +57,23 @@ export default function EditWorkoutPage({
           throw new Error('Missing Clerk token')
         }
 
-        const [workout, trainerList] = await Promise.all([
-          fetchWorkoutById(workoutId, token),
-          fetchTrainersWithToken(token),
-        ])
+        const workout = await fetchWorkoutById(workoutId, token)
 
         if (!isMounted) return
 
         const workoutData = workout as WorkoutResponse
 
-        setTrainers(Array.isArray(trainerList) ? trainerList : [])
         setForm({
           name: workoutData.name ?? '',
           description: workoutData.description ?? '',
           dashboardName: workoutData.dashboardName ?? '',
           dashboardDescription: workoutData.dashboardDescription ?? '',
-          subtitleText: workoutData.subtitleText ?? '',
-          instructionsSubtitleText: workoutData.instructionsSubtitleText ?? '',
+          instructions: workoutData.instructions ?? '',
+          guidance: workoutData.guidance ?? '',
           level: workoutData.level ?? 2,
           type: workoutData.type ?? '',
-          durationSeconds: workoutData.durationSeconds ?? 0,
-          instructionsAudio: workoutData.instructionsAudio ?? '',
-          workoutAudio: workoutData.workoutAudio ?? '',
-          instructionsImage: workoutData.instructionsImage ?? '',
-          workoutImage: workoutData.workoutImage ?? '',
-          instructionsVideo: workoutData.instructionsVideo ?? '',
-          instructionsVideoStart:
-            workoutData.instructionsVideoStart != null
-              ? String(workoutData.instructionsVideoStart)
-              : '',
-          instructionsVideoStop:
-            workoutData.instructionsVideoStop != null
-              ? String(workoutData.instructionsVideoStop)
-              : '',
-          kneeFriendly: workoutData.kneeFriendly ?? false,
-          lowImpact: workoutData.lowImpact ?? false,
-          seated: workoutData.seated ?? false,
-          beginnerFriendly: workoutData.beginnerFriendly ?? false,
-          trainerId:
-            workoutData.trainer?.id != null
-              ? String(workoutData.trainer.id)
-              : '',
+          image: workoutData.image ?? '',
+          video: workoutData.video ?? '',
         })
       } catch (error) {
         console.error(error)
@@ -198,12 +101,7 @@ export default function EditWorkoutPage({
   ) => {
     const { name, value, type } = e.target
 
-    const nextValue =
-      type === 'checkbox'
-        ? (e.target as HTMLInputElement).checked
-        : type === 'number'
-          ? Number(value)
-          : value
+    const nextValue = type === 'number' ? Number(value) : value
 
     setForm((prev) => ({
       ...prev,
@@ -218,38 +116,14 @@ export default function EditWorkoutPage({
     if (!form.description)
       nextErrors.push(t('workoutsAdmin.validation.descriptionRequired'))
     if (!form.type) nextErrors.push(t('workoutsAdmin.validation.typeRequired'))
-    if (form.durationSeconds <= 0)
-      nextErrors.push(t('workoutsAdmin.validation.durationPositive'))
     if (form.level < 0 || form.level > 4)
       nextErrors.push(t('workoutsAdmin.validation.levelRange'))
-    if (!form.trainerId)
-      nextErrors.push(t('workoutsAdmin.validation.trainerRequired'))
-    if (!form.instructionsAudio || !isValidUrl(form.instructionsAudio)) {
-      nextErrors.push(t('workoutsAdmin.validation.instructionsAudioUrl'))
-    }
-    if (!form.workoutAudio || !isValidUrl(form.workoutAudio)) {
-      nextErrors.push(t('workoutsAdmin.validation.workoutAudioUrl'))
-    }
-    if (!form.instructionsImage || !isValidUrl(form.instructionsImage)) {
-      nextErrors.push(t('workoutsAdmin.validation.instructionsImageUrl'))
-    }
-    if (!form.workoutImage || !isValidUrl(form.workoutImage)) {
+    if (!isValidUrl(form.image)) {
       nextErrors.push(t('workoutsAdmin.validation.workoutImageUrl'))
     }
-
-    if (form.instructionsVideo && !isValidUrl(form.instructionsVideo))
+    if (!isValidUrl(form.video)) {
       nextErrors.push(t('workoutsAdmin.validation.instructionsVideoUrl'))
-
-    const start =
-      form.instructionsVideoStart !== ''
-        ? Number(form.instructionsVideoStart)
-        : null
-    const stop =
-      form.instructionsVideoStop !== ''
-        ? Number(form.instructionsVideoStop)
-        : null
-    if (start !== null && stop !== null && start >= stop)
-      nextErrors.push(t('workoutsAdmin.validation.videoStartBeforeStop'))
+    }
 
     setErrors(nextErrors)
     return nextErrors.length === 0
@@ -276,31 +150,12 @@ export default function EditWorkoutPage({
           description: form.description,
           dashboardName: form.dashboardName || null,
           dashboardDescription: form.dashboardDescription || null,
-          subtitleText: form.subtitleText || null,
-          instructionsSubtitleText: form.instructionsSubtitleText || null,
+          instructions: form.instructions || null,
+          guidance: form.guidance || null,
           level: form.level,
           type: form.type,
-          durationSeconds: form.durationSeconds,
-          instructionsAudio: form.instructionsAudio,
-          workoutAudio: form.workoutAudio,
-          instructionsImage: form.instructionsImage,
-          workoutImage: form.workoutImage,
-          instructionsVideo: form.instructionsVideo || null,
-          instructionsVideoStart:
-            form.instructionsVideoStart !== ''
-              ? Number(form.instructionsVideoStart)
-              : null,
-          instructionsVideoStop:
-            form.instructionsVideoStop !== ''
-              ? Number(form.instructionsVideoStop)
-              : null,
-          kneeFriendly: form.kneeFriendly,
-          lowImpact: form.lowImpact,
-          seated: form.seated,
-          beginnerFriendly: form.beginnerFriendly,
-          trainer: {
-            id: Number(form.trainerId),
-          },
+          image: form.image || null,
+          video: form.video || null,
         },
         token,
       )
@@ -390,25 +245,6 @@ export default function EditWorkoutPage({
 
             <label className="flex flex-col gap-1">
               <span className="text-sm opacity-80">
-                {t('workoutsAdmin.trainer')} *
-              </span>
-              <select
-                name="trainerId"
-                value={form.trainerId}
-                onChange={handleChange}
-                className="rounded-lg border border-(--brand-border) bg-white p-3"
-              >
-                <option value="">{t('workoutsAdmin.chooseTrainer')}</option>
-                {trainers.map((trainer) => (
-                  <option key={trainer.id} value={trainer.id}>
-                    {trainer.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <label className="flex flex-col gap-1">
-              <span className="text-sm opacity-80">
                 {t('workoutsAdmin.level')} *
               </span>
               <input
@@ -417,20 +253,6 @@ export default function EditWorkoutPage({
                 max="4"
                 name="level"
                 value={form.level}
-                onChange={handleChange}
-                className="rounded-lg border border-(--brand-border) bg-white p-3"
-              />
-            </label>
-
-            <label className="flex flex-col gap-1 md:col-span-2">
-              <span className="text-sm opacity-80">
-                {t('workoutsAdmin.duration')} *
-              </span>
-              <input
-                type="number"
-                min="0"
-                name="durationSeconds"
-                value={form.durationSeconds}
                 onChange={handleChange}
                 className="rounded-lg border border-(--brand-border) bg-white p-3"
               />
@@ -452,12 +274,11 @@ export default function EditWorkoutPage({
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <label className="flex flex-col gap-1">
               <span className="text-sm opacity-80">
-                Workout audio subtitle text
+                {t('workoutsAdmin.instructions')}
               </span>
               <textarea
-                name="subtitleText"
-                placeholder="Example: subtitles for the workout audio in the language spoken during the workout"
-                value={form.subtitleText}
+                name="instructions"
+                value={form.instructions}
                 onChange={handleChange}
                 className="min-h-[120px] rounded-lg border border-(--brand-border) bg-white p-3"
               />
@@ -465,12 +286,11 @@ export default function EditWorkoutPage({
 
             <label className="flex flex-col gap-1">
               <span className="text-sm opacity-80">
-                Instructions audio subtitle text
+                {t('workoutsAdmin.guidance')}
               </span>
               <textarea
-                name="instructionsSubtitleText"
-                placeholder="Example: subtitles for the instructions audio in the language spoken during the instructions"
-                value={form.instructionsSubtitleText}
+                name="guidance"
+                value={form.guidance}
                 onChange={handleChange}
                 className="min-h-[120px] rounded-lg border border-(--brand-border) bg-white p-3"
               />
@@ -516,116 +336,28 @@ export default function EditWorkoutPage({
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <label className="flex flex-col gap-1">
               <span className="text-sm opacity-80">
-                {t('workoutsAdmin.instructionsAudio')} *
+                {t('workoutsAdmin.workoutImage')}
               </span>
               <input
-                name="instructionsAudio"
-                value={form.instructionsAudio}
-                onChange={handleChange}
-                className="rounded-lg border border-(--brand-border) bg-white p-3"
-              />
-            </label>
-            <label className="flex flex-col gap-1">
-              <span className="text-sm opacity-80">
-                {t('workoutsAdmin.workoutAudio')} *
-              </span>
-              <input
-                name="workoutAudio"
-                value={form.workoutAudio}
-                onChange={handleChange}
-                className="rounded-lg border border-(--brand-border) bg-white p-3"
-              />
-            </label>
-            <label className="flex flex-col gap-1">
-              <span className="text-sm opacity-80">
-                {t('workoutsAdmin.instructionsImage')} *
-              </span>
-              <input
-                name="instructionsImage"
-                value={form.instructionsImage}
-                onChange={handleChange}
-                className="rounded-lg border border-(--brand-border) bg-white p-3"
-              />
-            </label>
-            <label className="flex flex-col gap-1">
-              <span className="text-sm opacity-80">
-                {t('workoutsAdmin.workoutImage')} *
-              </span>
-              <input
-                name="workoutImage"
-                value={form.workoutImage}
+                name="image"
+                value={form.image}
                 onChange={handleChange}
                 className="rounded-lg border border-(--brand-border) bg-white p-3"
               />
             </label>
 
-            <label className="flex flex-col gap-1 md:col-span-2">
+            <label className="flex flex-col gap-1">
               <span className="text-sm opacity-80">
-                {t('workoutsAdmin.instructionsVideoOptional')}
+                {t('workoutsAdmin.videoPlaceholder')}
               </span>
               <input
-                name="instructionsVideo"
+                name="video"
                 placeholder={t('workoutsAdmin.videoPlaceholder')}
-                value={form.instructionsVideo}
+                value={form.video}
                 onChange={handleChange}
                 className="rounded-lg border border-(--brand-border) bg-white p-3"
               />
             </label>
-
-            <label className="flex flex-col gap-1">
-              <span className="text-sm opacity-80">
-                {t('workoutsAdmin.videoStartSeconds')}
-              </span>
-              <input
-                name="instructionsVideoStart"
-                inputMode="numeric"
-                pattern="[0-9]*"
-                placeholder={t('workoutsAdmin.videoStartPlaceholder')}
-                value={form.instructionsVideoStart}
-                onChange={handleChange}
-                className="rounded-lg border border-(--brand-border) bg-white p-3"
-              />
-            </label>
-
-            <label className="flex flex-col gap-1">
-              <span className="text-sm opacity-80">
-                {t('workoutsAdmin.videoStopSeconds')}
-              </span>
-              <input
-                name="instructionsVideoStop"
-                inputMode="numeric"
-                pattern="[0-9]*"
-                placeholder={t('workoutsAdmin.videoStopPlaceholder')}
-                value={form.instructionsVideoStop}
-                onChange={handleChange}
-                className="rounded-lg border border-(--brand-border) bg-white p-3"
-              />
-            </label>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-            {[
-              { name: 'kneeFriendly', label: t('exercisePanel.kneeFriendly') },
-              { name: 'lowImpact', label: t('exercisePanel.lowImpact') },
-              { name: 'seated', label: t('exercisePanel.seated') },
-              {
-                name: 'beginnerFriendly',
-                label: t('exercisePanel.beginnerFriendly'),
-              },
-            ].map((item) => (
-              <label
-                key={item.name}
-                className="flex items-center gap-2 rounded-lg border border-(--brand-border) bg-(--brand-surface-glass) p-3"
-              >
-                <input
-                  type="checkbox"
-                  name={item.name}
-                  checked={form[item.name as keyof WorkoutForm] as boolean}
-                  onChange={handleChange}
-                />
-                {item.label}
-              </label>
-            ))}
           </div>
 
           {errors.length > 0 && (

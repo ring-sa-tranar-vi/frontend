@@ -23,8 +23,9 @@ import {
   getStoredLanguageFilter,
   setStoredLanguageFilter,
 } from '../trainerPreference'
+import { guestTrainerOptions } from './menu/guestTrainerData'
 
-type Trainer = {
+export type TrainerSelectionItem = {
   id: number
   name: string
   imageSelect?: string | null
@@ -37,21 +38,42 @@ function wrap(index: number, length: number): number {
   return ((index % length) + length) % length
 }
 
+function getLocalTrainerImage(trainerId: number) {
+  return guestTrainerOptions.find((trainer) => trainer.id === trainerId)
+    ?.imageSelect
+}
+
+function withLocalImageFallback(
+  trainer: TrainerSelectionItem,
+): TrainerSelectionItem {
+  const image = trainer.imageSelect?.trim()
+
+  if (image && /^(?:https?:|data:|blob:|\/)/i.test(image)) {
+    return trainer
+  }
+
+  const fallbackImage = getLocalTrainerImage(trainer.id)
+
+  return fallbackImage ? { ...trainer, imageSelect: fallbackImage } : trainer
+}
+
 export default function TrainerSelectionModal({
   onTrainerSelect,
   selectedTrainerId,
+  trainersOverride,
 }: {
   onTrainerSelect?: (trainerId: number) => void
   selectedTrainerId?: number | null
+  trainersOverride?: readonly TrainerSelectionItem[]
 }) {
   const { getToken, isSignedIn } = useAuth()
   const { play, stop, loadingId, playingId } = useVoicePlayer()
   const { t } = useTranslation()
 
   const {
-    data: trainers = [],
-    isLoading,
-    isError,
+    data: fetchedTrainers = [],
+    isLoading: isFetchingTrainers,
+    isError: didTrainerFetchFail,
   } = useQuery({
     queryKey: ['trainers'],
     queryFn: async () => {
@@ -59,9 +81,18 @@ export default function TrainerSelectionModal({
       if (!token) throw new Error('Not authenticated')
       return fetchTrainersWithToken(token)
     },
-    enabled: isSignedIn === true,
+    enabled: trainersOverride === undefined && isSignedIn === true,
     refetchOnWindowFocus: false,
   })
+  const trainers = useMemo(
+    () =>
+      (trainersOverride ?? fetchedTrainers).map(
+        (trainer: TrainerSelectionItem) => withLocalImageFallback(trainer),
+      ),
+    [fetchedTrainers, trainersOverride],
+  )
+  const isLoading = trainersOverride === undefined && isFetchingTrainers
+  const isError = trainersOverride === undefined && didTrainerFetchFail
 
   const [activeLanguages, setActiveLanguages] = useState<string[]>(
     () => getStoredLanguageFilter() ?? [],
@@ -85,7 +116,7 @@ export default function TrainerSelectionModal({
   const hasInitialisedFilter = useRef(false)
 
   const allLanguages = useMemo(() => {
-    const langs = (trainers as Trainer[])
+    const langs = (trainers as TrainerSelectionItem[])
       .map((t) => t.language)
       .filter((l): l is string => typeof l === 'string' && l.trim() !== '')
     return Array.from(new Set(langs))
@@ -118,8 +149,8 @@ export default function TrainerSelectionModal({
   }, [filterOpen])
 
   const filteredTrainers = useMemo(() => {
-    if (activeLanguages.length === 0) return trainers as Trainer[]
-    return (trainers as Trainer[]).filter(
+    if (activeLanguages.length === 0) return trainers as TrainerSelectionItem[]
+    return (trainers as TrainerSelectionItem[]).filter(
       (t) =>
         typeof t.language === 'string' && activeLanguages.includes(t.language),
     )
@@ -224,7 +255,7 @@ export default function TrainerSelectionModal({
     }
   }
 
-  if (isSignedIn === false) {
+  if (isSignedIn === false && trainersOverride === undefined) {
     return (
       <section aria-labelledby="trainer-selection-title">
         <AppSheetNotice>{t('trainerSelection.notLoggedIn')}</AppSheetNotice>
@@ -244,7 +275,10 @@ export default function TrainerSelectionModal({
   }
 
   return (
-    <section aria-labelledby="trainer-selection-title" className="space-y-4">
+    <section
+      aria-labelledby="trainer-selection-title"
+      className="space-y-4 rounded-xl bg-(--menu-content-bg) p-4"
+    >
       {isLoading ? (
         <AppSheetNotice>{t('trainerSelection.loading')}</AppSheetNotice>
       ) : isError ? (
@@ -255,7 +289,7 @@ export default function TrainerSelectionModal({
         <div>
           {/* Header */}
           <div className="flex items-start gap-3 text-(--brand-primary-deep)">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-(--brand-surface) text-(--brand-primary)">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-(--menu-choice-bg) text-(--brand-primary)">
               <UserRound size={22} />
             </div>
             <div className="min-w-0 flex-1">
@@ -284,14 +318,14 @@ export default function TrainerSelectionModal({
                 <button
                   type="button"
                   onClick={() => setFilterOpen((prev) => !prev)}
-                  className="rounded-lg border border-(--brand-border-field) bg-(--brand-surface) px-2.5 py-1 text-[length:var(--text-xs)] font-extrabold text-(--brand-primary) transition hover:bg-(--brand-soft) active:scale-95"
+                  className="rounded-lg border border-(--menu-control-border) bg-(--menu-control-bg) px-2.5 py-1 text-[length:var(--text-xs)] font-extrabold text-(--brand-primary) transition hover:bg-(--brand-soft) active:scale-95"
                 >
                   {t('trainerSelection.changeFilter')}
                 </button>
               </div>
 
               {filterOpen && (
-                <div className="absolute top-full left-0 z-10 mt-2 min-w-[180px] space-y-1 rounded-2xl border border-(--brand-border-field) bg-(--brand-surface) p-3 shadow-lg">
+                <div className="absolute top-full left-0 z-10 mt-2 min-w-[180px] space-y-1 rounded-2xl border border-(--menu-control-border) bg-(--menu-content-bg) p-3">
                   {allLanguages.map((lang) => (
                     <button
                       key={lang}
@@ -303,14 +337,14 @@ export default function TrainerSelectionModal({
                         className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-[5px] border-2 transition ${
                           activeLanguages.includes(lang)
                             ? 'border-(--brand-primary) bg-(--brand-primary)'
-                            : 'border-(--brand-border-field) bg-(--brand-surface)'
+                            : 'border-(--menu-control-border) bg-(--menu-control-bg)'
                         }`}
                       >
                         {activeLanguages.includes(lang) && (
                           <Check
                             size={11}
                             strokeWidth={3}
-                            className="text-white"
+                            className="text-(--brand-on-primary)"
                           />
                         )}
                       </div>
@@ -338,7 +372,7 @@ export default function TrainerSelectionModal({
             <div className="relative mt-4">
               {/* 3-item sliding window — overflow hides prev and next */}
               <div
-                className="overflow-hidden rounded-3xl border border-(--brand-border)"
+                className="overflow-hidden rounded-2xl border border-(--menu-category-border)"
                 onTouchStart={handleTouchStart}
                 onTouchMove={handleTouchMove}
                 onTouchEnd={handleTouchEnd}
@@ -363,10 +397,11 @@ export default function TrainerSelectionModal({
                           onPlay={() => play(String(trainer.id), trainer.intro)}
                           onStop={stop}
                           onSelect={() => onTrainerSelect?.(trainer.id)}
+                          showAudioPreview={trainersOverride === undefined}
                           t={t}
                         />
                       ) : (
-                        <div className="aspect-[8/9] bg-(--brand-soft)" />
+                        <div className="aspect-[8/9] bg-(--menu-choice-bg)" />
                       )}
                     </div>
                   ))}
@@ -378,7 +413,7 @@ export default function TrainerSelectionModal({
                 type="button"
                 onClick={() => navigate(-1)}
                 disabled={n <= 1}
-                className="absolute top-1/2 left-2 z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-(--brand-primary) bg-white/20 text-(--brand-primary) shadow-[0_1px_8px_rgba(0,0,0,0.18)] backdrop-blur-[2px] transition active:scale-95 disabled:opacity-30"
+                className="absolute top-1/2 left-2 z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-(--brand-primary) bg-(--menu-control-bg) text-(--brand-primary) transition active:scale-95 disabled:opacity-30"
                 aria-label={t('trainerSelection.previousTrainer')}
               >
                 <ChevronLeft size={20} strokeWidth={2.2} />
@@ -389,7 +424,7 @@ export default function TrainerSelectionModal({
                 type="button"
                 onClick={() => navigate(1)}
                 disabled={n <= 1}
-                className="absolute top-1/2 right-2 z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-(--brand-primary) bg-white/20 text-(--brand-primary) shadow-[0_1px_8px_rgba(0,0,0,0.18)] backdrop-blur-[2px] transition active:scale-95 disabled:opacity-30"
+                className="absolute top-1/2 right-2 z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-(--brand-primary) bg-(--menu-control-bg) text-(--brand-primary) transition active:scale-95 disabled:opacity-30"
                 aria-label={t('trainerSelection.nextTrainer')}
               >
                 <ChevronRight size={20} strokeWidth={2.2} />
@@ -413,15 +448,17 @@ function TrainerCard({
   onPlay,
   onStop,
   onSelect,
+  showAudioPreview,
   t,
 }: {
-  trainer: Trainer
+  trainer: TrainerSelectionItem
   isSelected: boolean
   playingId: string | null
   loadingId: string | null
   onPlay: () => void
   onStop: () => void
   onSelect: () => void
+  showAudioPreview: boolean
   t: (key: string) => string
 }) {
   const id = String(trainer.id)
@@ -429,7 +466,7 @@ function TrainerCard({
   const isLoading = loadingId === id
 
   return (
-    <div className="relative aspect-[8/9] overflow-hidden bg-(--brand-soft)">
+    <div className="relative aspect-[8/9] overflow-hidden bg-(--menu-choice-bg)">
       {/* Image — left half, full height */}
       {trainer.imageSelect ? (
         <img
@@ -437,6 +474,16 @@ function TrainerCard({
           alt={trainer.name}
           loading="lazy"
           draggable={false}
+          onError={(event) => {
+            const fallbackImage = getLocalTrainerImage(trainer.id)
+
+            if (
+              fallbackImage &&
+              event.currentTarget.getAttribute('src') !== fallbackImage
+            ) {
+              event.currentTarget.src = fallbackImage
+            }
+          }}
           className="absolute bottom-0 left-0 h-full w-1/2 object-contain object-bottom select-none"
         />
       ) : (
@@ -460,7 +507,7 @@ function TrainerCard({
         )}
         {isSelected && (
           <div className="mt-2 flex justify-end">
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-(--brand-primary-deep) text-white">
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-(--brand-primary-deep) text-(--brand-on-primary)">
               <Check size={18} strokeWidth={3} />
             </div>
           </div>
@@ -470,33 +517,35 @@ function TrainerCard({
       {/* Bottom-right: buttons — 65% card width */}
       <div className="absolute right-0 bottom-0 w-[65%] space-y-1.5 px-4 pb-4">
         {/* Preview audio */}
-        <button
-          type="button"
-          onClick={isPlaying ? onStop : onPlay}
-          disabled={isLoading}
-          className={`flex w-full items-center justify-center gap-1.5 ${appSheetFieldClass} px-2 py-2 text-[13px] font-extrabold transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-60 ${
-            isPlaying
-              ? 'border-rose-300 bg-rose-50 text-rose-800'
-              : 'text-(--brand-title-ink)'
-          }`}
-        >
-          {isLoading ? (
-            <>
-              <Loader size={14} className="animate-spin" />
-              {t('trainerSelection.loadingAudio')}
-            </>
-          ) : isPlaying ? (
-            <>
-              <Square size={13} className="fill-current" />
-              {t('trainerSelection.stopAudio')}
-            </>
-          ) : (
-            <>
-              <Volume2 size={14} />
-              {t('trainerSelection.listenAudio')}
-            </>
-          )}
-        </button>
+        {showAudioPreview ? (
+          <button
+            type="button"
+            onClick={isPlaying ? onStop : onPlay}
+            disabled={isLoading}
+            className={`flex w-full items-center justify-center gap-1.5 ${appSheetFieldClass} px-2 py-2 text-[13px] font-extrabold transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-60 ${
+              isPlaying
+                ? 'border-(--brand-danger-border) bg-(--brand-danger-surface) text-(--brand-danger-ink-muted)'
+                : 'text-(--brand-title-ink)'
+            }`}
+          >
+            {isLoading ? (
+              <>
+                <Loader size={14} className="animate-spin" />
+                {t('trainerSelection.loadingAudio')}
+              </>
+            ) : isPlaying ? (
+              <>
+                <Square size={13} className="fill-current" />
+                {t('trainerSelection.stopAudio')}
+              </>
+            ) : (
+              <>
+                <Volume2 size={14} />
+                {t('trainerSelection.listenAudio')}
+              </>
+            )}
+          </button>
+        ) : null}
 
         {/* Select / selected */}
         {isSelected ? (
@@ -508,7 +557,7 @@ function TrainerCard({
           <button
             type="button"
             onClick={onSelect}
-            className="flex w-full items-center justify-center rounded-2xl bg-(--brand-primary) px-2 py-2.5 text-[length:var(--text-sm)] font-extrabold text-white transition active:scale-95"
+            className="flex w-full items-center justify-center rounded-2xl bg-(--brand-primary) px-2 py-2.5 text-[length:var(--text-sm)] font-extrabold text-(--brand-on-primary) transition active:scale-95"
           >
             {t('trainerSelection.selectButton')}
           </button>

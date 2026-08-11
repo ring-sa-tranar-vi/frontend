@@ -57,23 +57,25 @@ export default function SupportSheet({
         </section>
       }
     >
-      <div className="divide-y divide-(--brand-border)/60 pb-2">
-        <section className="pt-1 pb-3">
+      <div className="space-y-4 rounded-2xl border border-(--menu-category-border) bg-(--menu-category-bg) p-4">
+        <section className="rounded-xl bg-(--menu-content-bg) p-4">
           <AppSheetSectionTitle>{t('support.faqTitle')}</AppSheetSectionTitle>
+
+          <div className="mt-3 divide-y divide-(--brand-border)/60">
+            {([0, 1, 2, 3, 4] as const).map((i) => (
+              <section key={i} className="py-4 first:pt-0 last:pb-0">
+                <h4 className="text-[length:var(--text-base)] font-extrabold text-(--brand-title-ink)">
+                  {t(`support.help${i}Title`)}
+                </h4>
+                <p className="mt-1 text-[length:var(--text-sm)] leading-relaxed font-semibold text-(--brand-body-ink)">
+                  {t(`support.help${i}Text`)}
+                </p>
+              </section>
+            ))}
+          </div>
         </section>
 
-        {([0, 1, 2, 3, 4] as const).map((i) => (
-          <section key={i} className="py-4">
-            <h4 className="text-[length:var(--text-base)] font-extrabold text-(--brand-title-ink)">
-              {t(`support.help${i}Title`)}
-            </h4>
-            <p className="mt-1 text-[length:var(--text-sm)] leading-relaxed font-semibold text-(--brand-body-ink)">
-              {t(`support.help${i}Text`)}
-            </p>
-          </section>
-        ))}
-
-        <section className="py-5">
+        <section className="rounded-xl bg-(--menu-content-bg) p-4">
           <AppSheetSectionTitle>{t('support.formTitle')}</AppSheetSectionTitle>
           <AppSheetSectionText>
             {t('support.formDescription')}
@@ -84,7 +86,7 @@ export default function SupportSheet({
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               placeholder={t('support.placeholder') || ''}
-              className="resize-vertical min-h-[120px] w-full rounded-2xl border border-(--brand-border-field) bg-(--brand-field-bg) px-4 py-3 text-[length:var(--text-base)] text-(--brand-ink) transition outline-none placeholder:text-(--brand-muted) focus:border-(--brand-border-strong)"
+              className="resize-vertical min-h-[120px] w-full rounded-2xl border border-(--menu-control-border) bg-(--menu-control-bg) px-4 py-3 text-[length:var(--text-base)] text-(--brand-ink) transition outline-none placeholder:text-(--brand-muted) focus:border-(--brand-border-strong)"
             />
           </div>
 

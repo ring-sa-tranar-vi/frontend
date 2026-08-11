@@ -3,9 +3,6 @@ import { useAuth } from '@clerk/react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { getJson } from '../lib/api/fetcher'
 import { useUpdateProfile } from './useUpdateProfile'
-import type { Trainer } from '../features/session/types'
-
-const FALLBACK_VOICE = 'Kore'
 
 type CurrentUserProfile = {
   id: number
@@ -14,6 +11,8 @@ type CurrentUserProfile = {
   name?: string | null
   context?: string | null
   isAdmin?: boolean
+  city?: string | null
+  onboarding?: boolean
 }
 
 export default function useCurrentUser() {
@@ -42,28 +41,9 @@ export default function useCurrentUser() {
   })
 
   const trainerId = profile?.trainerId ?? null
-
-  const {
-    data: trainer,
-    isLoading: isTrainerLoading,
-    isError: isTrainerError,
-    refetch: refetchTrainer,
-  } = useQuery<Trainer | null>({
-    queryKey: ['trainer', trainerId == null ? 'null' : String(trainerId)],
-    queryFn: async () => {
-      if (!trainerId || !isSignedIn) return null
-      const rawToken = await getToken()
-      const token: string | undefined = rawToken ?? undefined
-      return await getJson<Trainer>(`/api/trainers/${trainerId}`, { token })
-    },
-    enabled: !!trainerId && isSignedIn,
-    staleTime: 1000 * 60 * 60,
-  })
-
   const userId = profile?.id ? String(profile.id) : null
   const level = profile?.intensityLevel ?? null
-  const voice = (trainer?.voice as string | undefined) ?? FALLBACK_VOICE
-  const coachPrompt = trainer?.prompt ?? null
+  const context = profile?.context ?? null
 
   const updateProfile = useCallback(
     async (data: Partial<CurrentUserProfile>) => {
@@ -76,6 +56,8 @@ export default function useCurrentUser() {
           data.trainerId !== undefined
             ? data.trainerId
             : (profile?.trainerId ?? null),
+        city: data.city !== undefined ? data.city : (profile?.city ?? null),
+        onboarding: data.onboarding ? true : false,
       }
 
       await updateProfileMutation.mutateAsync(payload)
@@ -96,16 +78,12 @@ export default function useCurrentUser() {
       isSignedIn,
       isProfileLoading,
       isProfileError,
-      isTrainerLoading,
-      isTrainerError,
       user: profile ?? null,
       userId,
       trainerId,
       level,
-      voice,
-      coachPrompt,
+      context,
       refetchProfile,
-      refetchTrainer,
       updateProfile,
     }),
     [
@@ -113,16 +91,12 @@ export default function useCurrentUser() {
       isSignedIn,
       isProfileLoading,
       isProfileError,
-      isTrainerLoading,
-      isTrainerError,
       profile,
       userId,
       trainerId,
       level,
-      voice,
-      coachPrompt,
+      context,
       refetchProfile,
-      refetchTrainer,
       updateProfile,
     ],
   )

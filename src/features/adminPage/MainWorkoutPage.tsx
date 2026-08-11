@@ -12,7 +12,7 @@ import {
 } from '../../api/workouts'
 import ConfirmModal from '../../components/ConfirmModal'
 import { useToast } from '../../hooks/useToast'
-import { fetchTrainersWithToken } from '../../api/trainers'
+import type { WorkoutForm } from './types.ts'
 
 type AdminTab = 'workouts' | 'trainers' | 'feedback'
 
@@ -27,73 +27,28 @@ type Workout = {
   description?: string
   dashboardName?: string | null
   dashboardDescription?: string | null
-  subtitleText?: string | null
-  instructionsSubtitleText?: string | null
+  instructions?: string | null
+  guidance?: string | null
   type?: string
   level?: number
-  durationSeconds?: number
-  instructionsAudio?: string
-  workoutAudio?: string
-  instructionsImage?: string
-  workoutImage?: string
-  instructionsVideo?: string | null
-  instructionsVideoStart?: number | null
-  instructionsVideoStop?: number | null
-  kneeFriendly?: boolean
-  lowImpact?: boolean
-  seated?: boolean
-  beginnerFriendly?: boolean
+  image?: string | null
+  video?: string | null
   enabled?: boolean
-  trainer?: { id?: number; name?: string } | null
 }
 
-type WorkoutForm = {
-  name: string
-  description: string
-  dashboardName: string
-  dashboardDescription: string
-  subtitleText: string
-  instructionsSubtitleText: string
-  type: string
-  level: number
-  durationSeconds: number
-  instructionsAudio: string
-  workoutAudio: string
-  instructionsImage: string
-  workoutImage: string
-  instructionsVideo: string
-  instructionsVideoStart: string
-  instructionsVideoStop: string
-  kneeFriendly: boolean
-  lowImpact: boolean
-  seated: boolean
-  beginnerFriendly: boolean
-}
-
-type SortBy =
-  'newest' | 'name-asc' | 'name-desc' | 'duration-asc' | 'duration-desc'
+type SortBy = 'newest' | 'name-asc' | 'name-desc'
 
 const emptyForm: WorkoutForm = {
   name: '',
   description: '',
   dashboardName: '',
   dashboardDescription: '',
-  subtitleText: '',
-  instructionsSubtitleText: '',
+  instructions: '',
+  guidance: '',
   type: '',
   level: 1,
-  durationSeconds: 60,
-  instructionsAudio: '',
-  workoutAudio: '',
-  instructionsImage: '',
-  workoutImage: '',
-  instructionsVideo: '',
-  instructionsVideoStart: '',
-  instructionsVideoStop: '',
-  kneeFriendly: false,
-  lowImpact: false,
-  seated: false,
-  beginnerFriendly: false,
+  image: '',
+  video: '',
 }
 
 function toForm(workout: Workout): WorkoutForm {
@@ -102,28 +57,12 @@ function toForm(workout: Workout): WorkoutForm {
     description: workout.description ?? '',
     dashboardName: workout.dashboardName ?? '',
     dashboardDescription: workout.dashboardDescription ?? '',
-    subtitleText: workout.subtitleText ?? '',
-    instructionsSubtitleText: workout.instructionsSubtitleText ?? '',
+    instructions: workout.instructions ?? '',
+    guidance: workout.guidance ?? '',
     type: workout.type ?? '',
     level: workout.level ?? 1,
-    durationSeconds: workout.durationSeconds ?? 60,
-    instructionsAudio: workout.instructionsAudio ?? '',
-    workoutAudio: workout.workoutAudio ?? '',
-    instructionsImage: workout.instructionsImage ?? '',
-    workoutImage: workout.workoutImage ?? '',
-    instructionsVideo: workout.instructionsVideo ?? '',
-    instructionsVideoStart:
-      workout.instructionsVideoStart != null
-        ? String(workout.instructionsVideoStart)
-        : '',
-    instructionsVideoStop:
-      workout.instructionsVideoStop != null
-        ? String(workout.instructionsVideoStop)
-        : '',
-    kneeFriendly: workout.kneeFriendly ?? false,
-    lowImpact: workout.lowImpact ?? false,
-    seated: workout.seated ?? false,
-    beginnerFriendly: workout.beginnerFriendly ?? false,
+    image: workout.image ?? '',
+    video: workout.video ?? '',
   }
 }
 
@@ -232,9 +171,9 @@ function WorkoutDetailsPanel({
   return (
     <div className="space-y-0">
       <div className="relative h-44 w-full overflow-hidden rounded-t-2xl bg-[#ece5ff]">
-        {workout.workoutImage || workout.instructionsImage ? (
+        {workout.image ? (
           <img
-            src={workout.workoutImage || workout.instructionsImage}
+            src={workout.image}
             alt={workout.name}
             className="h-full w-full object-cover"
           />
@@ -273,15 +212,7 @@ function WorkoutDetailsPanel({
           </p>
         </div>
 
-        <div className="grid grid-cols-3 gap-2">
-          <div className="rounded-xl border border-[#ece5ff] bg-[#f8f5ff] p-3 text-center">
-            <p className="text-[10px] font-semibold tracking-wide text-[#9b96b8] uppercase">
-              {t('workoutsAdmin.duration')}
-            </p>
-            <p className="mt-1 text-base font-bold text-[#100b2f]">
-              {workout.durationSeconds ?? '-'} {t('workoutsAdmin.seconds')}
-            </p>
-          </div>
+        <div className="grid grid-cols-2 gap-2">
           <div className="rounded-xl border border-[#ece5ff] bg-[#f8f5ff] p-3 text-center">
             <p className="text-[10px] font-semibold tracking-wide text-[#9b96b8] uppercase">
               {t('workoutsAdmin.level')}
@@ -346,7 +277,6 @@ export default function MainWorkoutPage({ searchTerm = '' }: Props) {
   const [currentPage, setCurrentPage] = useState(1)
   const [filterType, setFilterType] = useState<string>('')
   const [filterLevel, setFilterLevel] = useState<string>('')
-  const [filterTrainerId, setFilterTrainerId] = useState<string>('')
   const [selectedId, setSelectedId] = useState<number | null>(null)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [errors, setErrors] = useState<string[]>([])
@@ -368,15 +298,6 @@ export default function MainWorkoutPage({ searchTerm = '' }: Props) {
 
   const normalizedSearch = searchTerm.trim().toLowerCase()
 
-  const { data: trainers = [] } = useQuery<{ id: number; name: string }[]>({
-    queryKey: ['admin-trainers'],
-    queryFn: async () => {
-      const token = await getToken()
-      if (!token) throw new Error('Missing Clerk token')
-      return fetchTrainersWithToken(token)
-    },
-  })
-
   const uniqueTypes = useMemo(() => {
     const types = workouts
       .map((w) => w.type?.trim().toUpperCase())
@@ -395,12 +316,6 @@ export default function MainWorkoutPage({ searchTerm = '' }: Props) {
     return workouts.filter((item) => {
       if (filterType && item.type?.toUpperCase() !== filterType) return false
       if (filterLevel && String(item.level) !== filterLevel) return false
-      if (
-        filterTrainerId &&
-        String(item.trainer?.id ?? '') !== filterTrainerId
-      ) {
-        return false
-      }
 
       if (!normalizedSearch) return true
       return (
@@ -410,7 +325,7 @@ export default function MainWorkoutPage({ searchTerm = '' }: Props) {
         String(item.level ?? '').includes(normalizedSearch)
       )
     })
-  }, [normalizedSearch, workouts, filterType, filterLevel, filterTrainerId])
+  }, [normalizedSearch, workouts, filterType, filterLevel])
 
   const sortedWorkouts = useMemo(() => {
     const next = [...filteredWorkouts]
@@ -421,12 +336,6 @@ export default function MainWorkoutPage({ searchTerm = '' }: Props) {
       }
       if (sortBy === 'name-desc') {
         return (b.name ?? '').localeCompare(a.name ?? '')
-      }
-      if (sortBy === 'duration-asc') {
-        return (a.durationSeconds ?? 0) - (b.durationSeconds ?? 0)
-      }
-      if (sortBy === 'duration-desc') {
-        return (b.durationSeconds ?? 0) - (a.durationSeconds ?? 0)
       }
 
       // Newest as default proxy by id
@@ -441,14 +350,7 @@ export default function MainWorkoutPage({ searchTerm = '' }: Props) {
 
   useEffect(() => {
     if (currentPage !== 1) setCurrentPage(1)
-  }, [
-    normalizedSearch,
-    sortBy,
-    filterType,
-    filterLevel,
-    filterTrainerId,
-    currentPage,
-  ])
+  }, [normalizedSearch, sortBy, filterType, filterLevel, currentPage])
 
   useEffect(() => {
     if (currentPage > totalPages) setCurrentPage(totalPages)
@@ -505,28 +407,12 @@ export default function MainWorkoutPage({ searchTerm = '' }: Props) {
         description: form.description.trim(),
         dashboardName: form.dashboardName.trim() || null,
         dashboardDescription: form.dashboardDescription.trim() || null,
-        subtitleText: form.subtitleText.trim() || null,
-        instructionsSubtitleText: form.instructionsSubtitleText.trim() || null,
+        instructions: form.instructions.trim() || null,
+        guidance: form.guidance.trim() || null,
         type: form.type.trim(),
         level: form.level,
-        durationSeconds: form.durationSeconds,
-        instructionsAudio: form.instructionsAudio.trim(),
-        workoutAudio: form.workoutAudio.trim(),
-        instructionsImage: form.instructionsImage.trim(),
-        workoutImage: form.workoutImage.trim(),
-        instructionsVideo: form.instructionsVideo.trim() || null,
-        instructionsVideoStart:
-          form.instructionsVideoStart !== ''
-            ? Number(form.instructionsVideoStart)
-            : null,
-        instructionsVideoStop:
-          form.instructionsVideoStop !== ''
-            ? Number(form.instructionsVideoStop)
-            : null,
-        kneeFriendly: form.kneeFriendly,
-        lowImpact: form.lowImpact,
-        seated: form.seated,
-        beginnerFriendly: form.beginnerFriendly,
+        image: form.image.trim() || null,
+        video: form.video.trim() || null,
       }
 
       if (mode === 'edit') {
@@ -608,37 +494,12 @@ export default function MainWorkoutPage({ searchTerm = '' }: Props) {
     if (form.level < 0 || form.level > 4) {
       nextErrors.push(t('workoutsAdmin.validation.levelRange'))
     }
-    if (form.durationSeconds < 0) {
-      nextErrors.push(t('workoutsAdmin.validation.durationPositive'))
-    }
 
-    if (!isValidUrl(form.instructionsAudio)) {
-      nextErrors.push(t('workoutsAdmin.validation.instructionsAudioUrl'))
-    }
-    if (!isValidUrl(form.workoutAudio)) {
-      nextErrors.push(t('workoutsAdmin.validation.workoutAudioUrl'))
-    }
-    if (!isValidUrl(form.instructionsImage)) {
-      nextErrors.push(t('workoutsAdmin.validation.instructionsImageUrl'))
-    }
-    if (!isValidUrl(form.workoutImage)) {
+    if (!isValidUrl(form.image)) {
       nextErrors.push(t('workoutsAdmin.validation.workoutImageUrl'))
     }
-
-    if (form.instructionsVideo && !isValidUrl(form.instructionsVideo)) {
+    if (!isValidUrl(form.video)) {
       nextErrors.push(t('workoutsAdmin.validation.instructionsVideoUrl'))
-    }
-
-    const vStart =
-      form.instructionsVideoStart !== ''
-        ? Number(form.instructionsVideoStart)
-        : null
-    const vStop =
-      form.instructionsVideoStop !== ''
-        ? Number(form.instructionsVideoStop)
-        : null
-    if (vStart !== null && vStop !== null && vStart >= vStop) {
-      nextErrors.push(t('workoutsAdmin.validation.videoStartBeforeStop'))
     }
 
     setErrors(nextErrors)
@@ -659,17 +520,7 @@ export default function MainWorkoutPage({ searchTerm = '' }: Props) {
   ) => {
     const { name, value, type } = event.target
 
-    let nextValue: string | number | boolean =
-      type === 'checkbox'
-        ? (event.target as HTMLInputElement).checked
-        : type === 'number'
-          ? Number(value)
-          : value
-
-    if (name === 'durationSeconds') {
-      const onlyDigits = String(value).replace(/\D/g, '')
-      nextValue = onlyDigits.length > 0 ? Number(onlyDigits) : 0
-    }
+    const nextValue: string | number = type === 'number' ? Number(value) : value
 
     setForm((prev) => ({ ...prev, [name]: nextValue }))
   }
@@ -767,22 +618,12 @@ export default function MainWorkoutPage({ searchTerm = '' }: Props) {
             ))}
           </FilterSelect>
 
-          <FilterSelect value={filterTrainerId} onChange={setFilterTrainerId}>
-            <option value="">{t('workoutsAdmin.allTrainers')}</option>
-            {trainers.map((tr) => (
-              <option key={tr.id} value={String(tr.id)}>
-                {tr.name}
-              </option>
-            ))}
-          </FilterSelect>
-
-          {(filterType || filterLevel || filterTrainerId) && (
+          {(filterType || filterLevel) && (
             <button
               type="button"
               onClick={() => {
                 setFilterType('')
                 setFilterLevel('')
-                setFilterTrainerId('')
               }}
               className="rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-500 transition hover:bg-red-100"
             >
@@ -799,12 +640,6 @@ export default function MainWorkoutPage({ searchTerm = '' }: Props) {
           <option value="newest">{t('workoutsAdmin.sortNewest')}</option>
           <option value="name-asc">{t('workoutsAdmin.sortNameAsc')}</option>
           <option value="name-desc">{t('workoutsAdmin.sortNameDesc')}</option>
-          <option value="duration-asc">
-            {t('workoutsAdmin.sortDurationAsc')}
-          </option>
-          <option value="duration-desc">
-            {t('workoutsAdmin.sortDurationDesc')}
-          </option>
         </select>
       </div>
 
@@ -826,9 +661,9 @@ export default function MainWorkoutPage({ searchTerm = '' }: Props) {
               >
                 <div className="flex items-center gap-3">
                   <div className="relative h-12 w-16 shrink-0 overflow-hidden rounded-lg bg-[#ece5ff]">
-                    {workout.workoutImage || workout.instructionsImage ? (
+                    {workout.image ? (
                       <img
-                        src={workout.workoutImage || workout.instructionsImage}
+                        src={workout.image}
                         alt={workout.name}
                         className="h-full w-full object-cover"
                       />
@@ -860,11 +695,6 @@ export default function MainWorkoutPage({ searchTerm = '' }: Props) {
                       <span className="text-xs text-[#9b96b8]">
                         {t('workoutsAdmin.level')} {workout.level ?? '-'}
                       </span>
-                      <span className="text-xs text-[#9b96b8]">·</span>
-                      <span className="text-xs text-[#9b96b8]">
-                        {workout.durationSeconds ?? '-'}{' '}
-                        {t('workoutsAdmin.seconds')}
-                      </span>
                     </div>
                   </div>
 
@@ -884,13 +714,12 @@ export default function MainWorkoutPage({ searchTerm = '' }: Props) {
                 <p className="text-xs text-[#9b96b8]">
                   {t('workoutsAdmin.tryAdjustSearch')}
                 </p>
-                {(filterType || filterLevel || filterTrainerId) && (
+                {(filterType || filterLevel) && (
                   <button
                     type="button"
                     onClick={() => {
                       setFilterType('')
                       setFilterLevel('')
-                      setFilterTrainerId('')
                     }}
                     className="mt-1 rounded-lg bg-[#f3eeff] px-3 py-1.5 text-xs font-semibold text-[#5836d6] hover:bg-[#ede9ff]"
                   >
@@ -1013,7 +842,7 @@ export default function MainWorkoutPage({ searchTerm = '' }: Props) {
                 />
               </div>
 
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-2 gap-2">
                 <div className="space-y-1">
                   <label className="text-xs font-semibold text-[#6f6a93]">
                     {t('workoutsAdmin.type')}
@@ -1040,19 +869,6 @@ export default function MainWorkoutPage({ searchTerm = '' }: Props) {
                     className="w-full rounded-xl border border-[#ece5ff] p-2.5 text-sm transition outline-none focus:border-[#5836d6]"
                   />
                 </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-semibold text-[#6f6a93]">
-                    {t('workoutsAdmin.seconds')}
-                  </label>
-                  <input
-                    type="text"
-                    name="durationSeconds"
-                    inputMode="numeric"
-                    value={form.durationSeconds}
-                    onChange={onFormChange}
-                    className="w-full rounded-xl border border-[#ece5ff] p-2.5 text-sm transition outline-none focus:border-[#5836d6]"
-                  />
-                </div>
               </div>
 
               <div className="space-y-2">
@@ -1060,8 +876,8 @@ export default function MainWorkoutPage({ searchTerm = '' }: Props) {
                   {t('workoutsAdmin.workoutImage')}
                 </label>
                 <input
-                  name="workoutImage"
-                  value={form.workoutImage}
+                  name="image"
+                  value={form.image}
                   onChange={onFormChange}
                   placeholder="https://..."
                   className="w-full rounded-xl border border-[#ece5ff] p-2.5 text-sm transition outline-none focus:border-[#5836d6]"
@@ -1075,105 +891,37 @@ export default function MainWorkoutPage({ searchTerm = '' }: Props) {
                 <div className="space-y-3 px-3 pb-3">
                   <div className="space-y-1">
                     <label className="text-xs font-semibold text-[#6f6a93]">
-                      {t('workoutsAdmin.instructionsImage')}
-                    </label>
-                    <input
-                      name="instructionsImage"
-                      value={form.instructionsImage}
-                      onChange={onFormChange}
-                      placeholder="https://..."
-                      className="w-full rounded-xl border border-[#ece5ff] p-2.5 text-sm transition outline-none focus:border-[#5836d6]"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-xs font-semibold text-[#6f6a93]">
-                      {t('workoutsAdmin.workoutAudio')}
-                    </label>
-                    <input
-                      name="workoutAudio"
-                      value={form.workoutAudio}
-                      onChange={onFormChange}
-                      placeholder="https://..."
-                      className="w-full rounded-xl border border-[#ece5ff] p-2.5 text-sm transition outline-none focus:border-[#5836d6]"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-xs font-semibold text-[#6f6a93]">
-                      {t('workoutsAdmin.instructionsAudio')}
-                    </label>
-                    <input
-                      name="instructionsAudio"
-                      value={form.instructionsAudio}
-                      onChange={onFormChange}
-                      placeholder="https://..."
-                      className="w-full rounded-xl border border-[#ece5ff] p-2.5 text-sm transition outline-none focus:border-[#5836d6]"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-xs font-semibold text-[#6f6a93]">
-                      Workout audio subtitle text
+                      {t('workoutsAdmin.instructions')}
                     </label>
                     <textarea
-                      name="subtitleText"
-                      value={form.subtitleText}
+                      name="instructions"
+                      value={form.instructions}
                       onChange={onFormChange}
-                      placeholder="Example: subtitles for the workout audio in the language spoken during the workout"
                       className="min-h-[120px] w-full rounded-xl border border-[#ece5ff] p-2.5 text-sm transition outline-none focus:border-[#5836d6]"
                     />
                   </div>
                   <div className="space-y-1">
                     <label className="text-xs font-semibold text-[#6f6a93]">
-                      Instructions audio subtitle text
+                      {t('workoutsAdmin.guidance')}
                     </label>
                     <textarea
-                      name="instructionsSubtitleText"
-                      value={form.instructionsSubtitleText}
+                      name="guidance"
+                      value={form.guidance}
                       onChange={onFormChange}
-                      placeholder="Example: subtitles for the instructions audio in the language spoken during the instructions"
                       className="min-h-[120px] w-full rounded-xl border border-[#ece5ff] p-2.5 text-sm transition outline-none focus:border-[#5836d6]"
                     />
                   </div>
                   <div className="space-y-1">
                     <label className="text-xs font-semibold text-[#6f6a93]">
-                      {t('workoutsAdmin.instructionsVideoOptional')}
+                      {t('workoutsAdmin.videoPlaceholder')}
                     </label>
                     <input
-                      name="instructionsVideo"
-                      value={form.instructionsVideo}
+                      name="video"
+                      value={form.video}
                       onChange={onFormChange}
                       placeholder="https://..."
                       className="w-full rounded-xl border border-[#ece5ff] p-2.5 text-sm transition outline-none focus:border-[#5836d6]"
                     />
-                  </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="space-y-1">
-                      <label className="text-xs font-semibold text-[#6f6a93]">
-                        {t('workoutsAdmin.videoStartSeconds')}
-                      </label>
-                      <input
-                        name="instructionsVideoStart"
-                        inputMode="numeric"
-                        pattern="[0-9]*"
-                        value={form.instructionsVideoStart}
-                        onChange={onFormChange}
-                        placeholder={t('workoutsAdmin.videoStartPlaceholder')}
-                        className="w-full rounded-xl border border-[#ece5ff] p-2.5 text-sm transition outline-none focus:border-[#5836d6]"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <label className="text-xs font-semibold text-[#6f6a93]">
-                        {t('workoutsAdmin.videoStopSeconds')}
-                      </label>
-                      <input
-                        name="instructionsVideoStop"
-                        inputMode="numeric"
-                        pattern="[0-9]*"
-                        value={form.instructionsVideoStop}
-                        onChange={onFormChange}
-                        placeholder={t('workoutsAdmin.videoStopPlaceholder')}
-                        className="w-full rounded-xl border border-[#ece5ff] p-2.5 text-sm transition outline-none focus:border-[#5836d6]"
-                      />
-                    </div>
                   </div>
                 </div>
               </details>
