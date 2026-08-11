@@ -6,6 +6,8 @@ import {
   AppSheetNotice,
   AppSheetSectionText,
   AppSheetSectionTitle,
+  appSheetCategoryClass,
+  appSheetContentClass,
   appSheetPrimaryButtonClass,
 } from '../../../components/AppSheet'
 
@@ -45,6 +47,7 @@ export default function SupportSheet({
       subtitle={t('support.subtitle')}
       onClose={() => setOpen(false)}
       height="large"
+      motion="instant"
       footer={
         <section className="pb-1">
           <button
@@ -57,8 +60,8 @@ export default function SupportSheet({
         </section>
       }
     >
-      <div className="space-y-4 rounded-2xl border border-(--menu-category-border) bg-(--menu-category-bg) p-4">
-        <section className="rounded-xl bg-(--menu-content-bg) p-4">
+      <div className={`${appSheetCategoryClass} space-y-3`}>
+        <section className={appSheetContentClass}>
           <AppSheetSectionTitle>{t('support.faqTitle')}</AppSheetSectionTitle>
 
           <div className="mt-3 divide-y divide-(--brand-border)/60">
@@ -75,7 +78,7 @@ export default function SupportSheet({
           </div>
         </section>
 
-        <section className="rounded-xl bg-(--menu-content-bg) p-4">
+        <section className={appSheetContentClass}>
           <AppSheetSectionTitle>{t('support.formTitle')}</AppSheetSectionTitle>
           <AppSheetSectionText>
             {t('support.formDescription')}
@@ -86,7 +89,7 @@ export default function SupportSheet({
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               placeholder={t('support.placeholder') || ''}
-              className="resize-vertical min-h-[120px] w-full rounded-2xl border border-(--menu-control-border) bg-(--menu-control-bg) px-4 py-3 text-[length:var(--text-base)] text-(--brand-ink) transition outline-none placeholder:text-(--brand-muted) focus:border-(--brand-border-strong)"
+              className="resize-vertical min-h-[120px] w-full rounded-2xl border border-(--menu-control-border) bg-(--menu-field-bg) px-4 py-3 text-[length:var(--text-base)] text-(--brand-ink) transition outline-none placeholder:text-(--brand-muted) focus:border-(--brand-border-strong)"
             />
           </div>
 

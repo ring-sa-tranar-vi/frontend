@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import {
   AppSheetSectionText,
   AppSheetSectionTitle,
+  appSheetContentClass,
 } from '../../../components/AppSheet'
 
 type IntensitySliderProps = {
@@ -10,8 +11,8 @@ type IntensitySliderProps = {
   onChange: (value: number) => void
 }
 
-const INTENSITY_MIN = 1
-const INTENSITY_MAX = 5
+const INTENSITY_MIN = 0
+const INTENSITY_MAX = 4
 
 const IntensitySlider = ({ value, onChange }: IntensitySliderProps) => {
   const { t } = useTranslation()
@@ -42,14 +43,25 @@ const IntensitySlider = ({ value, onChange }: IntensitySliderProps) => {
         {t('intensitySlider.description')}
       </AppSheetSectionText>
 
-      <div className="mt-4 rounded-xl bg-(--menu-content-bg) p-4">
-        <div className="relative">
-          <div className="pointer-events-none absolute top-4 right-2 left-2 h-1 rounded-full bg-(--brand-border)" />
+      <div className={`mt-4 ${appSheetContentClass}`}>
+        <div className="grid grid-cols-5 gap-1 text-center text-[length:var(--text-xs)] leading-tight font-bold text-(--brand-body-ink)">
+          {steps.map((label) => (
+            <span
+              key={label}
+              className="flex min-h-9 items-end justify-center whitespace-nowrap"
+            >
+              {label}
+            </span>
+          ))}
+        </div>
 
-          <div
-            className="pointer-events-none absolute top-4 left-2 h-1 rounded-full bg-(--brand-primary) transition-all duration-150"
-            style={{ width: `calc(${progress}% - 4px)` }}
-          />
+        <div className="relative mt-3">
+          <div className="pointer-events-none absolute top-5 right-[10%] left-[10%] h-1 overflow-hidden rounded-full bg-(--brand-border)">
+            <div
+              className="h-full rounded-full bg-(--brand-primary) transition-all duration-150"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
 
           <input
             type="range"
@@ -57,38 +69,39 @@ const IntensitySlider = ({ value, onChange }: IntensitySliderProps) => {
             max={INTENSITY_MAX}
             value={safeValue}
             onChange={(e) => onChange(parseInt(e.target.value, 10))}
-            className="absolute inset-x-0 top-0 z-20 h-10 w-full cursor-pointer opacity-0"
+            className="absolute top-0 right-[10%] left-[10%] z-20 h-11 cursor-pointer opacity-0"
             aria-label={t('intensitySlider.title')}
           />
 
-          <div className="relative z-30 flex items-center justify-between">
-            {steps.map((label, index) =>
-              (() => {
-                const stepValue = index + INTENSITY_MIN
+          <div className="relative z-30 grid grid-cols-5 items-center">
+            {steps.map((label, stepValue) => {
+              const isCurrentStep = stepValue === safeValue
 
-                return (
-                  <button
-                    key={label}
-                    type="button"
-                    onClick={() => onChange(stepValue)}
-                    className="-mx-2 px-2"
-                    aria-label={`${t('intensitySlider.choose')} ${label}`}
-                  >
-                    <span
-                      className={`block rounded-full transition-all duration-150 ${
-                        stepValue === safeValue
-                          ? 'h-9 w-9 border-4 border-(--brand-primary) bg-(--brand-primary)'
-                          : 'h-7 w-7 border-[3px] border-(--brand-border-strong)/60 bg-(--menu-control-bg)'
-                      }`}
-                    />
-                  </button>
-                )
-              })(),
-            )}
+              return (
+                <button
+                  key={label}
+                  type="button"
+                  onClick={() => onChange(stepValue)}
+                  className="flex h-11 w-11 items-center justify-center justify-self-center rounded-full"
+                  aria-label={`${t('intensitySlider.choose')} ${label}`}
+                  aria-pressed={isCurrentStep}
+                  aria-current={isCurrentStep ? 'step' : undefined}
+                >
+                  <span
+                    className={`block rounded-full transition-all duration-150 ${
+                      isCurrentStep
+                        ? 'h-9 w-9 border-4 border-(--brand-primary) bg-(--brand-primary) ring-2 ring-(--brand-selection) ring-offset-2 ring-offset-(--menu-content-bg)'
+                        : 'h-7 w-7 border-[3px] border-(--brand-primary) bg-(--menu-content-bg)'
+                    }`}
+                    aria-hidden="true"
+                  />
+                </button>
+              )
+            })}
           </div>
 
-          <p className="mt-4 text-center text-[length:var(--text-lg)] font-extrabold text-(--brand-title-ink)">
-            {steps[safeValue - INTENSITY_MIN]}
+          <p className="mt-4 text-center text-[length:var(--text-sm)] font-extrabold text-(--brand-title-ink)">
+            {steps[safeValue]}
           </p>
         </div>
       </div>

@@ -8,7 +8,11 @@ import {
 } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { AppSheetNotice } from '../../../../components/AppSheet'
+import {
+  AppSheetNotice,
+  appSheetCategoryClass,
+  appSheetContentClass,
+} from '../../../../components/AppSheet'
 import MenuSectionHeader from './MenuSectionHeader'
 import type { CalendarActivity } from './types'
 import { useCalendarEvents } from '../../../../hooks/useCalendarEvents.ts'
@@ -201,7 +205,7 @@ export default function MenuCalendarSection({
   return (
     <section
       aria-labelledby="menu-calendar-title"
-      className="rounded-2xl border border-(--menu-category-border) bg-(--menu-category-bg) p-4"
+      className={appSheetCategoryClass}
     >
       <div id="menu-calendar-title">
         <MenuSectionHeader
@@ -211,14 +215,14 @@ export default function MenuCalendarSection({
         />
       </div>
 
-      <div className="mt-4 rounded-xl bg-(--menu-content-bg) p-4">
+      <div className={`mt-4 ${appSheetContentClass}`}>
         {/* Month Navigation */}
         <div className="flex items-center justify-between">
           <button
             type="button"
             onClick={() => changeMonth(-1)}
             aria-label={t('menu.calendar.previousMonth')}
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-(--brand-soft) text-(--brand-primary) transition focus-visible:ring-2 focus-visible:ring-(--brand-border-strong) focus-visible:ring-offset-2 focus-visible:outline-none active:scale-95"
+            className="flex h-11 w-11 items-center justify-center rounded-xl bg-(--brand-soft) text-(--brand-primary) transition focus-visible:ring-2 focus-visible:ring-(--brand-border-strong) focus-visible:ring-offset-2 focus-visible:outline-none active:scale-95"
           >
             <ChevronLeft size={18} strokeWidth={2.5} aria-hidden="true" />
           </button>
@@ -237,7 +241,7 @@ export default function MenuCalendarSection({
             type="button"
             onClick={() => changeMonth(1)}
             aria-label={t('menu.calendar.nextMonth')}
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-(--brand-soft) text-(--brand-primary) transition focus-visible:ring-2 focus-visible:ring-(--brand-border-strong) focus-visible:ring-offset-2 focus-visible:outline-none active:scale-95"
+            className="flex h-11 w-11 items-center justify-center rounded-xl bg-(--brand-soft) text-(--brand-primary) transition focus-visible:ring-2 focus-visible:ring-(--brand-border-strong) focus-visible:ring-offset-2 focus-visible:outline-none active:scale-95"
           >
             <ChevronRight size={18} strokeWidth={2.5} aria-hidden="true" />
           </button>
@@ -247,7 +251,7 @@ export default function MenuCalendarSection({
           {weekdayLabels.map((label, index) => (
             <span
               key={`${label}-${index}`}
-              className="pb-1 text-[0.62rem] font-extrabold text-(--brand-muted)"
+              className="pb-1 text-[length:var(--text-xs)] font-extrabold text-(--brand-muted)"
             >
               {label}
             </span>
@@ -271,7 +275,7 @@ export default function MenuCalendarSection({
                   dateStyle: 'full',
                 }).format(cell.date)}
                 aria-pressed={isSelected}
-                className={`relative mx-auto flex h-10 w-full max-w-10 items-center justify-center rounded-xl text-[length:var(--text-xs)] font-extrabold transition focus-visible:ring-2 focus-visible:ring-(--brand-border-strong) focus-visible:ring-offset-1 focus-visible:outline-none active:scale-95 ${
+                className={`relative mx-auto flex h-11 w-full max-w-11 items-center justify-center rounded-xl text-[length:var(--text-xs)] font-extrabold transition focus-visible:ring-2 focus-visible:ring-(--brand-border-strong) focus-visible:ring-offset-1 focus-visible:outline-none active:scale-95 ${
                   isSelected
                     ? 'bg-(--brand-primary) text-(--brand-on-primary)'
                     : isToday
@@ -346,17 +350,17 @@ export default function MenuCalendarSection({
         {!isLoading && (!isError || hasData) ? (
           <div className="pt-4">
             <div className="flex items-center justify-between">
-              <p className="text-[length:var(--text-xs)] font-extrabold text-(--brand-muted)">
+              <p className="menu-card-meta font-extrabold">
                 {selectedDateFormatted}
               </p>
               {selectedDayActivities.length > 0 ? (
-                <span className="rounded-full bg-(--brand-soft) px-2 py-0.5 text-[0.65rem] font-extrabold text-(--brand-primary)">
+                <span className="menu-card-badge rounded-full bg-(--brand-soft) px-2 py-1 text-(--brand-primary)">
                   {selectedDayActivities.length}
                 </span>
               ) : null}
             </div>
 
-            <div className="mt-3 space-y-2">
+            <div className="mt-3 space-y-3">
               {selectedDayActivities.length > 0 ? (
                 selectedDayActivities.map((act) => {
                   const canCancelEvent =
@@ -372,29 +376,29 @@ export default function MenuCalendarSection({
                   return (
                     <div
                       key={act.id}
-                      className="flex items-center justify-between rounded-xl border border-(--brand-border-light) bg-(--menu-control-bg) p-3"
+                      className="menu-item-card flex items-start justify-between gap-3"
                     >
-                      <div className="flex min-w-0 items-center gap-3">
+                      <div className="flex min-w-0 items-start gap-3">
                         <span
-                          className={`h-2.5 w-2.5 shrink-0 rounded-full ${getActivityColorClass(
+                          className={`mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full ${getActivityColorClass(
                             act.kind,
                           )}`}
                         />
                         <div className="min-w-0">
-                          <p className="truncate text-[length:var(--text-sm)] font-bold text-(--brand-ink)">
+                          <p className="menu-card-title line-clamp-2">
                             {act.kind === 'callback'
                               ? t('menu.calendar.callback')
                               : act.title ||
                                 t('menu.calendar.untitledActivity')}
                           </p>
                           {act.description ? (
-                            <p className="mt-0.5 line-clamp-2 text-[length:var(--text-xs)] text-(--brand-body-ink)">
+                            <p className="menu-card-copy mt-1 line-clamp-2">
                               {act.description}
                             </p>
                           ) : null}
                           {act.time ? (
-                            <div className="mt-1.5 flex items-center gap-1 text-[length:var(--text-xs)] font-extrabold text-(--brand-muted)">
-                              <Clock size={12} aria-hidden="true" />
+                            <div className="menu-card-meta mt-2 flex items-center gap-1.5 font-extrabold">
+                              <Clock size={14} aria-hidden="true" />
                               <span>{act.time}</span>
                             </div>
                           ) : null}
@@ -410,7 +414,7 @@ export default function MenuCalendarSection({
                               ? 'menu.calendar.cancelCallback'
                               : 'menu.calendar.cancelEvent',
                           )}
-                          className="ml-3 flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-(--brand-danger) transition hover:bg-(--brand-danger-surface) focus-visible:ring-2 focus-visible:ring-(--brand-danger-border) focus-visible:ring-offset-2 focus-visible:outline-none active:scale-95"
+                          className="ml-3 flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-(--brand-danger) transition hover:bg-(--brand-danger-surface) focus-visible:ring-2 focus-visible:ring-(--brand-danger-border) focus-visible:ring-offset-2 focus-visible:outline-none active:scale-95"
                         >
                           <X size={19} strokeWidth={2.6} aria-hidden="true" />
                         </button>
@@ -419,7 +423,7 @@ export default function MenuCalendarSection({
                   )
                 })
               ) : (
-                <p className="py-2 text-center text-[length:var(--text-xs)] font-medium text-(--brand-muted)">
+                <p className="menu-card-meta py-2 text-center">
                   {t('menu.calendar.noEventsForDay', {
                     defaultValue: 'Inga aktiviteter denna dag',
                   })}

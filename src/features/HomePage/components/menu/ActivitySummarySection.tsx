@@ -1,6 +1,10 @@
 import { Flame } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { AppSheetNotice } from '../../../../components/AppSheet'
+import {
+  AppSheetNotice,
+  appSheetCategoryClass,
+  appSheetContentClass,
+} from '../../../../components/AppSheet'
 import type { ActivitySummary } from './types'
 import { callbackWeekdays } from './types'
 import MenuSectionHeader from './MenuSectionHeader'
@@ -52,7 +56,7 @@ export default function ActivitySummarySection({
   return (
     <section
       aria-labelledby="menu-activity-title"
-      className="rounded-2xl border border-(--menu-category-border) bg-(--menu-category-bg) p-4"
+      className={appSheetCategoryClass}
     >
       <div id="menu-activity-title">
         <MenuSectionHeader
@@ -64,12 +68,12 @@ export default function ActivitySummarySection({
 
       {isLoading ? (
         <div
-          className="mt-4 rounded-xl bg-(--menu-content-bg) p-5"
+          className={`mt-4 ${appSheetContentClass}`}
           role="status"
           aria-label={t('menu.activity.loading')}
         >
-          <div className="flex items-center gap-5" aria-hidden="true">
-            <div className="h-[122px] w-[122px] shrink-0 animate-pulse rounded-full bg-(--menu-skeleton-bg)" />
+          <div className="flex items-center gap-4" aria-hidden="true">
+            <div className="h-[104px] w-[104px] shrink-0 animate-pulse rounded-full bg-(--menu-skeleton-bg)" />
             <div className="flex-1 space-y-3">
               <div className="h-5 w-3/4 animate-pulse rounded-full bg-(--menu-skeleton-bg)" />
               <div className="h-4 w-full animate-pulse rounded-full bg-(--menu-skeleton-bg)" />
@@ -98,10 +102,10 @@ export default function ActivitySummarySection({
       ) : null}
 
       {!isLoading && !isError ? (
-        <div className="mt-4 rounded-xl bg-(--menu-content-bg) p-5">
-          <div className="flex items-center gap-5">
+        <div className={`mt-4 ${appSheetContentClass}`}>
+          <div className="flex items-center gap-4">
             <div
-              className="relative h-[122px] w-[122px] shrink-0"
+              className="relative h-[104px] w-[104px] shrink-0"
               role="img"
               aria-label={t('menu.activity.streakAriaLabel', {
                 count: resolvedSummary.currentStreak,
@@ -133,11 +137,13 @@ export default function ActivitySummarySection({
                 />
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center pt-1 text-center">
-                <strong className="text-[2.45rem] leading-none font-extrabold text-(--brand-primary-deep)">
+                <strong className="text-[length:var(--text-2xl)] leading-none font-extrabold text-(--brand-primary-deep)">
                   {resolvedSummary.currentStreak}
                 </strong>
                 <span className="mt-1 text-[length:var(--text-xs)] font-extrabold text-(--brand-body-ink)">
-                  {t('menu.activity.daysInRow')}
+                  {t('menu.activity.daysInRow', {
+                    count: resolvedSummary.currentStreak,
+                  })}
                 </span>
               </div>
             </div>
@@ -145,7 +151,7 @@ export default function ActivitySummarySection({
             <div className="min-w-0 flex-1">
               <p className="text-[length:var(--text-lg)] leading-tight font-extrabold text-(--brand-title-ink)">
                 {t(
-                  resolvedSummary.hasCompletedWorkouts
+                  activeCount > 0
                     ? 'menu.activity.encouragement'
                     : 'menu.activity.encouragementEmpty',
                 )}
@@ -166,7 +172,7 @@ export default function ActivitySummarySection({
                       return (
                         <span
                           key={weekday}
-                          className={`flex aspect-square items-center justify-center rounded-[9px] text-[0.68rem] font-extrabold ${
+                          className={`flex aspect-square items-center justify-center rounded-lg text-[length:var(--text-xs)] font-extrabold ${
                             isActive
                               ? 'bg-(--brand-primary) text-(--brand-on-primary)'
                               : 'bg-(--menu-control-bg) text-(--brand-muted)'

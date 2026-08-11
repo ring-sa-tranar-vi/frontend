@@ -1,13 +1,18 @@
 import type { CompanyEvent } from '../../../api/companyPortal'
-import { appSheetCardClass } from '../../../components/AppSheet'
 import type { Dispatch, SetStateAction } from 'react'
+import { useState } from 'react'
+import { Plus, X } from 'lucide-react'
+import {
+  appSheetCardClass,
+  appSheetCategoryClass,
+} from '../../../components/AppSheet'
+import ConfirmModal from '../../../components/ConfirmModal'
 import type { EventForm } from '../types'
 import EventCreateForm from './EventCreateForm'
 import EventEditForm from './EventEditForm'
 import EventListItem from './EventListItem'
 
 type Props = {
-  isWideLayout: boolean
   showCreateEvent: boolean
   setShowCreateEvent: (value: boolean | ((current: boolean) => boolean)) => void
   eventForm: EventForm
@@ -22,13 +27,13 @@ type Props = {
   canSaveEditedEvent: boolean
   updateEvent: () => void
   isUpdatingEvent: boolean
+  deletingEventId: number | null
   stopEditingEvent: () => void
   startEditingEvent: (event: CompanyEvent) => void
-  deleteEvent: (id: number) => void
+  deleteEvent: (id: number) => Promise<void>
 }
 
 export default function EventListCard({
-  isWideLayout,
   showCreateEvent,
   setShowCreateEvent,
   eventForm,
@@ -43,36 +48,37 @@ export default function EventListCard({
   canSaveEditedEvent,
   updateEvent,
   isUpdatingEvent,
+  deletingEventId,
   stopEditingEvent,
   startEditingEvent,
   deleteEvent,
 }: Props) {
+  const [eventPendingDeletion, setEventPendingDeletion] =
+    useState<CompanyEvent | null>(null)
+
   return (
-    <article
-      className={`${appSheetCardClass} p-2.5 md:rounded-2xl md:border-[#ebe4ff] md:bg-[#fcfbff] md:p-5 ${isWideLayout ? 'col-span-7' : ''}`}
-    >
-      <div
-        className={`flex items-start justify-between gap-2 ${
-          isWideLayout ? 'flex-row items-center' : 'flex-col'
-        }`}
-      >
-        <h2 className="text-[1.75rem] leading-tight font-extrabold text-[#100b2f] md:text-3xl">
-          Kommande event
-        </h2>
+    <section className={appSheetCategoryClass}>
+      <div className="px-1">
+        <div className="min-w-0">
+          <h2 className="text-[length:var(--text-lg)] leading-tight font-extrabold tracking-tight text-(--brand-ink)">
+            Kommande event
+          </h2>
+          <p className="mt-0.5 text-[length:var(--text-sm)] leading-snug font-semibold text-(--brand-body-ink)">
+            Skapa, ändra eller ta bort organisationens event.
+          </p>
+        </div>
         <button
           type="button"
           onClick={() => setShowCreateEvent((v) => !v)}
-          className={`shrink-0 text-[13px] leading-tight font-bold whitespace-normal text-[#5b3fe6] ${
-            isWideLayout ? '' : 'self-start'
-          }`}
+          className="mt-3 flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-(--brand-border) bg-(--menu-content-bg) px-4 py-2.5 text-[length:var(--text-sm)] font-extrabold text-(--brand-primary) transition hover:bg-(--brand-soft) focus-visible:ring-2 focus-visible:ring-(--brand-border-strong) focus-visible:outline-none"
         >
-          + Lägg till event
+          {showCreateEvent ? <X size={17} /> : <Plus size={17} />}
+          {showCreateEvent ? 'Stäng formuläret' : 'Lägg till event'}
         </button>
       </div>
 
       {showCreateEvent ? (
         <EventCreateForm
-          isWideLayout={isWideLayout}
           eventForm={eventForm}
           setEventForm={setEventForm}
           canCreateEvent={canCreateEvent}
@@ -83,17 +89,21 @@ export default function EventListCard({
 
       <div className="mt-3 space-y-3">
         {events.length === 0 ? (
-          <p className="text-sm text-[#6f6a93]">Inga event ännu.</p>
+          <div className="rounded-2xl border border-dashed border-(--brand-border) bg-(--brand-surface-soft) px-5 py-8 text-center">
+            <p className="font-extrabold text-(--brand-ink)">Inga event ännu</p>
+            <p className="mt-1 text-sm leading-6 text-(--brand-muted)">
+              Lägg till ett event när ni har en aktivitet att bjuda in till.
+            </p>
+          </div>
         ) : null}
 
         {events.map((event) => (
           <div
             key={event.id}
-            className="rounded-2xl border border-[#e6dbff] bg-white p-3 shadow-[0_4px_12px_rgba(82,63,176,0.06)] md:p-4"
+            className={`${appSheetCardClass} menu-event-card menu-event-owner`}
           >
             {editingEventId === event.id ? (
               <EventEditForm
-                isWideLayout={isWideLayout}
                 form={editingEventForm}
                 setForm={setEditingEventForm}
                 canSave={canSaveEditedEvent}
@@ -105,12 +115,40 @@ export default function EventListCard({
               <EventListItem
                 event={event}
                 onEdit={() => startEditingEvent(event)}
-                onDelete={() => deleteEvent(event.id)}
+                onDelete={() => setEventPendingDeletion(event)}
+                isDeleting={deletingEventId === event.id}
               />
             )}
           </div>
         ))}
       </div>
-    </article>
+
+      <ConfirmModal
+        open={eventPendingDeletion !== null}
+        title="Ta bort event?"
+        body={
+          eventPendingDeletion
+            ? `”${eventPendingDeletion.name}” tas bort permanent. Det går inte att ångra.`
+            : undefined
+        }
+        confirmLabel="Ja, ta bort eventet"
+        cancelLabel="Avbryt"
+        isConfirming={
+          eventPendingDeletion !== null &&
+          deletingEventId === eventPendingDeletion.id
+        }
+        confirmingLabel="Tar bort eventet..."
+        onConfirm={() => {
+          if (!eventPendingDeletion) return
+
+          void deleteEvent(eventPendingDeletion.id)
+            .then(() => setEventPendingDeletion(null))
+            .catch(() => undefined)
+        }}
+        onCancel={() => {
+          if (deletingEventId === null) setEventPendingDeletion(null)
+        }}
+      />
+    </section>
   )
 }

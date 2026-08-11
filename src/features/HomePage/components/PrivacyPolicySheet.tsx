@@ -5,6 +5,8 @@ import {
   AppSheetNotice,
   AppSheetSectionText,
   AppSheetSectionTitle,
+  appSheetCategoryClass,
+  appSheetContentClass,
   appSheetSecondaryButtonClass,
 } from '../../../components/AppSheet'
 
@@ -27,6 +29,7 @@ export default function PrivacyPolicySheet({
       icon={<ShieldCheck size={20} strokeWidth={2.4} />}
       onClose={() => setOpen(false)}
       height="large"
+      motion="instant"
       footer={
         <button
           type="button"
@@ -37,10 +40,10 @@ export default function PrivacyPolicySheet({
         </button>
       }
     >
-      <div className="rounded-2xl border border-(--menu-category-border) bg-(--menu-category-bg) p-4">
+      <div className={appSheetCategoryClass}>
         <AppSheetNotice>{t('privacy.draftNotice')}</AppSheetNotice>
 
-        <div className="mt-4 rounded-xl bg-(--menu-content-bg) p-4">
+        <div className={`mt-3 ${appSheetContentClass}`}>
           <div className="divide-y divide-(--brand-border)/60">
             {POLICY_SECTIONS.map((section) => (
               <section key={section} className="py-4 first:pt-0 last:pb-0">
