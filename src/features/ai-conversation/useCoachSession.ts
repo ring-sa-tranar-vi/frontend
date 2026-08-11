@@ -426,6 +426,7 @@ export function useCoachSession(
   const startSession = useCallback(async () => {
     if (hasStartedRef.current) return
 
+    console.log('playing ringback...')
     startRingback()
 
     startedAtRef.current = performance.now()
@@ -459,7 +460,9 @@ export function useCoachSession(
       hasStartedRef.current = false
       return
     }
+    console.log('sleep 1s before starting gym ambience...')
     await sleep(1000)
+    console.log('sleep done, starting gym ambience...')
     stopRingback()
 
     startGymAmbience(session.trainer?.ambience)
