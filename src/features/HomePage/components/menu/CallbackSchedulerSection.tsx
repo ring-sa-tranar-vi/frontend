@@ -17,7 +17,9 @@ import {
 } from './types'
 
 const WEEKDAY_DATE = new Date(Date.UTC(2026, 6, 13))
-const callbackMinuteValues = ['00', '15', '30', '45'] as const
+const callbackMinuteValues = Array.from({ length: 60 }, (_, minute) =>
+  String(minute).padStart(2, '0'),
+)
 
 function getWeekdayLabels(locale: string) {
   const shortFormatter = new Intl.DateTimeFormat(locale, {
