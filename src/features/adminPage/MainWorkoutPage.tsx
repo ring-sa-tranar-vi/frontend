@@ -491,7 +491,7 @@ export default function MainWorkoutPage({ searchTerm = '' }: Props) {
 
     if (!form.name.trim())
       nextErrors.push(t('workoutsAdmin.validation.nameRequired'))
-    if (form.level < 0 || form.level > 4) {
+    if (form.level < 1 || form.level > 5) {
       nextErrors.push(t('workoutsAdmin.validation.levelRange'))
     }
 
