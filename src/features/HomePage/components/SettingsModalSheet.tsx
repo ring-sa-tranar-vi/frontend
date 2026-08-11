@@ -9,7 +9,6 @@ import {
   User,
 } from 'lucide-react'
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { useMyProfile } from '../../../hooks/useMyProfile'
 import { useUpdateProfile } from '../../../hooks/useUpdateProfile'
 import ContextModel from './ContextModal'
 import IntensitySlider from './IntensitySlider'
@@ -34,6 +33,7 @@ import SupportSheet from './SupportSheet'
 import EventsOrganisationsSheet from './menu/EventsOrganisationsSheet'
 import MenuPlaceholderSections from './menu/MenuPlaceholderSections'
 import OrganisationApplicationSheet from './menu/OrganisationApplicationSheet'
+import useCurrentUser from '../../../hooks/useCurrentUser'
 
 type ProfileSettings = {
   name?: string | null
@@ -318,7 +318,11 @@ export default function SettingsModalSheet({
 }) {
   const { t } = useTranslation()
   const { isLoaded, isSignedIn } = useAuth()
-  const { data: user, isSuccess, isLoading, isError } = useMyProfile()
+  const {
+    user,
+    isProfileLoading: isLoading,
+    isProfileError: isError,
+  } = useCurrentUser()
   const [isRendered, setIsRendered] = useState(open)
 
   useLayoutEffect(() => {
@@ -351,7 +355,7 @@ export default function SettingsModalSheet({
     )
   }
 
-  const hasProfile = isSuccess && Boolean(user)
+  const hasProfile = Boolean(user)
 
   return (
     <SettingsModalBody

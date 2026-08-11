@@ -1,19 +1,19 @@
 import { Gauge, MessageSquareText, UserRound } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import type { CoachCallSession } from '../types'
-import { useMyProfile } from '../../../hooks/useMyProfile'
 import {
   AppSheetCard,
   AppSheetLabel,
   AppSheetValue,
 } from '../../../components/AppSheet'
+import useCurrentUser from '../../../hooks/useCurrentUser'
 
 type UserInfoPanelProps = {
   session: CoachCallSession
 }
 
 export function UserInfoPanel({ session }: UserInfoPanelProps) {
-  const { data: profile } = useMyProfile()
+  const { user: profile } = useCurrentUser()
   const { t } = useTranslation()
 
   const displayName = profile?.name ?? session.userName ?? '-'

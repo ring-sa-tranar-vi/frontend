@@ -1,20 +1,11 @@
 import { getJson } from '../../lib/api/fetcher'
-import type { CoachCallSession, Trainer } from './types'
+import type {
+  CoachCallSession,
+  CurrentUserProfile,
+  Trainer,
+  Workout,
+} from './types'
 
-export type BackendWorkoutResponse = {
-  id: number
-  name: string
-  description?: string | null
-  dashboardName?: string | null
-  dashboardDescription?: string | null
-  instructions?: string | null
-  guidance?: string | null
-  level?: number | string | null
-  type?: string | null
-
-  image?: string | null
-  video?: string | null
-}
 export type BackendTrainerResponse = {
   id: number
   name: string
@@ -28,21 +19,12 @@ export type BackendTrainerResponse = {
   ambience: string | null
 }
 
-type BackendProgressResponse = {
+export type BackendProgressResponse = {
   currentStreak: number
   completedWorkouts: Array<{
     dateLabel: string
     workoutName: string
   }>
-}
-
-type BackendUserResponse = {
-  id: number
-  name: string
-  intensityLevel: number
-  context: string
-  trainerId?: number | null
-  onboarding?: boolean | null
 }
 
 const DEFAULT_TRAINER_ID = 1
@@ -89,36 +71,14 @@ export async function getTrainer(
   })
 }
 
-export async function getWorkouts(
-  token?: string | null,
-): Promise<BackendWorkoutResponse[]> {
-  return await getJson<BackendWorkoutResponse[]>(`/api/workouts`, {
-    token: token ?? undefined,
-  })
-}
-
 export async function getCoachCallSession(
-  workoutId: string | undefined,
+  user: CurrentUserProfile | null,
+  workout: Workout | null,
   token?: string | null,
 ): Promise<CoachCallSession> {
-  const workout = workoutId
-    ? await getJson<BackendWorkoutResponse>(`/api/workouts/${workoutId}`, {
-        token: token ?? undefined,
-      })
-    : null
-
-  let user: BackendUserResponse | null = null
   let progress: BackendProgressResponse | null = null
 
   if (token) {
-    try {
-      user = await getJson<BackendUserResponse>(`/api/users/me/profile`, {
-        token,
-      })
-    } catch (error) {
-      console.warn('[session/api] Could not fetch user profile', error)
-    }
-
     try {
       progress = await getJson<BackendProgressResponse>(
         `/api/users/me/progress`,

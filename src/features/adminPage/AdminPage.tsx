@@ -10,9 +10,9 @@ import AdminDashboard from './AdminDashboard'
 import CompanyOrganisationAdminPage from './CompanyOrganisationAdminPage'
 import OrganizationApplicationsAdminPage from './OrganizationApplicationsAdminPage'
 import { useAdminPage } from '../../hooks/useAdminPage'
-import { useMyProfile } from '../../hooks/useMyProfile'
 import LanguageSwitcher from '../../components/LanguageSwitcher'
 import { fetchAdminUsers, type AdminUser } from '../../api/admins'
+import useCurrentUser from '../../hooks/useCurrentUser'
 
 type AdminView =
   | 'dashboard'
@@ -148,7 +148,7 @@ export default function AdminPage() {
   const navigate = useNavigate()
   const { isLoaded } = useAuth()
   const { user } = useUser()
-  const { isLoading: profileLoading } = useMyProfile()
+  const { isProfileLoading: profileLoading } = useCurrentUser()
   const { t } = useTranslation()
   // TODO: re-enable before deploy
   const isAdmin = true // profile?.isAdmin === true

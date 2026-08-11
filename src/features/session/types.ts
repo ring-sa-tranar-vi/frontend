@@ -5,6 +5,31 @@ export type CompletedWorkout = {
   workoutName: string
 }
 
+export type Workout = {
+  id: number
+  name: string
+  description?: string | null
+  dashboardName?: string | null
+  dashboardDescription?: string | null
+  instructions?: string | null
+  guidance?: string | null
+  level?: number | string | null
+  type?: string | null
+  image?: string | null
+  video?: string | null
+}
+
+export type CurrentUserProfile = {
+  id: number
+  trainerId: number | null
+  intensityLevel: number | null
+  name?: string | null
+  context?: string | null
+  isAdmin?: boolean
+  city?: string | null
+  onboarding?: boolean
+}
+
 export type Trainer = {
   id: number
   name: string
@@ -21,36 +46,24 @@ export type Trainer = {
 export type CoachCallSession = {
   id: number | string
   isAuthenticated: boolean
-
-  // Backend använder "name" för workout-namnet
   name?: string
-
-  // Behålls för äldre frontend-kod
   workoutName?: string
-
-  // English dashboard display name (used when name/description is in another language)
   dashboardName?: string | null
-
   description?: string | null
   dashboardDescription?: string | null
   instructions?: string | null
   guidance?: string | null
-
   level?: number | string | null
   type?: string | null
-
   image?: string | null
   video?: string | null
-
   trainer?: Trainer | null
-
-  userName?: string
-  intensityLevel?: number
-  context?: string
-
-  currentStreak?: number
-  completedWorkouts?: CompletedWorkout[]
-  onboarding?: boolean
+  userName?: string | null
+  intensityLevel?: number | null
+  context?: string | null
+  currentStreak?: number | null
+  completedWorkouts?: CompletedWorkout[] | null
+  onboarding?: boolean | null
 }
 
 export type OnboardingStage = 'confirm_name' | 'intensity' | 'context' | 'done'

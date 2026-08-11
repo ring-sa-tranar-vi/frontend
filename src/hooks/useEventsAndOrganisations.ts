@@ -127,7 +127,7 @@ export function useEventsAndOrganisations(
     queryFn: async () => {
       const token = await getRequiredToken()
       const organisations = await requestJson<unknown>(
-        '/api/organisations',
+        '/api/organizations',
         token,
       )
 
