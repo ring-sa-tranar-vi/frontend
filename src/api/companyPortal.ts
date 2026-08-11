@@ -61,12 +61,12 @@ async function requestJson<T>(path: string, token: string, init?: RequestInit) {
 }
 
 export function fetchMyOrganisations(token: string) {
-  return requestJson<CompanyOrganisation[]>('/api/organisations/me', token)
+  return requestJson<CompanyOrganisation[]>('/api/organizations/me', token)
 }
 
 export function fetchOrganisationEvents(token: string, organisationId: number) {
   return requestJson<CompanyEvent[]>(
-    `/api/organisations/${organisationId}/events`,
+    `/api/organizations${organisationId}/events`,
     token,
   )
 }
@@ -77,7 +77,7 @@ export function updateCompanyOrganisation(
   payload: CompanyOrganisationUpdateInput,
 ) {
   return requestJson<CompanyOrganisation>(
-    `/api/organisations/${organisationId}`,
+    `/api/organizations${organisationId}`,
     token,
     {
       method: 'PUT',

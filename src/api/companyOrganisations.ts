@@ -84,11 +84,11 @@ export async function fetchCompanyOrganisations(
 ): Promise<CompanyOrganisation[]> {
   try {
     return await requestJson<CompanyOrganisation[]>(
-      '/api/admin/organisations',
+      '/api/admin/organizations',
       token,
     )
   } catch {
-    return requestJson<CompanyOrganisation[]>('/api/organisations', token)
+    return requestJson<CompanyOrganisation[]>('/api/organizations', token)
   }
 }
 
@@ -96,7 +96,7 @@ export async function createCompanyOrganisation(
   token: string | null | undefined,
   payload: CreateOrganisationInput,
 ): Promise<CompanyOrganisation> {
-  return requestJson<CompanyOrganisation>('/api/admin/organisations', token, {
+  return requestJson<CompanyOrganisation>('/api/admin/organizations', token, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -121,7 +121,7 @@ export async function updateCompanyOrganisation(
     orgCity: payload.orgCity.trim(),
     organizerId: payload.organizerId,
   }
-  return requestJson<CompanyOrganisation>(`/api/organisations/${id}`, token, {
+  return requestJson<CompanyOrganisation>(`/api/organizations${id}`, token, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
@@ -132,7 +132,7 @@ export async function deleteCompanyOrganisation(
   token: string | null | undefined,
   id: number,
 ) {
-  await request(`/api/admin/organisations/${id}`, token, { method: 'DELETE' })
+  await request(`/api/admin/organizations/${id}`, token, { method: 'DELETE' })
 }
 
 export async function createCompanyEvent(
