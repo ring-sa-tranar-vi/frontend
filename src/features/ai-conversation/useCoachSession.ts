@@ -89,7 +89,7 @@ export function useCoachSession(
         calendarEvents,
       ),
     [
-      session,
+      session.id,
       sessionCoachPrompt,
       sessionTrainerName,
       alreadyCompletedToday,
@@ -394,12 +394,21 @@ export function useCoachSession(
       addDebugEvent('change_workout', workoutId)
       addDebugEvent('change_workout_reasoning', reasoning)
       updateCurrentWorkout(workoutId, reasoning)
+      const instructions = session.instructions
+      const guidance = session.guidance
+
+      const prompt = `
+      ### CHANGE WORKOUT
+      - WORKOUT ID: workoutId
+      - INSTRUCTIONS: ${instructions}
+      - GUIDANCE: ${guidance}`.trim()
+      sendCoachPrompt(prompt)
     },
     [addDebugEvent, updateCurrentWorkout],
   )
 
   const getWorkouts = useCallback(() => {
-    const filteredWorkouts = workouts?.filter((w) => w.level !== session.level)
+    const filteredWorkouts = workouts?.filter((w) => w.level === session.level)
     const workoutsPrompt = `These are your available workouts: ${filteredWorkouts
       ?.map(
         (workout) =>
@@ -486,6 +495,13 @@ export function useCoachSession(
   //──────────────────────
   const updateUserName = useCallback(
     async (name: string) => {
+      if (name === session.userName) {
+        addDebugEvent(
+          'skip onboarding',
+          `step=${stepRef.current} - name unchanged`,
+        )
+        return
+      }
       if (name === '') {
         addDebugEvent('skip onboarding', `step=${stepRef.current} - empty name`)
         return
@@ -500,7 +516,6 @@ export function useCoachSession(
 
       await updateProfile({ name: name })
       addDebugEvent('onboarding-name', name)
-      sendCoachPrompt(`Mitt namn är ${name}.`)
     },
     [addDebugEvent, sendCoachPrompt, updateProfile],
   )
@@ -510,6 +525,13 @@ export function useCoachSession(
   //──────────────────────
   const updateIntensityLevel = useCallback(
     async (intensityLevel: number) => {
+      if (intensityLevel === session.intensityLevel) {
+        addDebugEvent(
+          'skip onboarding',
+          `step=${stepRef.current} - intensity unchanged`,
+        )
+        return
+      }
       if (intensityLevel < 1 || intensityLevel > 5) {
         addDebugEvent(
           'skip onboarding',
@@ -519,7 +541,6 @@ export function useCoachSession(
       }
       await updateProfile({ intensityLevel })
       addDebugEvent('onboarding-intensity', intensityLevel)
-      sendCoachPrompt(`Jag vill träna på nivå ${intensityLevel}.`)
     },
     [addDebugEvent, sendCoachPrompt, updateProfile],
   )
@@ -532,7 +553,6 @@ export function useCoachSession(
     async (context: string) => {
       await updateProfile({ context })
       addDebugEvent('onboarding-context', context)
-      sendCoachPrompt(`Jag vill träna i kontexten: ${context}.`)
     },
     [addDebugEvent, sendCoachPrompt, updateProfile],
   )
@@ -544,14 +564,13 @@ export function useCoachSession(
   const endOnboarding = useCallback(async () => {
     await updateProfile({ onboarding: false })
     addDebugEvent('onboarding-complete')
-    sendCoachPrompt('Jag är redo att avsluta samtalet.')
+    finishSessionRef.current()
   }, [addDebugEvent, sendCoachPrompt, updateProfile])
 
   const onboardingToTraining = useCallback(async () => {
     await updateProfile({ onboarding: false })
     setSessionStep('waiting_instruction_approval')
     addDebugEvent('onboarding-complete')
-    sendCoachPrompt('Jag är redo att höra instruktionerna.')
   }, [addDebugEvent, sendCoachPrompt, updateProfile, setSessionStep])
 
   //──────────────────────
