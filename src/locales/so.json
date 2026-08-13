@@ -76,6 +76,7 @@
   "menu": {
     "title": "Liiska",
     "subtitle": "Wax walba hal meel",
+    "progress": "Horumarka liiska",
     "activity": {
       "title": "Dhaqdhaqaaqaaga",
       "description": "La soco taxanaha tababarka adigoon maalin walba goobo badan muujin.",
@@ -116,6 +117,7 @@
           "week": "Toddobaadkan"
         },
         "upcomingEvents": "Dhacdooyinka soo socda",
+        "online": "Online",
         "resultCount": "{{count}} dhacdo",
         "organisationsIntro": "Raac ururrada bixiya dhaqdhaqaaqyo ay la sameeyaan Ring så tränar vi.",
         "allOrganisations": "Dhammaan ururrada",
@@ -181,7 +183,7 @@
       "hour": "Saacad",
       "minute": "Daqiiqad",
       "repeat": "Ku celi",
-      "repeatNever": "Marna",
+      "repeatNever": "Hal mar",
       "repeatWeekly": "Toddobaad kasta",
       "confirm": "Xaqiiji wicitaanka",
       "confirming": "Waa la xaqiijinayaa…",
@@ -207,6 +209,7 @@
     "getHelpButton": "Hel caawimaad",
     "privacyComingSoon": "Siyaasadda asturnaanta dhawaan ayay imaanaysaa",
     "fullName": "Magac",
+    "changeName": "Wax ka beddel",
     "fullNameDescription": "Magaca waxaa isticmaali doona tababaraha inta lagu jiro fadhiga.",
     "fullNamePlaceholder": "Magacaaga hore",
     "fullNameFound": "Magaca waxaa laga helay profile-kaaga.",

@@ -28,6 +28,7 @@ describe('EventListItem', () => {
     event: mockEvent,
     onEdit: vi.fn(),
     onDelete: vi.fn(),
+    isDeleting: false,
   }
 
   const renderComponent = (propsOverrides = {}) => {

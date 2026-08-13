@@ -14,6 +14,7 @@ describe('OrganisationInfoCard', () => {
     orgCity: 'Stockholm',
     setOrgCity: vi.fn(),
     orgWords: 3,
+    orgCharacterCount: 19,
     canSaveOrg: true,
     saveOrganisation: vi.fn(),
     isSavingOrganisation: false,

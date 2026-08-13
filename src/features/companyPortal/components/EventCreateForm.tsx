@@ -23,6 +23,13 @@ export default function EventCreateForm({
   createEvent,
   isSavingEvent,
 }: Props) {
+  const now = new Date()
+  const minimumDateTime = new Date(
+    now.getTime() - now.getTimezoneOffset() * 60_000,
+  )
+    .toISOString()
+    .slice(0, 16)
+
   return (
     <section className={`mt-3 ${appSheetCardClass}`}>
       <h3 className="text-[length:var(--text-lg)] font-extrabold text-(--brand-ink)">
@@ -43,6 +50,7 @@ export default function EventCreateForm({
           <span className={appSheetFormLabelClass}>Datum och tid</span>
           <input
             type="datetime-local"
+            min={minimumDateTime}
             value={eventForm.time}
             onChange={(e) =>
               setEventForm((f) => ({ ...f, time: e.target.value }))
