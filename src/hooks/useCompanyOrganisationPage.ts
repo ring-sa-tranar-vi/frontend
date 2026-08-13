@@ -1,11 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '@clerk/react'
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   createCompanyEvent,
   deleteCompanyEvent,
-  fetchMyOrganisations,
-  fetchOrganisationEvents,
+  fetchCompanyMe,
+  fetchManagedOrganisation,
+  fetchManagedOrganisationEvents,
   updateCompanyEvent,
   updateCompanyOrganisation,
   type CompanyEvent,
@@ -14,8 +15,6 @@ import {
   emptyEventForm,
   type EventForm,
 } from '../features/companyPortal/types.ts'
-
-const emptyOrganisations: never[] = []
 
 function toLocalDateTime(value: string) {
   const trimmed = value.trim()
@@ -47,10 +46,6 @@ export function formatTime(value: string) {
   })
 }
 
-export function wordCount(text: string) {
-  return text.trim().split(/\s+/).filter(Boolean).length
-}
-
 export function formatDayNumber(value: string) {
   const d = new Date(value)
   if (Number.isNaN(d.getTime())) return '--'
@@ -60,15 +55,15 @@ export function formatDayNumber(value: string) {
 export function formatMonthShort(value: string) {
   const d = new Date(value)
   if (Number.isNaN(d.getTime())) return '---'
-  return d.toLocaleDateString('sv-SE', { month: 'short' }).toUpperCase()
+  return d
+    .toLocaleDateString('sv-SE', { month: 'short' })
+    .replace('.', '')
+    .toUpperCase()
 }
 
-export function useCompanyOrganisationPage() {
-  const { getToken, isLoaded, isSignedIn } = useAuth()
+export function useCompanyOrganisationPage(enabled = true) {
+  const { getToken, isLoaded, isSignedIn, userId } = useAuth()
   const queryClient = useQueryClient()
-  const layoutRef = useRef<HTMLDivElement | null>(null)
-  const [isWideLayout, setIsWideLayout] = useState(false)
-
   const [orgName, setOrgName] = useState('')
   const [orgDescription, setOrgDescription] = useState('')
   const [orgCity, setOrgCity] = useState('')
@@ -79,9 +74,6 @@ export function useCompanyOrganisationPage() {
     useState<EventForm>(emptyEventForm)
   const [showCreateEvent, setShowCreateEvent] = useState(false)
   const [statusMessage, setStatusMessage] = useState<string | null>(null)
-  const [selectedOrganisationId, setSelectedOrganisationId] = useState<
-    number | null
-  >(null)
 
   async function getRequiredToken() {
     const token = await getToken()
@@ -92,31 +84,31 @@ export function useCompanyOrganisationPage() {
     return token
   }
 
-  const organisationsQuery = useQuery({
-    queryKey: ['my-organisations'],
-    queryFn: async () => fetchMyOrganisations(await getRequiredToken()),
-    enabled: isLoaded && Boolean(isSignedIn),
+  const companyQuery = useQuery({
+    queryKey: ['company-me', userId],
+    queryFn: async () => fetchCompanyMe(await getRequiredToken()),
+    enabled: enabled && isLoaded && Boolean(isSignedIn),
   })
 
-  const organisations = organisationsQuery.data ?? emptyOrganisations
-  const activeOrganisationId =
-    selectedOrganisationId ?? organisations[0]?.id ?? null
-  const activeOrganisation =
-    organisations.find(
-      (organisation) => organisation.id === activeOrganisationId,
-    ) ?? null
+  const canManageOrganisation =
+    companyQuery.data?.canManageOrganisation === true
 
-  useEffect(() => {
-    if (!selectedOrganisationId && organisations[0]) {
-      setSelectedOrganisationId(organisations[0].id)
-    }
-  }, [organisations, selectedOrganisationId])
+  const organisationQuery = useQuery({
+    queryKey: ['company-organisation', companyQuery.data?.organisationId],
+    queryFn: async () => fetchManagedOrganisation(await getRequiredToken()),
+    enabled:
+      enabled && isLoaded && Boolean(isSignedIn) && canManageOrganisation,
+  })
+
+  const activeOrganisation = organisationQuery.data ?? null
+  const activeOrganisationId = activeOrganisation?.id ?? null
 
   const eventsQuery = useQuery({
-    queryKey: ['organisation-events', activeOrganisationId],
+    queryKey: ['company-events', activeOrganisationId],
     queryFn: async () =>
-      fetchOrganisationEvents(await getRequiredToken(), activeOrganisationId!),
-    enabled: isLoaded && Boolean(isSignedIn) && activeOrganisationId != null,
+      fetchManagedOrganisationEvents(await getRequiredToken()),
+    enabled:
+      enabled && isLoaded && Boolean(isSignedIn) && canManageOrganisation,
   })
 
   const events = useMemo(() => {
@@ -135,21 +127,6 @@ export function useCompanyOrganisationPage() {
     setOrgCity(organisation.orgCity ?? '')
   }, [activeOrganisation])
 
-  useLayoutEffect(() => {
-    const el = layoutRef.current
-    if (!el || typeof ResizeObserver === 'undefined') return
-
-    const syncLayout = () => {
-      setIsWideLayout(el.clientWidth >= 860)
-    }
-
-    syncLayout()
-    const observer = new ResizeObserver(syncLayout)
-    observer.observe(el)
-
-    return () => observer.disconnect()
-  }, [])
-
   const orgMutation = useMutation({
     mutationFn: async () => {
       const organisationId = activeOrganisationId
@@ -157,21 +134,18 @@ export function useCompanyOrganisationPage() {
         throw new Error('Organisation saknas.')
       }
 
-      return updateCompanyOrganisation(
-        await getRequiredToken(),
-        organisationId,
-        {
-          name: orgName.trim(),
-          description: orgDescription.trim(),
-          orgCity: orgCity.trim(),
-        },
-      )
+      return updateCompanyOrganisation(await getRequiredToken(), {
+        name: orgName.trim(),
+        description: orgDescription.trim(),
+        orgCity: orgCity.trim(),
+      })
     },
     onSuccess: async () => {
       setStatusMessage('Organisationen sparades.')
-      await queryClient.invalidateQueries({
-        queryKey: ['my-organisations'],
-      })
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['company-organisation'] }),
+        queryClient.invalidateQueries({ queryKey: ['organisations', 'list'] }),
+      ])
     },
     onError: (error) => {
       setStatusMessage((error as Error).message)
@@ -191,7 +165,10 @@ export function useCompanyOrganisationPage() {
     onSuccess: async () => {
       setEventForm(emptyEventForm)
       setStatusMessage('Event skapades.')
-      await queryClient.invalidateQueries({ queryKey: ['organisation-events'] })
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['company-events'] }),
+        queryClient.invalidateQueries({ queryKey: ['events', 'list'] }),
+      ])
     },
     onError: (error) => {
       setStatusMessage((error as Error).message)
@@ -217,7 +194,10 @@ export function useCompanyOrganisationPage() {
       setEditingEventId(null)
       setEditingEventForm(emptyEventForm)
       setStatusMessage('Event uppdaterades.')
-      await queryClient.invalidateQueries({ queryKey: ['organisation-events'] })
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['company-events'] }),
+        queryClient.invalidateQueries({ queryKey: ['events', 'list'] }),
+      ])
     },
     onError: (error) => {
       setStatusMessage((error as Error).message)
@@ -229,7 +209,10 @@ export function useCompanyOrganisationPage() {
       deleteCompanyEvent(await getRequiredToken(), eventId),
     onSuccess: async () => {
       setStatusMessage('Event togs bort.')
-      await queryClient.invalidateQueries({ queryKey: ['organisation-events'] })
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['company-events'] }),
+        queryClient.invalidateQueries({ queryKey: ['events', 'list'] }),
+      ])
     },
     onError: (error) => {
       setStatusMessage((error as Error).message)
@@ -241,21 +224,20 @@ export function useCompanyOrganisationPage() {
     eventForm.name.trim().length > 1 &&
     eventForm.time.trim().length > 0 &&
     eventForm.city.trim().length > 0 &&
-    eventForm.venue.trim().length > 0 &&
     eventForm.eventType !== ''
 
   const canSaveEditedEvent =
     editingEventForm.name.trim().length > 1 &&
     editingEventForm.time.trim().length > 0 &&
     editingEventForm.city.trim().length > 0 &&
-    editingEventForm.venue.trim().length > 0 &&
     editingEventForm.eventType !== ''
 
-  const isLoading = organisationsQuery.isLoading || eventsQuery.isLoading
-  const isError = organisationsQuery.isError || eventsQuery.isError
+  const isLoading = organisationQuery.isLoading || eventsQuery.isLoading
+  const isError = organisationQuery.isError || eventsQuery.isError
 
   const errorMessage =
-    (organisationsQuery.error as Error)?.message ||
+    (companyQuery.error as Error)?.message ||
+    (organisationQuery.error as Error)?.message ||
     (eventsQuery.error as Error)?.message ||
     'Okänt fel.'
 
@@ -266,7 +248,7 @@ export function useCompanyOrganisationPage() {
       description: event.description ?? '',
       time: toInputDateTime(event.time),
       city: event.city,
-      venue: event.venue,
+      venue: event.venue ?? '',
       eventType: event.eventType,
     })
   }
@@ -277,12 +259,13 @@ export function useCompanyOrganisationPage() {
   }
 
   return {
-    layoutRef,
-    isWideLayout,
     statusMessage,
-    organisations,
-    selectedOrganisationId: activeOrganisationId,
-    setSelectedOrganisationId,
+    company: companyQuery.data ?? null,
+    isLoadingCompany: companyQuery.isLoading,
+    isCompanyError: companyQuery.isError,
+    refetchCompany: () => companyQuery.refetch(),
+    refetchOrganisation: () =>
+      Promise.all([organisationQuery.refetch(), eventsQuery.refetch()]),
     orgName,
     setOrgName,
     orgDescription,
@@ -300,16 +283,22 @@ export function useCompanyOrganisationPage() {
     canSaveOrg,
     canCreateEvent,
     canSaveEditedEvent,
-    orgWords: wordCount(orgDescription),
+    orgCharacterCount: orgDescription.length,
+    followersCount: activeOrganisation?.followersCount,
     saveOrganisation: () => orgMutation.mutate(),
     createEvent: () => createEventMutation.mutate(),
     updateEvent: () => updateEventMutation.mutate(),
-    deleteEvent: (id: number) => deleteEventMutation.mutate(id),
+    deleteEvent: async (id: number) => {
+      await deleteEventMutation.mutateAsync(id)
+    },
     startEditingEvent,
     stopEditingEvent,
     isSavingOrganisation: orgMutation.isPending,
     isSavingEvent: createEventMutation.isPending,
     isUpdatingEvent: updateEventMutation.isPending,
+    deletingEventId: deleteEventMutation.isPending
+      ? deleteEventMutation.variables
+      : null,
     isLoading,
     isError,
     errorMessage,

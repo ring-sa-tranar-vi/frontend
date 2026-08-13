@@ -26,7 +26,7 @@ const ContextModel = ({ value, onChange }: ContextModelProps) => {
 
       <AppSheetSectionText>{t('context.description')}</AppSheetSectionText>
 
-      <div className="mt-3 rounded-2xl border border-(--menu-control-border) bg-(--menu-control-bg) p-3">
+      <div className="menu-field-shell mt-3 rounded-2xl border border-(--menu-control-border) p-3 focus-within:border-(--brand-border-strong) focus-within:ring-2 focus-within:ring-(--brand-selection)">
         <textarea
           value={value}
           onChange={(e) => onChange(e.target.value.slice(0, MAX_CHARS))}

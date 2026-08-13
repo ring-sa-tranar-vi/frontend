@@ -5,12 +5,10 @@ import PhysicalEventsSection from './PhysicalEventsSection'
 import { useActivitySummary } from '../../../../hooks/useActivitySummary'
 import { useCallbackPreferences } from '../../../../hooks/useCallbackPreferences'
 import { useEventsAndOrganisations } from '../../../../hooks/useEventsAndOrganisations'
-import { menuPlaceholderData } from './placeholderData'
 import type {
   CalendarActivity,
   CallbackRequest,
   CallbackWeekday,
-  MenuPlaceholderData,
 } from './types'
 import { useMemo } from 'react'
 
@@ -42,13 +40,11 @@ function getEventIdFromCalendarActivity(activityId: string): string {
 }
 
 export default function MenuPlaceholderSections({
-  data = menuPlaceholderData,
   onFindEvents,
   onConfirmCallback,
   dataEnabled = false,
 }: {
-  data?: MenuPlaceholderData
-  onFindEvents?: () => void
+  onFindEvents: () => void
   onConfirmCallback?: (request: CallbackRequest) => void | Promise<void>
   dataEnabled?: boolean
 }) {
@@ -123,7 +119,7 @@ export default function MenuPlaceholderSections({
   }
 
   return (
-    <div className="space-y-7">
+    <div className="space-y-4">
       <ActivitySummarySection
         summary={activityQuery.data}
         isLoading={activityQuery.isLoading}
@@ -149,10 +145,7 @@ export default function MenuPlaceholderSections({
           callbackPreferences.removeCallbackMutation.reset()
         }}
       />
-      <CallbackSchedulerSection
-        initialRequest={data.callback}
-        onConfirm={onConfirmCallback ?? saveCallback}
-      />
+      <CallbackSchedulerSection onConfirm={onConfirmCallback ?? saveCallback} />
     </div>
   )
 }

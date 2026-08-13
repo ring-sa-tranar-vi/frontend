@@ -1,7 +1,9 @@
 import {
   ArrowLeft,
   Building2,
+  CalendarDays,
   Check,
+  ChevronDown,
   Clock3,
   MapPin,
   Search,
@@ -9,7 +11,12 @@ import {
 } from 'lucide-react'
 import { type KeyboardEvent, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { AppSheet, AppSheetNotice } from '../../../../components/AppSheet'
+import {
+  AppSheet,
+  AppSheetNotice,
+  appSheetCategoryClass,
+  appSheetCardClass,
+} from '../../../../components/AppSheet'
 import {
   type EventDto,
   type OrganisationDto,
@@ -125,6 +132,7 @@ function EventCard({
   onToggle: () => void
 }) {
   const { t } = useTranslation()
+  const [descriptionOpen, setDescriptionOpen] = useState(false)
   const date = toEventDate(event)
 
   if (!date) return null
@@ -138,6 +146,11 @@ function EventCard({
     hour: '2-digit',
     minute: '2-digit',
   }).format(date)
+  const dateLabel = new Intl.DateTimeFormat(locale, {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  }).format(date)
   const location = [event.venue, event.city].filter(Boolean).join(' · ')
   const buttonLabel = isPending
     ? t('menu.events.directory.saving')
@@ -145,74 +158,140 @@ function EventCard({
       ? t('menu.events.directory.unregister')
       : t('menu.events.directory.register')
 
-  return (
-    <article className="grid grid-cols-[3.5rem_minmax(0,1fr)_auto] items-center gap-3 rounded-2xl border border-(--brand-border-light) bg-(--menu-content-bg) p-4 max-[350px]:grid-cols-[3rem_minmax(0,1fr)]">
-      <time
-        dateTime={event.time}
-        className="flex h-16 w-14 shrink-0 flex-col items-center justify-center rounded-2xl bg-(--brand-soft) text-center max-[350px]:h-14 max-[350px]:w-12"
-      >
-        <span className="text-xl leading-none font-extrabold text-(--brand-primary-deep)">
-          {day}
-        </span>
-        <span className="mt-1 text-[0.62rem] leading-none font-extrabold tracking-wide text-(--brand-primary-deep)">
-          {month}
-        </span>
-      </time>
+  const description = event.description?.trim()
+  const descriptionId = `event-description-${event.id}`
 
-      <div className="min-w-0">
-        <div className="flex flex-wrap items-center gap-2">
-          <h3 className="text-[length:var(--text-base)] leading-tight font-extrabold text-(--brand-ink)">
+  return (
+    <div className={`${appSheetCardClass} menu-event-card`}>
+      <div className="menu-event-grid">
+        <time dateTime={event.time} className="menu-event-date">
+          <span className="menu-event-date-day">{day}</span>
+          <span className="menu-event-date-month">{month}</span>
+        </time>
+
+        <div className="menu-event-content">
+          <h3 className="menu-card-title menu-event-title" title={event.name}>
             {event.name}
           </h3>
-          {isAttending ? (
-            <span className="inline-flex items-center gap-1 rounded-full bg-(--brand-soft) px-2 py-1 text-[0.62rem] leading-none font-extrabold text-(--brand-primary-deep)">
-              <Check size={12} strokeWidth={2.8} aria-hidden="true" />
-              {t('menu.events.directory.registered')}
-            </span>
+
+          {isAttending || typeof event.attendeesCount === 'number' ? (
+            <div className="menu-event-status-row">
+              {isAttending ? (
+                <span className="menu-card-badge inline-flex items-center gap-1 rounded-full bg-(--brand-soft) px-2 py-1 text-(--brand-primary-deep)">
+                  <Check size={12} strokeWidth={2.8} aria-hidden="true" />
+                  {t('menu.events.directory.registered')}
+                </span>
+              ) : null}
+              {typeof event.attendeesCount === 'number' ? (
+                <span className="menu-card-badge inline-flex items-center gap-1.5 rounded-full bg-(--brand-soft) px-2 py-1 text-(--brand-primary-deep)">
+                  <UsersRound size={13} aria-hidden="true" />
+                  {t('menu.events.directory.attendeeCount', {
+                    count: event.attendeesCount,
+                  })}
+                </span>
+              ) : null}
+            </div>
           ) : null}
+
+          <div className="menu-card-meta menu-event-meta-stack text-(--brand-body-ink)">
+            <p className="menu-event-meta-row">
+              <span className="menu-event-meta-item whitespace-nowrap">
+                <CalendarDays
+                  size={14}
+                  className="shrink-0 text-(--brand-primary)"
+                  aria-hidden="true"
+                />
+                <span>{dateLabel}</span>
+              </span>
+              <span className="menu-event-meta-item whitespace-nowrap">
+                <Clock3
+                  size={14}
+                  className="shrink-0 text-(--brand-primary)"
+                  aria-hidden="true"
+                />
+                <span>{time}</span>
+              </span>
+            </p>
+            {location ? (
+              <p className="menu-event-meta-item">
+                <MapPin
+                  size={14}
+                  className="mt-0.5 shrink-0 text-(--brand-primary)"
+                  aria-hidden="true"
+                />
+                <span className="break-words">{location}</span>
+              </p>
+            ) : null}
+            {organisationName ? (
+              <p className="menu-event-meta-item">
+                <Building2
+                  size={14}
+                  className="mt-0.5 shrink-0 text-(--brand-primary)"
+                  aria-hidden="true"
+                />
+                <span className="break-words">{organisationName}</span>
+              </p>
+            ) : null}
+          </div>
         </div>
-        <p className="mt-1 flex items-center gap-1.5 text-[length:var(--text-xs)] font-semibold text-(--brand-body-ink)">
-          <Clock3 size={13} className="shrink-0" aria-hidden="true" />
-          <span>{time}</span>
-        </p>
-        {location ? (
-          <p className="mt-1 flex min-w-0 items-start gap-1.5 text-[length:var(--text-xs)] font-semibold text-(--brand-body-ink)">
-            <MapPin size={13} className="mt-0.5 shrink-0" aria-hidden="true" />
-            <span>{location}</span>
-          </p>
-        ) : null}
-        {organisationName ? (
-          <p className="mt-1 flex min-w-0 items-start gap-1.5 text-[length:var(--text-xs)] font-semibold text-(--brand-muted)">
-            <UsersRound
-              size={13}
-              className="mt-0.5 shrink-0"
-              aria-hidden="true"
-            />
-            <span>{organisationName}</span>
-          </p>
-        ) : null}
+
+        <div className="menu-event-actions menu-event-primary-action">
+          <button
+            type="button"
+            onClick={onToggle}
+            disabled={!membershipReady || isPending}
+            aria-busy={isPending}
+            aria-live="polite"
+            aria-label={
+              isPending
+                ? buttonLabel
+                : isAttending
+                  ? t('menu.events.directory.cancelRegistrationFor', {
+                      name: event.name,
+                    })
+                  : t('menu.events.directory.registerFor', { name: event.name })
+            }
+            className={`min-h-11 min-w-[5.75rem] rounded-xl px-3 py-2.5 text-[length:var(--text-sm)] font-extrabold transition focus-visible:ring-2 focus-visible:ring-(--brand-border-strong) focus-visible:ring-offset-2 focus-visible:outline-none active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-55 ${
+              isAttending
+                ? 'border border-(--brand-border-field) bg-(--brand-soft) text-(--brand-primary-deep)'
+                : 'bg-(--brand-primary) text-(--brand-on-primary) hover:bg-(--brand-primary-strong)'
+            }`}
+          >
+            {buttonLabel}
+          </button>
+        </div>
       </div>
 
-      <button
-        type="button"
-        onClick={onToggle}
-        disabled={!membershipReady || isPending}
-        aria-label={
-          isAttending
-            ? t('menu.events.directory.cancelRegistrationFor', {
-                name: event.name,
-              })
-            : t('menu.events.directory.registerFor', { name: event.name })
-        }
-        className={`min-h-11 min-w-[5.75rem] rounded-xl px-4 py-2.5 text-[length:var(--text-sm)] font-extrabold transition focus-visible:ring-2 focus-visible:ring-(--brand-border-strong) focus-visible:ring-offset-2 focus-visible:outline-none active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-55 max-[350px]:col-start-2 max-[350px]:justify-self-end ${
-          isAttending
-            ? 'border border-(--brand-border-field) bg-(--brand-soft) text-(--brand-primary-deep)'
-            : 'bg-(--brand-primary) text-(--brand-on-primary) hover:bg-(--brand-primary-strong)'
-        }`}
-      >
-        {buttonLabel}
-      </button>
-    </article>
+      {description ? (
+        <div className="menu-event-footer">
+          <button
+            type="button"
+            onClick={() => setDescriptionOpen((current) => !current)}
+            aria-expanded={descriptionOpen}
+            aria-controls={descriptionId}
+            className="menu-event-accordion transition hover:bg-(--brand-soft) focus-visible:ring-2 focus-visible:ring-(--brand-border-strong) focus-visible:outline-none"
+          >
+            <span>
+              {descriptionOpen
+                ? t('menu.events.directory.hideDescription')
+                : t('menu.events.directory.showDescription')}
+            </span>
+            <ChevronDown
+              size={19}
+              className={`shrink-0 transition-transform duration-200 ${
+                descriptionOpen ? 'rotate-180' : ''
+              }`}
+              aria-hidden="true"
+            />
+          </button>
+          {descriptionOpen ? (
+            <p id={descriptionId} className="menu-card-copy px-2 pt-1 pb-2">
+              {description}
+            </p>
+          ) : null}
+        </div>
+      ) : null}
+    </div>
   )
 }
 
@@ -222,17 +301,27 @@ function OrganisationCard({
   membershipReady,
   isPending,
   onToggle,
+  events,
+  attendingIds,
+  eventMembershipReady,
+  isEventPending,
+  onToggleEvent,
+  locale,
 }: {
   organisation: OrganisationDto
   isFollowing: boolean
   membershipReady: boolean
   isPending: boolean
   onToggle: () => void
+  events: EventDto[]
+  attendingIds: Set<number>
+  eventMembershipReady: boolean
+  isEventPending: (event: EventDto) => boolean
+  onToggleEvent: (event: EventDto) => void
+  locale: string
 }) {
   const { t } = useTranslation()
-  const upcomingEvents = (organisation.events ?? []).filter((event) =>
-    isUpcoming(event),
-  ).length
+  const [eventsOpen, setEventsOpen] = useState(false)
   const avatarClass =
     organisationAvatarClasses[
       Math.abs(organisation.id) % organisationAvatarClasses.length
@@ -242,67 +331,133 @@ function OrganisationCard({
     : isFollowing
       ? t('menu.events.directory.unfollow')
       : t('menu.events.directory.follow')
+  const description = organisation.description?.trim()
+  const eventsId = `organisation-events-${organisation.id}`
 
   return (
-    <article className="grid grid-cols-[3rem_minmax(0,1fr)_auto] items-center gap-3 rounded-2xl border border-(--brand-border-light) bg-(--menu-content-bg) p-4 max-[350px]:grid-cols-[3rem_minmax(0,1fr)]">
-      <div
-        className={`flex h-12 w-12 items-center justify-center rounded-2xl text-[length:var(--text-base)] font-extrabold ${avatarClass}`}
-        aria-hidden="true"
-      >
-        {getInitials(organisation.name)}
-      </div>
+    <article className={`${appSheetCardClass} menu-organisation-card`}>
+      <div className="menu-organisation-header flex items-start gap-3">
+        <div
+          className={`flex h-12 w-12 items-center justify-center rounded-2xl text-[length:var(--text-base)] font-extrabold ${avatarClass}`}
+          aria-hidden="true"
+        >
+          {getInitials(organisation.name)}
+        </div>
 
-      <div className="min-w-0">
-        <div className="flex flex-wrap items-center gap-2">
-          <h3 className="text-[length:var(--text-base)] leading-tight font-extrabold text-(--brand-ink)">
+        <div className="min-w-0 flex-1">
+          <h3
+            className="menu-card-title line-clamp-2 min-h-10"
+            title={organisation.name}
+          >
             {organisation.name}
           </h3>
           {isFollowing ? (
-            <span className="inline-flex items-center gap-1 rounded-full bg-(--brand-soft) px-2 py-1 text-[0.62rem] leading-none font-extrabold text-(--brand-primary-deep)">
-              <Check size={12} strokeWidth={2.8} aria-hidden="true" />
-              {t('menu.events.directory.following')}
+            <div className="menu-event-status-row">
+              <span className="menu-card-badge inline-flex items-center gap-1 rounded-full bg-(--brand-soft) px-2 py-1 text-(--brand-primary-deep)">
+                <Check size={12} strokeWidth={2.8} aria-hidden="true" />
+                {t('menu.events.directory.following')}
+              </span>
+            </div>
+          ) : null}
+        </div>
+
+        <div className="menu-organisation-actions shrink-0">
+          <button
+            type="button"
+            onClick={onToggle}
+            disabled={!membershipReady || isPending}
+            aria-busy={isPending}
+            aria-live="polite"
+            aria-label={
+              isPending
+                ? buttonLabel
+                : isFollowing
+                  ? t('menu.events.directory.unfollowOrganisation', {
+                      name: organisation.name,
+                    })
+                  : t('menu.events.directory.followOrganisation', {
+                      name: organisation.name,
+                    })
+            }
+            className={`min-h-11 rounded-xl px-3 py-2.5 text-[length:var(--text-sm)] font-extrabold transition focus-visible:ring-2 focus-visible:ring-(--brand-border-strong) focus-visible:ring-offset-2 focus-visible:outline-none active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-55 ${
+              isFollowing
+                ? 'border border-(--brand-border-field) bg-(--brand-soft) text-(--brand-primary-deep)'
+                : 'bg-(--brand-primary) text-(--brand-on-primary) hover:bg-(--brand-primary-strong)'
+            }`}
+          >
+            {buttonLabel}
+          </button>
+        </div>
+      </div>
+
+      {description ? (
+        <p className="menu-card-copy mt-3">{description}</p>
+      ) : null}
+
+      {organisation.orgCity ||
+      typeof organisation.followersCount === 'number' ? (
+        <div className="menu-card-meta mt-2 flex flex-wrap items-center gap-x-4 gap-y-1">
+          {organisation.orgCity ? (
+            <span className="inline-flex items-center gap-1.5">
+              <MapPin size={14} className="shrink-0" aria-hidden="true" />
+              {organisation.orgCity}
+            </span>
+          ) : null}
+          {typeof organisation.followersCount === 'number' ? (
+            <span className="inline-flex items-center gap-1.5">
+              <UsersRound size={14} className="shrink-0" aria-hidden="true" />
+              {t('menu.events.directory.followerCount', {
+                count: organisation.followersCount,
+              })}
             </span>
           ) : null}
         </div>
-        {organisation.description ? (
-          <p className="mt-1 line-clamp-2 text-[length:var(--text-xs)] leading-snug font-semibold text-(--brand-body-ink)">
-            {organisation.description}
-          </p>
-        ) : null}
-        {organisation.orgCity ? (
-          <p className="mt-1.5 flex items-center gap-1.5 text-[length:var(--text-xs)] font-semibold text-(--brand-muted)">
-            <MapPin size={13} className="shrink-0" aria-hidden="true" />
-            <span>{organisation.orgCity}</span>
-          </p>
-        ) : null}
-        <span className="mt-2 inline-flex rounded-full bg-(--brand-soft) px-2.5 py-1 text-[0.65rem] font-extrabold text-(--brand-primary-deep)">
-          {t('menu.events.directory.upcomingCount', {
-            count: upcomingEvents,
-          })}
-        </span>
-      </div>
+      ) : null}
 
-      <button
-        type="button"
-        onClick={onToggle}
-        disabled={!membershipReady || isPending}
-        aria-label={
-          isFollowing
-            ? t('menu.events.directory.unfollowOrganisation', {
-                name: organisation.name,
+      <div className="menu-event-footer">
+        <button
+          type="button"
+          onClick={() => setEventsOpen((current) => !current)}
+          aria-expanded={eventsOpen}
+          aria-controls={eventsId}
+          className="menu-event-accordion transition hover:bg-(--brand-soft) focus-visible:ring-2 focus-visible:ring-(--brand-border-strong) focus-visible:outline-none"
+        >
+          <span>{t('menu.events.directory.organisationEvents')}</span>
+          <ChevronDown
+            size={19}
+            className={`shrink-0 transition-transform duration-200 ${
+              eventsOpen ? 'rotate-180' : ''
+            }`}
+            aria-hidden="true"
+          />
+        </button>
+
+        {eventsOpen ? (
+          <div id={eventsId} className="space-y-3 pt-3">
+            {events.length > 0 ? (
+              events.map((event) => {
+                const isAttending = attendingIds.has(event.id)
+
+                return (
+                  <EventCard
+                    key={event.id}
+                    event={event}
+                    isAttending={isAttending}
+                    membershipReady={eventMembershipReady}
+                    isPending={isEventPending(event)}
+                    locale={locale}
+                    onToggle={() => onToggleEvent(event)}
+                  />
+                )
               })
-            : t('menu.events.directory.followOrganisation', {
-                name: organisation.name,
-              })
-        }
-        className={`min-h-11 min-w-[4.75rem] rounded-xl px-4 py-2.5 text-[length:var(--text-sm)] font-extrabold transition focus-visible:ring-2 focus-visible:ring-(--brand-border-strong) focus-visible:ring-offset-2 focus-visible:outline-none active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-55 max-[350px]:col-start-2 max-[350px]:justify-self-end ${
-          isFollowing
-            ? 'border border-(--brand-border-field) bg-(--brand-soft) text-(--brand-primary-deep)'
-            : 'bg-(--brand-primary) text-(--brand-on-primary) hover:bg-(--brand-primary-strong)'
-        }`}
-      >
-        {buttonLabel}
-      </button>
+            ) : (
+              <p className="rounded-xl bg-(--brand-soft) px-4 py-3 text-[length:var(--text-sm)] leading-relaxed font-semibold text-(--brand-body-ink)">
+                {t('menu.events.directory.noOrganisationEvents')}
+              </p>
+            )}
+          </div>
+        ) : null}
+      </div>
     </article>
   )
 }
@@ -347,6 +502,26 @@ export default function EventsOrganisationsSheet({
       ),
     [organisations],
   )
+  const upcomingEventsByOrganisationId = useMemo(() => {
+    const byOrganisationId = new Map<number, EventDto[]>()
+
+    for (const event of eventsQuery.data ?? []) {
+      if (!event.organisationId || !isUpcoming(event)) continue
+
+      const events = byOrganisationId.get(event.organisationId) ?? []
+      events.push(event)
+      byOrganisationId.set(event.organisationId, events)
+    }
+
+    for (const events of byOrganisationId.values()) {
+      events.sort(
+        (first, second) =>
+          toEventDate(first)!.getTime() - toEventDate(second)!.getTime(),
+      )
+    }
+
+    return byOrganisationId
+  }, [eventsQuery.data])
   const attendingIds = useMemo(
     () => new Set((attendingQuery.data ?? []).map((event) => event.id)),
     [attendingQuery.data],
@@ -366,7 +541,6 @@ export default function EventsOrganisationsSheet({
       .filter(
         (event) =>
           isUpcoming(event, now) &&
-          event.eventType === 'IN_PERSON' &&
           (eventFilter !== 'nearby' ||
             normalizeSearchText(event.city) === normalizedUserCity) &&
           (eventFilter !== 'week' ||
@@ -457,12 +631,13 @@ export default function EventsOrganisationsSheet({
       onClose={onClose}
       height="large"
       fillHeight
+      motion="instant"
     >
-      <div className="rounded-2xl border border-(--menu-category-border) bg-(--menu-category-bg) p-4">
+      <div className={appSheetCategoryClass}>
         <div
           role="tablist"
           aria-label={t('menu.events.directory.tabsLabel')}
-          className="grid grid-cols-2 rounded-2xl border border-(--brand-border-field) bg-(--brand-soft) p-1"
+          className="grid grid-cols-2 rounded-2xl border border-(--brand-border-field) bg-(--menu-content-bg) p-1"
         >
           {(['events', 'organisations'] as const).map((tab) => {
             const isActive = activeTab === tab
@@ -477,10 +652,10 @@ export default function EventsOrganisationsSheet({
                 tabIndex={isActive ? 0 : -1}
                 onClick={() => switchTab(tab)}
                 onKeyDown={(event) => handleTabKeyDown(event, tab)}
-                className={`min-h-11 rounded-xl px-3 py-2.5 text-[length:var(--text-sm)] font-extrabold transition focus-visible:ring-2 focus-visible:ring-(--brand-border-strong) focus-visible:outline-none active:scale-[0.985] ${
+                className={`min-h-11 rounded-xl border px-3 py-2.5 text-[length:var(--text-sm)] font-extrabold transition focus-visible:ring-2 focus-visible:ring-(--brand-border-strong) focus-visible:outline-none active:scale-[0.985] ${
                   isActive
-                    ? 'bg-(--brand-primary) text-(--brand-on-primary)'
-                    : 'text-(--brand-body-ink) hover:bg-(--menu-content-bg)'
+                    ? 'border-(--brand-primary) bg-(--brand-soft) text-(--brand-primary-deep)'
+                    : 'border-transparent bg-(--menu-content-bg) text-(--brand-ink-soft) hover:bg-(--brand-surface-soft)'
                 }`}
               >
                 {t(`menu.events.directory.tabs.${tab}`)}
@@ -509,22 +684,40 @@ export default function EventsOrganisationsSheet({
                 ? t('menu.events.directory.searchEvents')
                 : t('menu.events.directory.searchOrganisations')
             }
-            className="min-h-12 w-full rounded-2xl border border-(--menu-control-border) bg-(--menu-control-bg) py-3 pr-4 pl-11 text-[length:var(--text-sm)] font-semibold text-(--brand-ink) placeholder:text-(--brand-muted) focus-visible:border-(--brand-border-strong) focus-visible:ring-2 focus-visible:ring-(--brand-border-strong) focus-visible:ring-offset-2 focus-visible:outline-none"
+            className="min-h-12 w-full rounded-2xl border border-(--menu-control-border) bg-(--menu-field-bg) py-3 pr-4 pl-11 text-[length:var(--text-sm)] font-semibold text-(--brand-ink) placeholder:text-(--brand-muted) focus-visible:border-(--brand-border-strong) focus-visible:ring-2 focus-visible:ring-(--brand-selection) focus-visible:outline-none"
           />
         </label>
 
-        {activeTab === 'events' && attendanceMutation.isError ? (
+        {attendanceMutation.isError ? (
           <div className="mt-4">
             <AppSheetNotice tone="danger">
-              {t('menu.events.directory.eventsError')}
+              {t('menu.events.directory.attendanceUpdateError')}
             </AppSheetNotice>
           </div>
         ) : null}
         {activeTab === 'organisations' && followingMutation.isError ? (
           <div className="mt-4">
             <AppSheetNotice tone="danger">
-              {t('menu.events.directory.organisationsError')}
+              {t('menu.events.directory.followingUpdateError')}
             </AppSheetNotice>
+          </div>
+        ) : null}
+        {attendingQuery.isError ? (
+          <div className="mt-4">
+            <RetryState
+              message={t('menu.events.directory.attendanceLoadError')}
+              retryLabel={t('menu.events.directory.retry')}
+              onRetry={() => void attendingQuery.refetch()}
+            />
+          </div>
+        ) : null}
+        {activeTab === 'organisations' && followingQuery.isError ? (
+          <div className="mt-4">
+            <RetryState
+              message={t('menu.events.directory.followingLoadError')}
+              retryLabel={t('menu.events.directory.retry')}
+              onRetry={() => void followingQuery.refetch()}
+            />
           </div>
         ) : null}
 
@@ -639,20 +832,20 @@ export default function EventsOrganisationsSheet({
             aria-labelledby="organisations-tab"
             className="mt-4"
           >
-            <div className="rounded-2xl bg-(--brand-soft) px-4 py-3 text-[length:var(--text-sm)] leading-snug font-semibold text-(--brand-body-ink)">
+            <div className="menu-card-copy rounded-xl bg-(--brand-soft) px-4 py-3">
               {t('menu.events.directory.organisationsIntro')}
             </div>
 
-            <div className="mt-4 rounded-2xl border border-(--brand-border-light) bg-(--menu-content-bg) p-4">
+            <div className={`mt-4 ${appSheetCardClass}`}>
               <div className="flex items-start gap-3">
                 <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-(--brand-soft) text-(--brand-primary-deep)">
                   <Building2 size={21} strokeWidth={2.3} aria-hidden="true" />
                 </div>
                 <div className="min-w-0">
-                  <h2 className="text-[length:var(--text-base)] leading-tight font-extrabold text-(--brand-title-ink)">
+                  <h2 className="menu-card-title text-(--brand-title-ink)">
                     {t('menu.events.application.cardTitle')}
                   </h2>
-                  <p className="mt-1 text-[length:var(--text-xs)] leading-snug font-semibold text-(--brand-body-ink)">
+                  <p className="menu-card-copy mt-1">
                     {t('menu.events.application.cardText')}
                   </p>
                 </div>
@@ -720,6 +913,26 @@ export default function EventsOrganisationsSheet({
                           isFollowing,
                         })
                       }
+                      events={
+                        upcomingEventsByOrganisationId.get(organisation.id) ??
+                        []
+                      }
+                      attendingIds={attendingIds}
+                      eventMembershipReady={
+                        attendingQuery.isSuccess &&
+                        !attendanceMutation.isPending
+                      }
+                      isEventPending={(event) =>
+                        attendanceMutation.isPending &&
+                        attendanceMutation.variables?.event.id === event.id
+                      }
+                      onToggleEvent={(event) =>
+                        attendanceMutation.mutate({
+                          event,
+                          isAttending: attendingIds.has(event.id),
+                        })
+                      }
+                      locale={locale}
                     />
                   )
                 })}

@@ -13,6 +13,7 @@ export type EventDto = {
   city?: string | null
   venue?: string | null
   eventType?: 'IN_PERSON' | 'ONLINE' | null
+  attendeesCount?: number
 }
 
 export type OrganisationDto = {
@@ -21,6 +22,7 @@ export type OrganisationDto = {
   description?: string | null
   events?: EventDto[] | null
   orgCity?: string | null
+  followersCount?: number
 }
 
 type ToggleEventVariables = {
@@ -38,6 +40,10 @@ type EventsAndOrganisationsOptions = {
   fetchOrganisations?: boolean
   fetchAttendance?: boolean
   fetchFollowing?: boolean
+}
+
+function adjustOptionalCount(value: number | undefined, delta: number) {
+  return typeof value === 'number' ? Math.max(0, value + delta) : undefined
 }
 
 async function request(
@@ -92,8 +98,10 @@ export function useEventsAndOrganisations(
   const { getToken, isLoaded, isSignedIn, userId } = useAuth()
   const queryClient = useQueryClient()
   const canFetch = enabled && isLoaded && Boolean(isSignedIn) && Boolean(userId)
-  const attendingKey = ['my-attending-events', userId] as const
-  const followingKey = ['my-followed-organisations', userId] as const
+  const eventsKey = ['events', 'list'] as const
+  const organisationsKey = ['organisations', 'list'] as const
+  const attendingKey = ['viewer', userId, 'attending-events'] as const
+  const followingKey = ['viewer', userId, 'followed-organisations'] as const
 
   async function getRequiredToken() {
     const token = await getToken()
@@ -106,7 +114,7 @@ export function useEventsAndOrganisations(
   }
 
   const eventsQuery = useQuery({
-    queryKey: ['events'],
+    queryKey: eventsKey,
     queryFn: async () => {
       const token = await getRequiredToken()
       const events = await requestJson<unknown>('/api/events', token)
@@ -118,12 +126,12 @@ export function useEventsAndOrganisations(
       return events
     },
     enabled: canFetch && fetchEvents,
-    staleTime: 5 * 60_000,
+    staleTime: 60_000,
     retry: 1,
   })
 
   const organisationsQuery = useQuery({
-    queryKey: ['organisations'],
+    queryKey: organisationsKey,
     queryFn: async () => {
       const token = await getRequiredToken()
       const organisations = await requestJson<unknown>(
@@ -138,7 +146,7 @@ export function useEventsAndOrganisations(
       return organisations
     },
     enabled: canFetch && fetchOrganisations,
-    staleTime: 5 * 60_000,
+    staleTime: 60_000,
     retry: 1,
   })
 
@@ -191,13 +199,66 @@ export function useEventsAndOrganisations(
         isAttending ? 'DELETE' : 'POST',
       )
     },
-    onSuccess: (_, { event, isAttending }) => {
+    onMutate: async ({ event, isAttending }) => {
+      await Promise.all([
+        queryClient.cancelQueries({ queryKey: attendingKey }),
+        queryClient.cancelQueries({ queryKey: eventsKey }),
+        queryClient.cancelQueries({ queryKey: organisationsKey }),
+      ])
+      const previous = queryClient.getQueryData<EventDto[]>(attendingKey)
+      const previousEvents = queryClient.getQueryData<EventDto[]>(eventsKey)
+      const previousOrganisations =
+        queryClient.getQueryData<OrganisationDto[]>(organisationsKey)
+      const countDelta = isAttending ? -1 : 1
+
       queryClient.setQueryData<EventDto[]>(attendingKey, (current = []) =>
         isAttending
           ? current.filter((item) => item.id !== event.id)
           : [...current.filter((item) => item.id !== event.id), event],
       )
+
+      queryClient.setQueryData<EventDto[]>(eventsKey, (current) =>
+        current?.map((item) =>
+          item.id === event.id
+            ? {
+                ...item,
+                attendeesCount: adjustOptionalCount(
+                  item.attendeesCount,
+                  countDelta,
+                ),
+              }
+            : item,
+        ),
+      )
+
+      queryClient.setQueryData<OrganisationDto[]>(organisationsKey, (current) =>
+        current?.map((organisation) => ({
+          ...organisation,
+          events: organisation.events?.map((item) =>
+            item.id === event.id
+              ? {
+                  ...item,
+                  attendeesCount: adjustOptionalCount(
+                    item.attendeesCount,
+                    countDelta,
+                  ),
+                }
+              : item,
+          ),
+        })),
+      )
+
+      return { previous, previousEvents, previousOrganisations }
+    },
+    onError: (_error, _variables, context) => {
+      queryClient.setQueryData(attendingKey, context?.previous)
+      queryClient.setQueryData(eventsKey, context?.previousEvents)
+      queryClient.setQueryData(organisationsKey, context?.previousOrganisations)
+    },
+    onSettled: () => {
       void queryClient.invalidateQueries({ queryKey: attendingKey })
+      void queryClient.invalidateQueries({ queryKey: eventsKey })
+      void queryClient.invalidateQueries({ queryKey: organisationsKey })
       void queryClient.invalidateQueries({ queryKey: ['calendar'] })
     },
   })
@@ -214,7 +275,16 @@ export function useEventsAndOrganisations(
         isFollowing ? 'DELETE' : 'POST',
       )
     },
-    onSuccess: (_, { organisation, isFollowing }) => {
+    onMutate: async ({ organisation, isFollowing }) => {
+      await Promise.all([
+        queryClient.cancelQueries({ queryKey: followingKey }),
+        queryClient.cancelQueries({ queryKey: organisationsKey }),
+      ])
+      const previous = queryClient.getQueryData<OrganisationDto[]>(followingKey)
+      const previousOrganisations =
+        queryClient.getQueryData<OrganisationDto[]>(organisationsKey)
+      const countDelta = isFollowing ? -1 : 1
+
       queryClient.setQueryData<OrganisationDto[]>(
         followingKey,
         (current = []) =>
@@ -225,7 +295,30 @@ export function useEventsAndOrganisations(
                 organisation,
               ],
       )
+
+      queryClient.setQueryData<OrganisationDto[]>(organisationsKey, (current) =>
+        current?.map((item) =>
+          item.id === organisation.id
+            ? {
+                ...item,
+                followersCount: adjustOptionalCount(
+                  item.followersCount,
+                  countDelta,
+                ),
+              }
+            : item,
+        ),
+      )
+
+      return { previous, previousOrganisations }
+    },
+    onError: (_error, _variables, context) => {
+      queryClient.setQueryData(followingKey, context?.previous)
+      queryClient.setQueryData(organisationsKey, context?.previousOrganisations)
+    },
+    onSettled: () => {
       void queryClient.invalidateQueries({ queryKey: followingKey })
+      void queryClient.invalidateQueries({ queryKey: organisationsKey })
     },
   })
 

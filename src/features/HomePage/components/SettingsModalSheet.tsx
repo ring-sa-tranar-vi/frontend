@@ -1,11 +1,12 @@
 import { SignOutButton, useAuth, useClerk, useUser } from '@clerk/react'
+import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import {
   CircleHelp,
+  Building2,
   Globe,
   Menu,
   ShieldCheck,
-  Trash2,
   User,
 } from 'lucide-react'
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
@@ -23,10 +24,14 @@ import {
   AppSheetNotice,
   AppSheetSectionText,
   AppSheetSectionTitle,
+  appSheetCategoryClass,
+  appSheetContentClass,
+  appSheetFormFieldClass,
   appSheetInlineActionButtonClass,
   appSheetPrimaryButtonClass,
   appSheetSecondaryButtonClass,
 } from '../../../components/AppSheet'
+import ConfirmModal from '../../../components/ConfirmModal'
 import LanguageSwitcher from '../../../components/LanguageSwitcher'
 import PrivacyPolicySheet from './PrivacyPolicySheet'
 import SupportSheet from './SupportSheet'
@@ -34,6 +39,8 @@ import EventsOrganisationsSheet from './menu/EventsOrganisationsSheet'
 import MenuPlaceholderSections from './menu/MenuPlaceholderSections'
 import OrganisationApplicationSheet from './menu/OrganisationApplicationSheet'
 import useCurrentUser from '../../../hooks/useCurrentUser'
+import { fetchCompanyMe } from '../../../api/companyPortal'
+import CompanyOrganisationPage from '../../companyPortal/CompanyOrganisationPage'
 
 type ProfileSettings = {
   name?: string | null
@@ -45,18 +52,9 @@ type ProfileSettings = {
   onboarding?: boolean | null
 }
 
-const INTENSITY_MIN = 1
-const INTENSITY_MAX = 5
-const DEFAULT_INTENSITY_LEVEL = 3
-const DEFAULT_TRAINER_ID = 1
-const EMPTY_PROFILE: ProfileSettings = {
-  name: '',
-  intensityLevel: DEFAULT_INTENSITY_LEVEL,
-  context: '',
-  trainerId: DEFAULT_TRAINER_ID,
-  isAdmin: false,
-  city: '',
-}
+const INTENSITY_MIN = 0
+const INTENSITY_MAX = 4
+const DEFAULT_INTENSITY_LEVEL = 0
 
 function normalizeIntensityLevel(value?: number | null) {
   if (typeof value !== 'number' || Number.isNaN(value)) {
@@ -68,7 +66,7 @@ function normalizeIntensityLevel(value?: number | null) {
 
 function normalizeTrainerId(value?: number | null) {
   if (typeof value !== 'number' || Number.isNaN(value)) {
-    return DEFAULT_TRAINER_ID
+    return null
   }
 
   return value
@@ -78,10 +76,12 @@ function SettingsStatusSheet({
   open,
   setOpen,
   message,
+  onRetry,
 }: {
   open: boolean
   setOpen: (v: boolean) => void
   message: string
+  onRetry?: () => void
 }) {
   const { t } = useTranslation()
   return (
@@ -93,8 +93,14 @@ function SettingsStatusSheet({
         icon={<Menu size={20} strokeWidth={2.4} />}
         onClose={() => setOpen(false)}
         height="compact"
+        motion="instant"
         footer={
           <section className="space-y-2.5 pb-1">
+            {onRetry ? (
+              <button className={appSheetPrimaryButtonClass} onClick={onRetry}>
+                {t('menu.activity.retry')}
+              </button>
+            ) : null}
             <button
               className={appSheetSecondaryButtonClass}
               onClick={() => setOpen(false)}
@@ -136,9 +142,9 @@ function ProfilePreferenceSections({
   const { t, i18n } = useTranslation()
 
   return (
-    <div className="space-y-4 border-t border-(--brand-border)/60 pt-6 pb-4">
-      <section className="rounded-2xl border border-(--menu-category-border) bg-(--menu-category-bg) p-5">
-        <div className="rounded-xl bg-(--menu-content-bg) p-4">
+    <div className="space-y-4 border-t border-(--brand-border)/60 pt-4 pb-3">
+      <section className={appSheetCategoryClass}>
+        <div className={appSheetContentClass}>
           <div className="mb-2 flex items-center gap-2">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-(--menu-choice-bg) text-(--brand-primary-deep)">
               <User size={20} />
@@ -162,7 +168,7 @@ function ProfilePreferenceSections({
             value={fullName}
             onChange={(event) => setFullName(event.target.value)}
             placeholder={t('settings.fullNamePlaceholder')}
-            className="mt-3 w-full rounded-2xl border border-(--menu-control-border) bg-(--menu-control-bg) px-4 py-3.5 text-[length:var(--text-base)] font-semibold text-(--brand-ink) transition placeholder:text-(--brand-muted) focus-visible:border-(--brand-border-strong) focus-visible:ring-2 focus-visible:ring-(--brand-border-strong) focus-visible:ring-offset-2 focus-visible:outline-none"
+            className={`${appSheetFormFieldClass} mt-3 transition placeholder:text-(--brand-muted)`}
           />
 
           <p className="mt-2 text-[length:var(--text-xs)] leading-snug font-semibold text-(--brand-body-ink)">
@@ -173,23 +179,23 @@ function ProfilePreferenceSections({
         </div>
       </section>
 
-      <section className="rounded-2xl border border-(--menu-category-border) bg-(--menu-category-bg) p-5">
+      <section className={appSheetCategoryClass}>
         <TrainerSelectionModal
           selectedTrainerId={selectedTrainerId}
           onTrainerSelect={setSelectedTrainerId}
         />
       </section>
 
-      <section className="rounded-2xl border border-(--menu-category-border) bg-(--menu-category-bg) p-5">
+      <section className={appSheetCategoryClass}>
         <IntensitySlider value={intensityLevel} onChange={setIntensityLevel} />
       </section>
 
-      <section className="rounded-2xl border border-(--menu-category-border) bg-(--menu-category-bg) p-5">
+      <section className={appSheetCategoryClass}>
         <ContextModel value={context} onChange={setContext} />
       </section>
 
-      <section className="rounded-2xl border border-(--menu-category-border) bg-(--menu-category-bg) p-5">
-        <div className="rounded-xl bg-(--menu-content-bg) p-4">
+      <section className={appSheetCategoryClass}>
+        <div className={appSheetContentClass}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-(--menu-choice-bg) text-(--brand-primary-deep)">
@@ -207,8 +213,8 @@ function ProfilePreferenceSections({
         </div>
       </section>
 
-      <section className="rounded-2xl border border-(--menu-category-border) bg-(--menu-category-bg) p-5">
-        <div className="rounded-xl bg-(--menu-content-bg) p-4">
+      <section className={appSheetCategoryClass}>
+        <div className={appSheetContentClass}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-(--menu-choice-bg) text-(--brand-primary-deep)">
@@ -228,8 +234,8 @@ function ProfilePreferenceSections({
         </div>
       </section>
 
-      <section className="rounded-2xl border border-(--menu-category-border) bg-(--menu-category-bg) p-5">
-        <div className="rounded-xl bg-(--menu-content-bg) p-4">
+      <section className={appSheetCategoryClass}>
+        <div className={appSheetContentClass}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-(--menu-choice-bg) text-(--brand-primary-deep)">
@@ -253,62 +259,6 @@ function ProfilePreferenceSections({
   )
 }
 
-function DeleteAccountSheet({
-  open,
-  onClose,
-  onConfirm,
-  isDeleting,
-  error,
-}: {
-  open: boolean
-  onClose: () => void
-  onConfirm: () => void
-  isDeleting: boolean
-  error: string | null
-}) {
-  const { t } = useTranslation()
-
-  return (
-    <AppSheet
-      open={open}
-      title={t('settings.deleteAccountTitle')}
-      subtitle={t('settings.deleteAccountDescription')}
-      icon={<Trash2 size={20} strokeWidth={2.4} />}
-      onClose={onClose}
-      height="compact"
-      footer={
-        <section className="space-y-2.5 pb-1">
-          {error ? (
-            <AppSheetNotice tone="danger">{error}</AppSheetNotice>
-          ) : null}
-          <button
-            type="button"
-            className="w-full rounded-full bg-(--brand-danger) px-4 py-4 text-[length:var(--text-base)] font-extrabold text-(--brand-on-danger) transition hover:bg-(--brand-danger-hover) active:scale-[0.985] disabled:cursor-not-allowed disabled:opacity-70"
-            disabled={isDeleting}
-            onClick={onConfirm}
-          >
-            {isDeleting
-              ? t('settings.deletingAccount')
-              : t('settings.confirmDeleteAccount')}
-          </button>
-          <button
-            type="button"
-            className={appSheetSecondaryButtonClass}
-            disabled={isDeleting}
-            onClick={onClose}
-          >
-            {t('settings.cancel')}
-          </button>
-        </section>
-      }
-    >
-      <AppSheetNotice tone="danger">
-        {t('settings.deleteAccountWarning')}
-      </AppSheetNotice>
-    </AppSheet>
-  )
-}
-
 export default function SettingsModalSheet({
   open,
   setOpen,
@@ -322,6 +272,7 @@ export default function SettingsModalSheet({
     user,
     isProfileLoading: isLoading,
     isProfileError: isError,
+    refetchProfile,
   } = useCurrentUser()
   const [isRendered, setIsRendered] = useState(open)
 
@@ -355,16 +306,23 @@ export default function SettingsModalSheet({
     )
   }
 
-  const hasProfile = Boolean(user)
+  if (isError || !user) {
+    return (
+      <SettingsStatusSheet
+        open={open}
+        setOpen={setOpen}
+        message={t('settings.fetchError')}
+        onRetry={() => void refetchProfile()}
+      />
+    )
+  }
 
   return (
     <SettingsModalBody
-      key={hasProfile ? 'profile' : 'profile-unavailable'}
+      key="profile"
       open={open}
       setOpen={setOpen}
-      profile={hasProfile && user ? user : EMPTY_PROFILE}
-      profileAvailable={hasProfile}
-      profileError={isError ? t('settings.fetchError') : undefined}
+      profile={user}
     />
   )
 }
@@ -373,19 +331,15 @@ function SettingsModalBody({
   open,
   setOpen,
   profile,
-  profileAvailable,
-  profileError,
 }: {
   open: boolean
   setOpen: (v: boolean) => void
   profile: ProfileSettings
-  profileAvailable: boolean
-  profileError?: string
 }) {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const { user } = useUser()
-  const { getToken } = useAuth()
+  const { getToken, isLoaded: isAuthLoaded, isSignedIn } = useAuth()
   const { signOut } = useClerk()
   const [fullName, setFullName] = useState(profile.name?.trim() ?? '')
   const [intensityLevel, setIntensityLevel] = useState(() =>
@@ -400,6 +354,7 @@ function SettingsModalBody({
   const [privacyOpen, setPrivacyOpen] = useState(false)
   const [eventsOpen, setEventsOpen] = useState(false)
   const [applicationOpen, setApplicationOpen] = useState(false)
+  const [companyOpen, setCompanyOpen] = useState(false)
   const [deleteAccountOpen, setDeleteAccountOpen] = useState(false)
   const [isDeletingAccount, setIsDeletingAccount] = useState(false)
   const [deleteAccountError, setDeleteAccountError] = useState<string | null>(
@@ -407,9 +362,18 @@ function SettingsModalBody({
   )
 
   const feedbackTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const isInitialMount = useRef(true)
 
   const updateProfile = useUpdateProfile()
+  const companyQuery = useQuery({
+    queryKey: ['company-me', user?.id],
+    queryFn: async () => {
+      const token = await getToken()
+      if (!token) throw new Error('Missing authentication token')
+      return fetchCompanyMe(token)
+    },
+    enabled: open && isAuthLoaded && Boolean(isSignedIn),
+    retry: false,
+  })
 
   function onTrainerSelect(trainerId: number) {
     setSelectedTrainerId(trainerId)
@@ -422,27 +386,6 @@ function SettingsModalBody({
       }
     }
   }, [])
-
-  // Auto-save trainer immediately when selection changes, using last-saved profile
-  // values for other fields to avoid persisting incomplete form edits.
-  useEffect(() => {
-    if (isInitialMount.current) {
-      isInitialMount.current = false
-      return
-    }
-    if (selectedTrainerId == null) return
-    updateProfile
-      .mutateAsync({
-        name: (profile.name ?? '').trim(),
-        intensityLevel: normalizeIntensityLevel(profile.intensityLevel),
-        context: profile.context ?? '',
-        trainerId: selectedTrainerId,
-        city: profile.city ?? null,
-        onboarding: profile.onboarding ?? null,
-      })
-      .catch(console.error)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedTrainerId])
 
   const showFeedback = (message: string) => {
     if (feedbackTimeoutRef.current) {
@@ -459,12 +402,17 @@ function SettingsModalBody({
   const handleSave = async () => {
     setSaveFeedback(null)
 
+    if (selectedTrainerId === null) {
+      showFeedback(t('settings.selectTrainerFirst'))
+      return
+    }
+
     try {
       await updateProfile.mutateAsync({
         name: fullName.trim(),
         intensityLevel: normalizeIntensityLevel(intensityLevel),
         context,
-        trainerId: Number(selectedTrainerId),
+        trainerId: selectedTrainerId,
         city: profile.city ?? null,
         onboarding: profile.onboarding ?? null,
       })
@@ -506,61 +454,66 @@ function SettingsModalBody({
   return (
     <>
       <AppSheet
-        open={open && !eventsOpen}
+        open={
+          open && !eventsOpen && !companyOpen && !supportOpen && !privacyOpen
+        }
         title={t('menu.title')}
-        subtitle={t('menu.subtitle')}
+        subtitle=""
         icon={<Menu size={20} strokeWidth={2.4} />}
         onClose={() => setOpen(false)}
         height="large"
+        motion="instant"
         footer={
           <section className="space-y-2.5 pb-1">
-            {profileAvailable ? (
-              <>
-                {saveFeedback ? (
-                  <AppSheetNotice tone="danger">{saveFeedback}</AppSheetNotice>
-                ) : null}
-                <button
-                  className={appSheetPrimaryButtonClass}
-                  disabled={updateProfile.isPending}
-                  onClick={handleSave}
-                >
-                  {updateProfile.isPending
-                    ? t('settings.saving')
-                    : t('settings.saveAndClose')}
-                </button>
-              </>
+            {saveFeedback ? (
+              <AppSheetNotice tone="danger">{saveFeedback}</AppSheetNotice>
             ) : null}
+            <button
+              className={appSheetPrimaryButtonClass}
+              disabled={updateProfile.isPending}
+              onClick={handleSave}
+            >
+              {updateProfile.isPending
+                ? t('settings.saving')
+                : t('settings.save')}
+            </button>
           </section>
         }
       >
         <div className="pb-2">
-          {profileError ? (
-            <div className="pb-4">
-              <AppSheetNotice tone="danger">{profileError}</AppSheetNotice>
-            </div>
-          ) : null}
-
           <MenuPlaceholderSections
-            dataEnabled={open && !eventsOpen}
+            dataEnabled={
+              open &&
+              !eventsOpen &&
+              !companyOpen &&
+              !supportOpen &&
+              !privacyOpen
+            }
             onFindEvents={() => setEventsOpen(true)}
           />
 
-          {profileAvailable ? (
-            <ProfilePreferenceSections
-              fullName={fullName}
-              setFullName={setFullName}
-              selectedTrainerId={selectedTrainerId}
-              setSelectedTrainerId={onTrainerSelect}
-              intensityLevel={intensityLevel}
-              setIntensityLevel={setIntensityLevel}
-              context={context}
-              setContext={setContext}
-              setSupportOpen={setSupportOpen}
-              setPrivacyOpen={setPrivacyOpen}
-            />
-          ) : null}
+          <ProfilePreferenceSections
+            fullName={fullName}
+            setFullName={setFullName}
+            selectedTrainerId={selectedTrainerId}
+            setSelectedTrainerId={onTrainerSelect}
+            intensityLevel={intensityLevel}
+            setIntensityLevel={setIntensityLevel}
+            context={context}
+            setContext={setContext}
+            setSupportOpen={setSupportOpen}
+            setPrivacyOpen={setPrivacyOpen}
+          />
 
           <section className="space-y-2 border-t border-(--brand-border)/60 pt-6 pb-4">
+            {companyQuery.data?.canManageOrganisation ? (
+              <button
+                className={`${appSheetSecondaryButtonClass} flex items-center justify-center gap-2`}
+                onClick={() => setCompanyOpen(true)}
+              >
+                <Building2 size={18} /> Organisations-sida
+              </button>
+            ) : null}
             {profile.isAdmin && (
               <button
                 className={appSheetSecondaryButtonClass}
@@ -614,14 +567,28 @@ function SettingsModalBody({
           setOpen(false)
         }}
       />
-      <DeleteAccountSheet
-        open={open && deleteAccountOpen}
+      <CompanyOrganisationPage
+        asSheet
+        open={open && companyOpen}
+        onBack={() => setCompanyOpen(false)}
         onClose={() => {
+          setCompanyOpen(false)
+          setOpen(false)
+        }}
+      />
+      <ConfirmModal
+        open={open && deleteAccountOpen}
+        title={t('settings.deleteAccountTitle')}
+        body={t('settings.deleteAccountWarning')}
+        confirmLabel={t('settings.confirmDeleteAccount')}
+        cancelLabel={t('settings.cancel')}
+        isConfirming={isDeletingAccount}
+        confirmingLabel={t('settings.deletingAccount')}
+        error={deleteAccountError}
+        onCancel={() => {
           if (!isDeletingAccount) setDeleteAccountOpen(false)
         }}
         onConfirm={() => void handleDeleteAccount()}
-        isDeleting={isDeletingAccount}
-        error={deleteAccountError}
       />
     </>
   )

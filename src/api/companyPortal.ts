@@ -5,21 +5,30 @@ const API_URL = getApiBaseUrl()
 export type CompanyOrganisation = {
   id: number
   name: string
-  description: string
+  description: string | null
   orgCity: string
-  organizerId: number | null
+  organizerId?: number | null
+  followersCount?: number
 }
 
 export type CompanyEvent = {
   id: number
   name: string
-  description: string
+  description: string | null
   time: string
-  organisationId: number
   city: string
-  venue: string
+  venue: string | null
   eventType: 'IN_PERSON' | 'ONLINE'
+  organisationId?: number
   attendeesCount?: number
+}
+
+export type CompanyMe = {
+  userId: number
+  role: string
+  canManageOrganisation: boolean
+  organisationId: number | null
+  organisationName: string | null
 }
 
 export type CompanyOrganisationUpdateInput = {
@@ -66,25 +75,28 @@ export function fetchMyOrganisations(token: string) {
 
 export function fetchOrganisationEvents(token: string, organisationId: number) {
   return requestJson<CompanyEvent[]>(
-    `/api/organizations${organisationId}/events`,
+    `/api/organizations/${organisationId}/events`,
     token,
   )
 }
 
+export function fetchCompanyMe(token: string) {
+  return requestJson<CompanyMe>('/api/company/me', token)
+}
+
+export function fetchManagedOrganisation(token: string) {
+  return requestJson<CompanyOrganisation>('/api/company/organization', token)
+}
+
 export function updateCompanyOrganisation(
   token: string,
-  organisationId: number,
   payload: CompanyOrganisationUpdateInput,
 ) {
-  return requestJson<CompanyOrganisation>(
-    `/api/organizations${organisationId}`,
-    token,
-    {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    },
-  )
+  return requestJson<CompanyOrganisation>('/api/company/organization', token, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
 }
 
 export function createCompanyEvent(
@@ -92,12 +104,12 @@ export function createCompanyEvent(
   organisationId: number,
   payload: CompanyEventInput,
 ) {
-  return requestJson<CompanyEvent>('/api/events', token, {
+  return requestJson<CompanyEvent>('/api/company/events', token, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       ...payload,
-      organisationId,
+      organisation: { id: organisationId },
     }),
   })
 }
@@ -107,7 +119,7 @@ export function updateCompanyEvent(
   eventId: number,
   payload: CompanyEventInput,
 ) {
-  return requestJson<CompanyEvent>(`/api/events/${eventId}`, token, {
+  return requestJson<CompanyEvent>(`/api/company/events/${eventId}`, token, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
@@ -115,5 +127,9 @@ export function updateCompanyEvent(
 }
 
 export function deleteCompanyEvent(token: string, eventId: number) {
-  return request(`/api/events/${eventId}`, token, { method: 'DELETE' })
+  return request(`/api/company/events/${eventId}`, token, { method: 'DELETE' })
+}
+
+export function fetchManagedOrganisationEvents(token: string) {
+  return requestJson<CompanyEvent[]>('/api/company/events', token)
 }

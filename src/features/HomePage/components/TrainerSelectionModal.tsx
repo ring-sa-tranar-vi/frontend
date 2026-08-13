@@ -15,6 +15,7 @@ import { useVoicePlayer } from '../../../hooks/useVoicePlayer'
 import { useTranslation } from 'react-i18next'
 import {
   appSheetFieldClass,
+  appSheetContentClass,
   AppSheetNotice,
   AppSheetSectionText,
   AppSheetSectionTitle,
@@ -23,12 +24,12 @@ import {
   getStoredLanguageFilter,
   setStoredLanguageFilter,
 } from '../trainerPreference'
-import { guestTrainerOptions } from './menu/guestTrainerData'
 
 export type TrainerSelectionItem = {
   id: number
   name: string
   imageSelect?: string | null
+  imageStart?: string | null
   voice?: string
   intro?: string | null
   language?: string
@@ -38,23 +39,26 @@ function wrap(index: number, length: number): number {
   return ((index % length) + length) % length
 }
 
-function getLocalTrainerImage(trainerId: number) {
-  return guestTrainerOptions.find((trainer) => trainer.id === trainerId)
-    ?.imageSelect
-}
-
-function withLocalImageFallback(
-  trainer: TrainerSelectionItem,
-): TrainerSelectionItem {
-  const image = trainer.imageSelect?.trim()
-
-  if (image && /^(?:https?:|data:|blob:|\/)/i.test(image)) {
-    return trainer
+function getBundledLocalTrainerImage(source?: string | null) {
+  if (!import.meta.env.DEV || !source || typeof window === 'undefined') {
+    return null
   }
 
-  const fallbackImage = getLocalTrainerImage(trainer.id)
+  try {
+    const segments = new URL(source, window.location.origin).pathname
+      .split('/')
+      .filter(Boolean)
+    const trainerSegmentIndex = segments.lastIndexOf('trainers')
+    const trainerSlug = segments[trainerSegmentIndex + 1]
 
-  return fallbackImage ? { ...trainer, imageSelect: fallbackImage } : trainer
+    if (!trainerSlug || !/^[a-z0-9-]+$/i.test(trainerSlug)) {
+      return null
+    }
+
+    return `/start-page/${trainerSlug}-start.webp`
+  } catch {
+    return null
+  }
 }
 
 export default function TrainerSelectionModal({
@@ -85,10 +89,7 @@ export default function TrainerSelectionModal({
     refetchOnWindowFocus: false,
   })
   const trainers = useMemo(
-    () =>
-      (trainersOverride ?? fetchedTrainers).map(
-        (trainer: TrainerSelectionItem) => withLocalImageFallback(trainer),
-      ),
+    () => (trainersOverride ?? fetchedTrainers) as TrainerSelectionItem[],
     [fetchedTrainers, trainersOverride],
   )
   const isLoading = trainersOverride === undefined && isFetchingTrainers
@@ -277,7 +278,7 @@ export default function TrainerSelectionModal({
   return (
     <section
       aria-labelledby="trainer-selection-title"
-      className="space-y-4 rounded-xl bg-(--menu-content-bg) p-4"
+      className={`space-y-4 ${appSheetContentClass}`}
     >
       {isLoading ? (
         <AppSheetNotice>{t('trainerSelection.loading')}</AppSheetNotice>
@@ -307,8 +308,11 @@ export default function TrainerSelectionModal({
           {/* Language filter — summary + popover */}
           {allLanguages.length > 1 && (
             <div ref={filterRef} className="relative mt-2 ml-[52px]">
+              <p className="mb-1 text-[length:var(--text-sm)] font-extrabold text-(--brand-title-ink)">
+                {t('trainerSelection.trainerLanguages')}
+              </p>
               <div className="flex items-center gap-2">
-                <span className="text-[length:var(--text-xs)] font-semibold text-(--brand-body-ink)">
+                <span className="text-[length:var(--text-sm)] font-semibold text-(--brand-body-ink)">
                   {activeLanguages.length > 0
                     ? activeLanguages
                         .map((l) => t(`languages.${l}`, { defaultValue: l }))
@@ -318,7 +322,7 @@ export default function TrainerSelectionModal({
                 <button
                   type="button"
                   onClick={() => setFilterOpen((prev) => !prev)}
-                  className="rounded-lg border border-(--menu-control-border) bg-(--menu-control-bg) px-2.5 py-1 text-[length:var(--text-xs)] font-extrabold text-(--brand-primary) transition hover:bg-(--brand-soft) active:scale-95"
+                  className="min-h-11 rounded-xl border border-(--menu-control-border) bg-(--menu-control-bg) px-3 py-2 text-[length:var(--text-sm)] font-extrabold text-(--brand-primary) transition hover:bg-(--brand-soft) active:scale-95"
                 >
                   {t('trainerSelection.changeFilter')}
                 </button>
@@ -331,7 +335,7 @@ export default function TrainerSelectionModal({
                       key={lang}
                       type="button"
                       onClick={() => toggleLanguage(lang)}
-                      className="flex w-full items-center gap-2.5 rounded-xl px-2 py-2 text-left transition hover:bg-(--brand-soft) active:scale-[0.98]"
+                      className="flex min-h-11 w-full items-center gap-2.5 rounded-xl px-2 py-2 text-left transition hover:bg-(--brand-soft) active:scale-[0.98]"
                     >
                       <div
                         className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-[5px] border-2 transition ${
@@ -370,65 +374,86 @@ export default function TrainerSelectionModal({
           {/* Carousel */}
           {centerItem && (
             <div className="relative mt-4">
-              {/* 3-item sliding window — overflow hides prev and next */}
-              <div
-                className="overflow-hidden rounded-2xl border border-(--menu-category-border)"
-                onTouchStart={handleTouchStart}
-                onTouchMove={handleTouchMove}
-                onTouchEnd={handleTouchEnd}
-              >
-                <div
-                  className="flex"
-                  style={trackStyle}
-                  onTransitionEnd={handleTransitionEnd}
-                >
-                  {[prevItem, centerItem, nextItem].map((trainer, slot) => (
-                    <div
-                      key={`${slot}-${trainer?.id ?? 'empty'}`}
-                      className="w-full shrink-0"
-                      aria-hidden={slot !== 1}
-                    >
-                      {trainer ? (
-                        <TrainerCard
-                          trainer={trainer}
-                          isSelected={trainer.id === selectedTrainerId}
-                          playingId={playingId}
-                          loadingId={loadingId}
-                          onPlay={() => play(String(trainer.id), trainer.intro)}
-                          onStop={stop}
-                          onSelect={() => onTrainerSelect?.(trainer.id)}
-                          showAudioPreview={trainersOverride === undefined}
-                          t={t}
-                        />
-                      ) : (
-                        <div className="aspect-[8/9] bg-(--menu-choice-bg)" />
-                      )}
-                    </div>
-                  ))}
+              {n === 1 ? (
+                <div className="overflow-hidden rounded-2xl border border-(--menu-category-border)">
+                  <TrainerCard
+                    trainer={centerItem}
+                    isSelected={centerItem.id === selectedTrainerId}
+                    playingId={playingId}
+                    loadingId={loadingId}
+                    onPlay={() => play(String(centerItem.id), centerItem.intro)}
+                    onStop={stop}
+                    onSelect={() => {
+                      stop()
+                      onTrainerSelect?.(centerItem.id)
+                    }}
+                    showAudioPreview={trainersOverride === undefined}
+                    t={t}
+                  />
                 </div>
-              </div>
+              ) : (
+                <>
+                  <div
+                    className="overflow-hidden rounded-2xl border border-(--menu-category-border)"
+                    onTouchStart={handleTouchStart}
+                    onTouchMove={handleTouchMove}
+                    onTouchEnd={handleTouchEnd}
+                  >
+                    <div
+                      className="flex"
+                      style={trackStyle}
+                      onTransitionEnd={handleTransitionEnd}
+                    >
+                      {[prevItem, centerItem, nextItem].map((trainer, slot) => (
+                        <div
+                          key={`${slot}-${trainer?.id ?? 'empty'}`}
+                          className="w-full shrink-0"
+                          aria-hidden={slot !== 1}
+                        >
+                          {trainer ? (
+                            <TrainerCard
+                              trainer={trainer}
+                              isSelected={trainer.id === selectedTrainerId}
+                              playingId={playingId}
+                              loadingId={loadingId}
+                              onPlay={() =>
+                                play(String(trainer.id), trainer.intro)
+                              }
+                              onStop={stop}
+                              onSelect={() => {
+                                stop()
+                                onTrainerSelect?.(trainer.id)
+                              }}
+                              showAudioPreview={trainersOverride === undefined}
+                              t={t}
+                            />
+                          ) : (
+                            <div className="aspect-[8/9] bg-(--menu-choice-bg)" />
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
 
-              {/* Left arrow */}
-              <button
-                type="button"
-                onClick={() => navigate(-1)}
-                disabled={n <= 1}
-                className="absolute top-1/2 left-2 z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-(--brand-primary) bg-(--menu-control-bg) text-(--brand-primary) transition active:scale-95 disabled:opacity-30"
-                aria-label={t('trainerSelection.previousTrainer')}
-              >
-                <ChevronLeft size={20} strokeWidth={2.2} />
-              </button>
+                  <button
+                    type="button"
+                    onClick={() => navigate(-1)}
+                    className="absolute top-1/2 left-2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-xl border border-(--brand-primary) bg-(--menu-control-bg) text-(--brand-primary) transition active:scale-95"
+                    aria-label={t('trainerSelection.previousTrainer')}
+                  >
+                    <ChevronLeft size={20} strokeWidth={2.2} />
+                  </button>
 
-              {/* Right arrow */}
-              <button
-                type="button"
-                onClick={() => navigate(1)}
-                disabled={n <= 1}
-                className="absolute top-1/2 right-2 z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-(--brand-primary) bg-(--menu-control-bg) text-(--brand-primary) transition active:scale-95 disabled:opacity-30"
-                aria-label={t('trainerSelection.nextTrainer')}
-              >
-                <ChevronRight size={20} strokeWidth={2.2} />
-              </button>
+                  <button
+                    type="button"
+                    onClick={() => navigate(1)}
+                    className="absolute top-1/2 right-2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-xl border border-(--brand-primary) bg-(--menu-control-bg) text-(--brand-primary) transition active:scale-95"
+                    aria-label={t('trainerSelection.nextTrainer')}
+                  >
+                    <ChevronRight size={20} strokeWidth={2.2} />
+                  </button>
+                </>
+              )}
             </div>
           )}
         </div>
@@ -464,25 +489,36 @@ function TrainerCard({
   const id = String(trainer.id)
   const isPlaying = playingId === id
   const isLoading = loadingId === id
+  const [useBundledFallback, setUseBundledFallback] = useState(false)
+  const [imageUnavailable, setImageUnavailable] = useState(false)
+  const bundledFallback = getBundledLocalTrainerImage(
+    trainer.imageStart ?? trainer.imageSelect,
+  )
+  const imageSource =
+    useBundledFallback || !trainer.imageSelect
+      ? bundledFallback
+      : trainer.imageSelect
 
   return (
     <div className="relative aspect-[8/9] overflow-hidden bg-(--menu-choice-bg)">
       {/* Image — left half, full height */}
-      {trainer.imageSelect ? (
+      {imageSource && !imageUnavailable ? (
         <img
-          src={trainer.imageSelect}
+          src={imageSource}
           alt={trainer.name}
           loading="lazy"
           draggable={false}
-          onError={(event) => {
-            const fallbackImage = getLocalTrainerImage(trainer.id)
-
+          onError={() => {
             if (
-              fallbackImage &&
-              event.currentTarget.getAttribute('src') !== fallbackImage
+              !useBundledFallback &&
+              bundledFallback &&
+              imageSource !== bundledFallback
             ) {
-              event.currentTarget.src = fallbackImage
+              setUseBundledFallback(true)
+              return
             }
+
+            setImageUnavailable(true)
           }}
           className="absolute bottom-0 left-0 h-full w-1/2 object-contain object-bottom select-none"
         />
@@ -493,17 +529,18 @@ function TrainerCard({
       )}
 
       {/* Top-right: name, title, language, selected indicator */}
-      <div className="absolute top-0 right-0 w-1/2 px-4 pt-4 text-right">
-        <h3 className="text-[17px] leading-tight font-extrabold text-(--brand-title-ink)">
+      <div className="absolute top-0 right-0 w-1/2 px-3 pt-3 text-right">
+        <h3
+          className="menu-card-title line-clamp-2 min-h-10 text-(--brand-title-ink)"
+          title={trainer.name}
+        >
           {trainer.name}
         </h3>
-        <p className="text-[12px] font-semibold text-(--brand-body-ink)">
+        <p className="menu-card-meta text-(--brand-body-ink)">
           {t('trainerSelection.trainerTitle')}
         </p>
         {trainer.language && (
-          <p className="text-[12px] font-semibold text-(--brand-muted)">
-            {t(`languages.${trainer.language}`)}
-          </p>
+          <p className="menu-card-meta">{t(`languages.${trainer.language}`)}</p>
         )}
         {isSelected && (
           <div className="mt-2 flex justify-end">
@@ -515,14 +552,14 @@ function TrainerCard({
       </div>
 
       {/* Bottom-right: buttons — 65% card width */}
-      <div className="absolute right-0 bottom-0 w-[65%] space-y-1.5 px-4 pb-4">
+      <div className="absolute right-0 bottom-0 w-[65%] space-y-1.5 px-3 pb-3">
         {/* Preview audio */}
         {showAudioPreview ? (
           <button
             type="button"
             onClick={isPlaying ? onStop : onPlay}
             disabled={isLoading}
-            className={`flex w-full items-center justify-center gap-1.5 ${appSheetFieldClass} px-2 py-2 text-[13px] font-extrabold transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-60 ${
+            className={`flex min-h-11 w-full items-center justify-center gap-1.5 ${appSheetFieldClass} px-2 py-2 text-[length:var(--text-sm)] font-extrabold transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-60 ${
               isPlaying
                 ? 'border-(--brand-danger-border) bg-(--brand-danger-surface) text-(--brand-danger-ink-muted)'
                 : 'text-(--brand-title-ink)'
@@ -549,7 +586,7 @@ function TrainerCard({
 
         {/* Select / selected */}
         {isSelected ? (
-          <p className="flex w-full items-center justify-center gap-1 py-2 text-center text-[13px] font-extrabold text-(--brand-primary-deep)">
+          <p className="flex min-h-11 w-full items-center justify-center gap-1 py-2 text-center text-[length:var(--text-sm)] font-extrabold text-(--brand-primary-deep)">
             <Check size={14} strokeWidth={3} />
             {t('trainerSelection.selected')}
           </p>
@@ -557,7 +594,7 @@ function TrainerCard({
           <button
             type="button"
             onClick={onSelect}
-            className="flex w-full items-center justify-center rounded-2xl bg-(--brand-primary) px-2 py-2.5 text-[length:var(--text-sm)] font-extrabold text-(--brand-on-primary) transition active:scale-95"
+            className="flex min-h-11 w-full items-center justify-center rounded-xl bg-(--brand-primary) px-2 py-2.5 text-[length:var(--text-sm)] font-extrabold text-(--brand-on-primary) transition active:scale-95"
           >
             {t('trainerSelection.selectButton')}
           </button>

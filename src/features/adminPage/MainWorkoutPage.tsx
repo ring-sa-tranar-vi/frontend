@@ -571,7 +571,6 @@ export default function MainWorkoutPage({ searchTerm = '' }: Props) {
           open={true}
           title={t('workoutsAdmin.deleteTitle')}
           body={t('workoutsAdmin.deleteBody', { name: selectedWorkout.name })}
-          requireTyping="DELETE"
           confirmLabel={t('workoutsAdmin.deleteConfirm')}
           cancelLabel={t('workoutsAdmin.cancel')}
           onConfirm={() => deleteMutation.mutate()}

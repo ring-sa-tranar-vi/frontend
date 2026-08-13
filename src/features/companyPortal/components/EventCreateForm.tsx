@@ -1,12 +1,14 @@
 import {
-  appSheetFieldClass,
+  appSheetCardClass,
+  appSheetFormFieldClass,
+  appSheetFormLabelClass,
+  appSheetFormTextareaClass,
   appSheetPrimaryButtonClass,
 } from '../../../components/AppSheet'
 import type { Dispatch, SetStateAction } from 'react'
 import type { EventForm } from '../types'
 
 type Props = {
-  isWideLayout: boolean
   eventForm: EventForm
   setEventForm: Dispatch<SetStateAction<EventForm>>
   canCreateEvent: boolean
@@ -15,7 +17,6 @@ type Props = {
 }
 
 export default function EventCreateForm({
-  isWideLayout,
   eventForm,
   setEventForm,
   canCreateEvent,
@@ -23,74 +24,100 @@ export default function EventCreateForm({
   isSavingEvent,
 }: Props) {
   return (
-    <div className="mt-4 rounded-2xl border border-[#e6dbff] bg-white p-3 shadow-[0_6px_18px_rgba(82,63,176,0.08)]">
-      <div className={`grid gap-3 ${isWideLayout ? 'grid-cols-2' : ''}`}>
-        <input
-          placeholder="Namn"
-          value={eventForm.name}
-          onChange={(e) =>
-            setEventForm((f) => ({ ...f, name: e.target.value }))
-          }
-          className={`${appSheetFieldClass} px-3 py-2 text-sm outline-none focus:border-[#5836d6] md:bg-white`}
-        />
-        <input
-          type="datetime-local"
-          value={eventForm.time}
-          onChange={(e) =>
-            setEventForm((f) => ({ ...f, time: e.target.value }))
-          }
-          className={`${appSheetFieldClass} px-3 py-2 text-sm outline-none focus:border-[#5836d6] md:bg-white`}
-        />
-        <input
-          placeholder="Stad"
-          value={eventForm.city}
-          onChange={(e) =>
-            setEventForm((f) => ({ ...f, city: e.target.value }))
-          }
-          className={`${appSheetFieldClass} px-3 py-2 text-sm outline-none focus:border-[#5836d6] md:bg-white`}
-        />
-        <input
-          placeholder="Plats"
-          value={eventForm.venue}
-          onChange={(e) =>
-            setEventForm((f) => ({ ...f, venue: e.target.value }))
-          }
-          className={`${appSheetFieldClass} px-3 py-2 text-sm outline-none focus:border-[#5836d6] md:bg-white`}
-        />
-        <select
-          aria-label="Typ av event"
-          value={eventForm.eventType}
-          onChange={(e) =>
-            setEventForm((f) => ({
-              ...f,
-              eventType: e.target.value as EventForm['eventType'],
-            }))
-          }
-          className={`${appSheetFieldClass} px-3 py-2 text-sm outline-none focus:border-[#5836d6] md:bg-white`}
-        >
-          <option value="">Välj typ av event</option>
-          <option value="IN_PERSON">På plats</option>
-          <option value="ONLINE">Online</option>
-        </select>
-        <textarea
-          placeholder="Beskrivning"
-          rows={2}
-          value={eventForm.description}
-          onChange={(e) =>
-            setEventForm((f) => ({ ...f, description: e.target.value }))
-          }
-          className={`${appSheetFieldClass} ${isWideLayout ? 'col-span-2' : ''} px-3 py-2 text-sm outline-none focus:border-[#5836d6] md:bg-white`}
-        />
+    <section className={`mt-3 ${appSheetCardClass}`}>
+      <h3 className="text-[length:var(--text-lg)] font-extrabold text-(--brand-ink)">
+        Nytt event
+      </h3>
+      <div className="mt-3 grid gap-3">
+        <label className="block">
+          <span className={appSheetFormLabelClass}>Namn</span>
+          <input
+            value={eventForm.name}
+            onChange={(e) =>
+              setEventForm((f) => ({ ...f, name: e.target.value }))
+            }
+            className={appSheetFormFieldClass}
+          />
+        </label>
+        <label className="block">
+          <span className={appSheetFormLabelClass}>Datum och tid</span>
+          <input
+            type="datetime-local"
+            value={eventForm.time}
+            onChange={(e) =>
+              setEventForm((f) => ({ ...f, time: e.target.value }))
+            }
+            className={appSheetFormFieldClass}
+          />
+        </label>
+        <label className="block">
+          <span className={appSheetFormLabelClass}>Stad</span>
+          <input
+            value={eventForm.city}
+            onChange={(e) =>
+              setEventForm((f) => ({ ...f, city: e.target.value }))
+            }
+            className={appSheetFormFieldClass}
+          />
+        </label>
+        <label className="block">
+          <span className={appSheetFormLabelClass}>
+            Plats{' '}
+            <span className="font-semibold text-(--brand-muted)">
+              (valfritt)
+            </span>
+          </span>
+          <input
+            value={eventForm.venue}
+            onChange={(e) =>
+              setEventForm((f) => ({ ...f, venue: e.target.value }))
+            }
+            className={appSheetFormFieldClass}
+          />
+        </label>
+        <label className="block">
+          <span className={appSheetFormLabelClass}>Typ av event</span>
+          <select
+            value={eventForm.eventType}
+            onChange={(e) =>
+              setEventForm((f) => ({
+                ...f,
+                eventType: e.target.value as EventForm['eventType'],
+              }))
+            }
+            className={appSheetFormFieldClass}
+          >
+            <option value="">Välj typ av event</option>
+            <option value="IN_PERSON">På plats</option>
+            <option value="ONLINE">Online</option>
+          </select>
+        </label>
+        <label className="block">
+          <span className={appSheetFormLabelClass}>
+            Beskrivning{' '}
+            <span className="font-semibold text-(--brand-muted)">
+              (valfritt)
+            </span>
+          </span>
+          <textarea
+            rows={2}
+            value={eventForm.description}
+            onChange={(e) =>
+              setEventForm((f) => ({ ...f, description: e.target.value }))
+            }
+            className={appSheetFormTextareaClass}
+          />
+        </label>
       </div>
 
       <button
         type="button"
         onClick={createEvent}
         disabled={!canCreateEvent || isSavingEvent}
-        className={`${appSheetPrimaryButtonClass} mt-3 min-h-11 px-4 py-2 text-sm disabled:opacity-45 md:w-auto`}
+        className={`${appSheetPrimaryButtonClass} mt-3 min-h-11 px-4 py-2.5 text-[length:var(--text-sm)]`}
       >
-        Spara event
+        {isSavingEvent ? 'Skapar event…' : 'Skapa event'}
       </button>
-    </div>
+    </section>
   )
 }
