@@ -49,6 +49,14 @@ nedan meningsfullt — äldre rader saknar ofta den texten.
 Lägg `GEMINI_API_KEY=` i din befintliga rot-`.env` (redan gitignorad, redan
 källa för `VITE_API_URL`/`API_BASE`).
 
+**Varför en körning tar 1–2+ minuter**: scriptet skriver ut `⏱`-tider för varje
+steg. Coachens repliker (`coach turn N`) dominerar — de går via en riktig
+ljudsyntes (samma Live-anslutning som produktionen), och tar typiskt 5–15
+sekunder var även fast vi kastar ljudet. Simulator- och domarsteg är riktiga
+textanrop och tar normalt 1–5 sekunder. Det är alltså inte onödig väntan i
+flödet — det är kostnaden för att coachen testas mot exakt produktionens
+auth+transport. Vill du hellre optimera för hastighet än fidelitet, säg till.
+
 ## Kom igång
 
 1. Starta backend lokalt med en riktig `gemini.api-key` konfigurerad där.

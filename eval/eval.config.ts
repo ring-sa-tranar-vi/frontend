@@ -13,9 +13,9 @@ export const evalConfig = {
   trainerId: 2, // 1 = Eva in the seed data
   workoutId: 28, // "Axelhöjningar" (level 1, 5 explicit reps) in the seed data
 
-  scenarioType: 'onboarding' as ScenarioId, // 'standard' | 'onboarding' | 'guest' | 'alreadyFinished'
+  scenarioType: 'guest' as ScenarioId, // 'standard' | 'onboarding' | 'guest' | 'alreadyFinished'
 
-  userInstruction: 'Du är väldigt osäker och velig. Lite krånglig.',
+  userInstruction: 'Du är väldigt rakt på sak.',
 
   // Only used to build the CoachCallSession for 'standard'/'alreadyFinished'
   // (buildGuestContext ignores them for guest calls, and onboarding is

@@ -10,6 +10,7 @@ import {
   createMockToolExecutionContext,
   type ToolExecutionContext,
 } from './mockToolContext'
+import { phase, summarize, timeIt } from './timing'
 import type {
   RunResult,
   ScenarioFixture,
@@ -22,6 +23,19 @@ import { createUserSimChat, type TextChat } from './userSimClient'
 
 interface TerminatedState {
   terminated: boolean
+}
+
+// So `npm run eval`'s live turn feed shows what was actually said, not just
+// timing — lets you spot a conversation going off the rails and Ctrl+C early.
+function describeCoachTurn(resp: LiveChatTurnResult): string {
+  const parts: string[] = []
+  if (resp.text) parts.push(`"${summarize(resp.text)}"`)
+  if (resp.functionCalls.length) {
+    parts.push(
+      `🔧 ${resp.functionCalls.map((c) => c.name ?? 'unknown').join(', ')}`,
+    )
+  }
+  return parts.join(' ') || '(tyst)'
 }
 
 function pushCoachEvents(
@@ -62,7 +76,11 @@ async function processCoachTurn(
     if (calls.length === 0) {
       const followUp = consumeFollowUp()
       if (!followUp) return resp
-      resp = await coachChat.sendMessage(followUp)
+      resp = await timeIt(
+        `tur ${turn} — coach (uppföljning)`,
+        () => coachChat.sendMessage(followUp),
+        describeCoachTurn,
+      )
       continue
     }
 
@@ -86,7 +104,11 @@ async function processCoachTurn(
       }
     }
 
-    resp = await coachChat.sendFunctionResponses(responses)
+    resp = await timeIt(
+      `tur ${turn} — coach (efter verktygssvar)`,
+      () => coachChat.sendFunctionResponses(responses),
+      describeCoachTurn,
+    )
 
     if (terminatedState.terminated) {
       pushCoachEvents(transcript, turn, resp)
@@ -126,6 +148,9 @@ export async function runConversation(
       session: scenario.session,
     })
 
+    phase(
+      `Körning #${runIndex + 1} — initierar (mintar token, ansluter till coachen)...`,
+    )
     coachChat = await createCoachChat({
       apiBaseUrl: cfg.apiBaseUrl,
       model: cfg.coachModel,
@@ -145,7 +170,12 @@ export async function runConversation(
         onSideEffect: () => {},
       })
 
-    let coachResp = await coachChat.sendMessage('Starta samtalet.')
+    phase(`Körning #${runIndex + 1} — samtal pågår...`)
+    let coachResp = await timeIt(
+      'tur 0 — coach (hälsning)',
+      () => coachChat!.sendMessage('Starta samtalet.'),
+      describeCoachTurn,
+    )
     coachResp = await processCoachTurn(
       coachResp,
       turn,
@@ -162,7 +192,11 @@ export async function runConversation(
       const coachText = coachResp.text.trim()
       if (!coachText) break // safety valve: nothing for the user-sim to react to
 
-      const userResp = await userChat.sendMessage(coachText)
+      const userResp = await timeIt(
+        `tur ${turn} — användare`,
+        () => userChat!.sendMessage(coachText),
+        (r) => `"${summarize(r.text)}"`,
+      )
       const userText = userResp.text.trim() || '(tystnad)'
       transcript.push({
         turn,
@@ -170,7 +204,11 @@ export async function runConversation(
         events: [{ kind: 'text', text: userText }],
       })
 
-      coachResp = await coachChat.sendMessage(userText)
+      coachResp = await timeIt(
+        `tur ${turn} — coach`,
+        () => coachChat!.sendMessage(userText),
+        describeCoachTurn,
+      )
       coachResp = await processCoachTurn(
         coachResp,
         turn,

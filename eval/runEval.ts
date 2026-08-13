@@ -12,17 +12,19 @@ import {
   writeHtmlReport,
   writeResultArtifact,
 } from './report'
+import { phase, timeIt } from './timing'
 import type { RunResult } from './types'
 
 async function main() {
   const cfg = loadConfig()
 
-  console.log(
+  phase(
     `Bygger scenario "${evalConfig.scenarioType}" (tränare ${evalConfig.trainerId}, övning ${evalConfig.workoutId})...`,
   )
   const scenario = await buildScenario(evalConfig, cfg.apiBaseUrl)
-
-  console.log(`Kör ${evalConfig.runs} samtal (modell: ${cfg.coachModel})...`)
+  console.log(
+    `    ✓ ${scenario.label} — tränare "${scenario.trainerName}", övning "${scenario.session.name}"`,
+  )
 
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
   const resultsDir = join(import.meta.dirname, 'results', timestamp)
@@ -30,7 +32,6 @@ async function main() {
   const results: RunResult[] = []
 
   for (let runIndex = 0; runIndex < evalConfig.runs; runIndex++) {
-    process.stdout.write(`  ${scenario.label} — körning #${runIndex + 1} ... `)
     const result = await runConversation(
       scenario,
       evalConfig.userInstruction,
@@ -39,15 +40,18 @@ async function main() {
     )
 
     if (!result.error) {
+      phase(`Körning #${runIndex + 1} — domaren bedömer samtalet...`)
       try {
-        result.judge = await runJudge({
-          apiKey: cfg.apiKey,
-          model: cfg.judgeModel,
-          scenario,
-          transcript: result.transcript,
-          toolLog: result.toolLog,
-          deterministic: result.deterministic,
-        })
+        result.judge = await timeIt('domare', () =>
+          runJudge({
+            apiKey: cfg.apiKey,
+            model: cfg.judgeModel,
+            scenario,
+            transcript: result.transcript,
+            toolLog: result.toolLog,
+            deterministic: result.deterministic,
+          }),
+        )
       } catch (e) {
         result.error = `Domaren misslyckades: ${e instanceof Error ? e.message : String(e)}`
       }
@@ -57,17 +61,17 @@ async function main() {
     writeResultArtifact(result, resultsDir)
     console.log(
       result.error
-        ? `FEL (${result.error})`
-        : `klar (${result.turnCount} turer)`,
+        ? `\n✖ Körning #${runIndex + 1} FEL (${result.error})`
+        : `\n✔ Körning #${runIndex + 1} klar (${result.turnCount} turer${result.judge ? `, poäng ${result.judge.score}` : ''})`,
     )
   }
 
-  console.log('')
+  phase('Skriver rapport...')
   printSummary(results)
 
   writeBatchSummary(results, resultsDir)
   const reportPath = writeHtmlReport(results, resultsDir)
-  console.log(`\nHTML-rapport: ${reportPath}`)
+  console.log(`\n✅ HTML-rapport: ${reportPath}`)
 
   const anyFailed = results.some((r) => {
     if (r.error) return true
