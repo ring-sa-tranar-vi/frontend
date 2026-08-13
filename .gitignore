@@ -25,3 +25,6 @@ dist-ssr
 
 #Others
 .env
+
+# AI eval harness
+eval/results/
