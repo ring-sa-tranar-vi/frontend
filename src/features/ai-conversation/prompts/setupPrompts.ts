@@ -9,78 +9,124 @@ export function buildUserContext(
   session: CoachCallSession,
   calendarEvents?: CalendarActivity[] | null,
 ): string {
-  const parts: string[] = []
+  const parts: string[] = ['# USER INFORMATION']
+
   if (session.userName) {
-    parts.push(`Användarens namn är ${session.userName}.`)
+    parts.push(`- USER NAME: ${session.userName}.`)
   }
   if (session.currentStreak && session.currentStreak > 0) {
-    parts.push(`Nuvarande streak: ${session.currentStreak} dag(ar) i rad.`)
+    parts.push(`- CURRENT STREAK: ${session.currentStreak} day(s) in a row.`)
   }
   const last = session.completedWorkouts?.[0]
   if (last) {
-    parts.push(`Senaste pass: ${last.workoutName} (${last.dateLabel}).`)
+    parts.push(`- LAST WORKOUT: ${last.workoutName} (${last.dateLabel}).`)
   }
   if (session.intensityLevel) {
-    parts.push(`Intensitetsnivå: ${session.intensityLevel}.`)
+    parts.push(`- INTENSITY LEVEL: ${session.intensityLevel}.`)
   }
   if (session.context?.trim()) {
-    parts.push(`Bakgrund och context: ${session.context.trim()}`)
+    parts.push(`- CONTEXT: ${session.context.trim()}`)
   }
-  const workoutName = session.workoutName ?? session.name
-  if (workoutName) {
-    parts.push(`Dagens pass heter "${workoutName}".`)
-  }
-  if (session.instructions?.trim()) {
-    parts.push(`Passets INSTRUKTIONER: ${session.instructions.trim()}`)
-  }
-  if (session.guidance?.trim()) {
-    parts.push(`Passets GUIDNING: ${session.guidance.trim()}`)
-  }
+
   const activities = calendarEvents?.filter((e) => !e.completed).map((e) => e)
 
   if (activities && activities.length > 0) {
-    parts.push(
-      `Användaren har följande kommande aktiviteter: ${activities.join(', ')}.`,
-    )
+    parts.push(`- UPCOMING ACTIVITIES: ${activities.join(', ')}.`)
   } else {
-    parts.push('Användaren har inga kommande aktiviteter.')
+    parts.push('- NO UPCOMING ACTIVITIES.')
   }
-  return parts.join(' ')
+
+  return parts.join('\n')
 }
 
-export const LANGUAGE_ADAPTATION_INSTRUCTION =
-  'Om användaren ber dig byta språk ska du tala det nya språket med en brytning från ditt originalspråk. Översätt övningarnas namn till språket du talar, så att det inte kommer in svenska ord i en icke-svenska konversation.'
-
-export const PERSONA_STABILITY_INSTRUCTION =
-  'Detta gäller alla trainers: behåll exakt samma trainer-personlighet, språk, dialekt, röststil, energi och tonläge genom hela samtalet, inklusive instruktioner, feedback, avbrott och avslut. Om trainerprompten säger nervös, lugn, hetsig, elegant, varm eller något annat ska det märkas konsekvent hela tiden. Använd användarkontexten för vad du säger, men byt aldrig persona.'
-
-export const COACH_PROMPTS = {
-  INSTRUCTIONS_DONE:
-    'Instruktionerna har precis spelats klart. Invänta användarens svar på om de är redo att starta passet.',
-
-  WORKOUT_DONE: (workoutName: string, progressSummary = '') =>
-    `Passet "${workoutName}" är klart och sparat.${progressSummary ? ` ${progressSummary}` : ''} Invänta användarens svar på hur det kändes.`,
-
-  NO_TOKEN_ERROR: 'Kunde inte starta coach-samtalet.',
-  NO_WORKOUT_ERROR: 'Kunde inte hämta workout.',
-  NO_MIC_ERROR: 'Kunde inte starta mikrofonen.',
-  NO_INSTRUCTIONS_AUDIO: 'Instruktionsljud saknas för vald workout.',
-  NO_WORKOUT_AUDIO: 'Workout-ljud saknas.',
-}
-
-export function buildGuestContext(session: CoachCallSession): string {
-  const parts: string[] = []
+export function buildWorkoutContext(session: CoachCallSession): string {
+  const parts: string[] = ["# TODAY'S WORKOUT"]
   const workoutName = session.workoutName ?? session.name
+
   if (workoutName) {
-    parts.push(`Dagens pass heter "${workoutName}".`)
+    parts.push(`- WORKOUT NAME: "${workoutName}".`)
   }
   if (session.instructions?.trim()) {
-    parts.push(`Passets INSTRUKTIONER: ${session.instructions.trim()}`)
+    parts.push(`## INSTRUCTIONS: ${session.instructions.trim()}`)
   }
   if (session.guidance?.trim()) {
-    parts.push(`Passets GUIDNING: ${session.guidance.trim()}`)
+    parts.push(`## GUIDANCE: ${session.guidance.trim()}`)
   }
-  return parts.join(' ')
+
+  return parts.join('\n')
+}
+
+export const LANGUAGE_ADAPTATION_INSTRUCTION = `
+# LANGUAGE ADAPTATION
+- If the user asks you to switch languages, speak the new language with an accent from your original language.
+- Translate exercise names into the language you are speaking so that non-English words do not appear in an English conversation.
+`.trim()
+
+export const PERSONA_STABILITY_INSTRUCTION = `
+# PERSONA STABILITY
+This applies to all trainers:
+- Maintain the exact same trainer persona, language, dialect, vocal style, energy, and tone throughout the entire conversation, including instructions, feedback, interruptions, and sign-offs.
+- If the trainer prompt specifies nervous, calm, intense, elegant, warm, or anything else, ensure it is consistently reflected at all times.
+- Use the user context for what you say, but never break character or change persona.
+`.trim()
+
+export const COACH_PROMPTS = {
+  INSTRUCTIONS_DONE: `
+    # STATUS UPDATE
+    - The instructions have just finished playing. Await the user's response regarding whether they are ready to start the workout.`,
+  WORKOUT_DONE: (workoutName: string, progressSummary = '') =>
+    `# WORKOUT COMPLETED
+  - The workout "${workoutName}" is complete and saved.${
+    progressSummary ? ` ${progressSummary}` : ''
+  }
+    - Await the user's response on how it felt.`,
+
+  NO_TOKEN_ERROR: 'Could not start the coach session.',
+  NO_WORKOUT_ERROR: 'Could not retrieve the workout.',
+  NO_MIC_ERROR: 'Could not start the microphone.',
+  NO_INSTRUCTIONS_AUDIO:
+    'Instruction audio is missing for the selected workout.',
+  NO_WORKOUT_AUDIO: 'Workout audio is missing.',
+} as const
+
+// ============================================================================
+// CONTEXT BUILDERS
+// ============================================================================
+
+export function buildGuestContext(session: CoachCallSession): string {
+  const workoutName = session.workoutName ?? session.name
+
+  const parts = [
+    '# USER INFORMATION',
+    workoutName && `- TODAY'S WORKOUT: "${workoutName}".`,
+    session.instructions?.trim() &&
+      `- ## INSTRUCTIONS:\n${session.instructions.trim()}`,
+    session.guidance?.trim() && `- ## GUIDANCE:\n${session.guidance.trim()}`,
+  ].filter(Boolean)
+
+  return parts.join('\n')
+}
+
+function buildTrainerIdentity(
+  trainerName?: string | null,
+  trainerPrompt?: string | null,
+): string {
+  const nameLine = trainerName?.trim()
+    ? `Your name is ${trainerName.trim()}.\n`
+    : ''
+  const customPrompt = trainerPrompt?.trim()
+    ? `${nameLine}${trainerPrompt.trim()}\n\n`
+    : nameLine
+
+  return [
+    '# TRAINER IDENTITY AND STYLE',
+    'Apply this throughout the conversation:',
+    customPrompt ? `- ${customPrompt}` : null,
+    PERSONA_STABILITY_INSTRUCTION,
+    LANGUAGE_ADAPTATION_INSTRUCTION,
+  ]
+    .filter(Boolean)
+    .join('\n')
 }
 
 export function buildSessionInstruction(
@@ -90,26 +136,39 @@ export function buildSessionInstruction(
   alreadyCompletedToday?: boolean,
   isSignedIn?: boolean,
   calendarEvents?: CalendarActivity[] | null,
-) {
+): string {
   const trainerNameLine = trainerName?.trim()
-    ? `Ditt namn är ${trainerName.trim()}. `
+    ? `Your name is ${trainerName.trim()}.\n`
     : ''
+
+  const workoutContext = buildWorkoutContext(session)
+
+  // Guest Flow
   if (!isSignedIn) {
     const guestContext = buildGuestContext(session)
-    return `${guestContext} ${GUEST_SESSION_INSTRUCTION} ${trainerNameLine}${trainerPrompt?.trim() ?? ''} ${LANGUAGE_ADAPTATION_INSTRUCTION}`
+    const trainerIdentity = `# TRAINER IDENTITY\n${trainerNameLine}${trainerPrompt?.trim() ?? ''}`
+
+    return [
+      trainerIdentity,
+      LANGUAGE_ADAPTATION_INSTRUCTION,
+      GUEST_SESSION_INSTRUCTION,
+      guestContext,
+      workoutContext,
+    ].join('\n\n')
   }
+
+  // Authenticated User Flow
   const userContext = buildUserContext(session, calendarEvents)
-  const trainerIdentity = trainerPrompt?.trim()
-    ? `\n\nTrainer identity and style (apply this throughout the conversation):\n${trainerNameLine}${trainerPrompt.trim()}\n${PERSONA_STABILITY_INSTRUCTION} ${LANGUAGE_ADAPTATION_INSTRUCTION}`
-    : `\n\nTrainer identity and style (apply this throughout the conversation):\n${trainerNameLine}${PERSONA_STABILITY_INSTRUCTION} ${LANGUAGE_ADAPTATION_INSTRUCTION}`
+  const trainerIdentity = buildTrainerIdentity(trainerName, trainerPrompt)
 
+  let baseInstruction = SESSION_INSTRUCTION
   if (alreadyCompletedToday) {
-    return `${trainerIdentity}${userContext} ${ALREADY_COMPLETED_INSTRUCTION}`
+    baseInstruction = ALREADY_COMPLETED_INSTRUCTION
+  } else if (session.onboarding) {
+    baseInstruction = ONBOARDING_SYSTEM_INSTRUCTION
   }
 
-  if (session.onboarding) {
-    return `${trainerIdentity}${userContext} ${ONBOARDING_SYSTEM_INSTRUCTION}`
-  }
-
-  return `${trainerIdentity}${userContext}${SESSION_INSTRUCTION}`
+  return [trainerIdentity, baseInstruction, userContext, workoutContext].join(
+    '\n\n',
+  )
 }
