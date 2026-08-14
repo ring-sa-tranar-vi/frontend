@@ -52,6 +52,10 @@ const homepageTrainers: Record<number, { name: string; image: string }> = {
     name: 'Axmed',
     image: '/start-page/axmed-start.webp',
   },
+  9: {
+    name: 'Marek',
+    image: '/start-page/marek-start.webp',
+  },
 }
 
 function getHomepageTrainer(trainerId?: number | null) {

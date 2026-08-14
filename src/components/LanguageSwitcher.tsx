@@ -7,6 +7,7 @@ const LANGUAGES = [
   { code: 'so', label: 'Somali' },
   { code: 'ta', label: 'Tamil' },
   { code: 'ur', label: 'Urdu' },
+  { code: 'pl', label: 'Polski' },
 ]
 
 export default function LanguageSwitcher({
