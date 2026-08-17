@@ -1,4 +1,4 @@
-import { useQueryClient } from '@tanstack/react-query'
+import { useQueryClient, type RefetchOptions } from '@tanstack/react-query'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useCalendarEvents } from '../../hooks/useCalendarEvents'
 import { useCurrentTrainer } from '../../hooks/useCurrentTrainer'
@@ -51,6 +51,10 @@ export function useCoachSession(
     trainerId?: string
     session: CoachCallSession
     workouts: Workout[] | undefined
+    currentWorkout: Workout | null
+    refetchRecommendedWorkoutId: (
+      options?: RefetchOptions,
+    ) => Promise<{ id: number; reasoning?: string }>
     updateCurrentWorkout: (workoutId: number, reasoning?: string) => void
     alreadyCompletedToday?: boolean
   },
@@ -58,12 +62,12 @@ export function useCoachSession(
   const queryClient = useQueryClient()
   const {
     session,
-    autoStart = true,
     workouts,
+    autoStart = true,
     updateCurrentWorkout,
+    refetchRecommendedWorkoutId,
     alreadyCompletedToday = false,
   } = options
-
   const { userId, updateProfile, isSignedIn } = useCurrentUser()
   const { isTrainerLoading, isTrainerError: isCurrentTrainerError } =
     useCurrentTrainer(String(session.trainer?.id ?? undefined))
@@ -89,7 +93,7 @@ export function useCoachSession(
         calendarEvents,
       ),
     [
-      session.id,
+      session,
       sessionCoachPrompt,
       sessionTrainerName,
       alreadyCompletedToday,
@@ -97,9 +101,13 @@ export function useCoachSession(
       calendarEvents,
     ],
   )
+
   useEffect(() => {
-    console.log('[useCoachSession] sessionInstruction', sessionInstruction)
-  }, [sessionInstruction])
+    console.log('Instructions', session.instructions)
+  }, [session.instructions])
+  useEffect(() => {
+    console.log('Guidance', session.guidance)
+  }, [session.guidance])
 
   const [step, setStep] = useState<CoachSessionStep>('idle')
   const [error, setError] = useState<string | null>(null)
@@ -202,7 +210,6 @@ export function useCoachSession(
     console.debug('[CoachSession]', event)
     setDebugEvents((current) => [event, ...current].slice(0, 12))
   }, [])
-
   const sessionTools = useMemo(
     () =>
       getSessionTools({
@@ -393,13 +400,27 @@ export function useCoachSession(
     (workoutId: number, reasoning: string) => {
       addDebugEvent('change_workout', workoutId)
       addDebugEvent('change_workout_reasoning', reasoning)
+
       updateCurrentWorkout(workoutId, reasoning)
-      const instructions = session.instructions
-      const guidance = session.guidance
+      const newWorkout = workouts?.find((w) => w.id === workoutId)
+      if (!newWorkout) {
+        console.error('Workout not found for ID:', workoutId)
+        return
+      }
+      if (!newWorkout.instructions || !newWorkout.guidance) {
+        console.error(
+          'Workout instructions or guidance missing for ID:',
+          workoutId,
+        )
+        return
+      }
+      const instructions = newWorkout?.instructions
+      const guidance = newWorkout?.guidance
 
       const prompt = `
-      ### CHANGE WORKOUT
-      - WORKOUT ID: workoutId
+      ### THIS IS THE NEW WORKOUT FOR THIS SESSION
+      - Tell the user that we have changed their workout based on their request.
+      - WORKOUT ID: ${workoutId}
       - INSTRUCTIONS: ${instructions}
       - GUIDANCE: ${guidance}`.trim()
       sendCoachPrompt(prompt)
@@ -517,11 +538,11 @@ export function useCoachSession(
       await updateProfile({ name: name })
       addDebugEvent('onboarding-name', name)
     },
-    [addDebugEvent, sendCoachPrompt, updateProfile],
+    [addDebugEvent, updateProfile],
   )
 
   //──────────────────────
-  // Update intensity level during onboarding
+  // Update intensity level
   //──────────────────────
   const updateIntensityLevel = useCallback(
     async (intensityLevel: number) => {
@@ -540,7 +561,27 @@ export function useCoachSession(
         return
       }
       await updateProfile({ intensityLevel })
-      addDebugEvent('onboarding-intensity', intensityLevel)
+      const { id: newWorkoutId } = await refetchRecommendedWorkoutId()
+      console.log('New recommended workout ID:', newWorkoutId)
+      // Find the workout from your workouts list using newWorkoutId
+      const newWorkout = workouts?.find((w) => w.id === newWorkoutId)
+      if (!newWorkout || !newWorkout.instructions || !newWorkout.guidance) {
+        console.error(
+          'New recommended workout instructions or guidance missing.',
+        )
+        return // <--- SILENT RETURN: NO PROMPT SENT TO AI!
+      }
+      const prompt = `
+### THIS IS THE NEW WORKOUT FOR THIS SESSION
+- Tell the user that we have updated their workout based on their intensity level.
+- WORKOUT ID: \`${newWorkoutId}\`
+- INSTRUCTIONS: ${newWorkout?.instructions}
+- GUIDANCE: ${newWorkout?.guidance}`.trim()
+
+      sendCoachPrompt(prompt)
+      setSessionStep('waiting_instruction_approval')
+
+      addDebugEvent('update intensity', intensityLevel)
     },
     [addDebugEvent, sendCoachPrompt, updateProfile],
   )
@@ -569,7 +610,21 @@ export function useCoachSession(
 
   const onboardingToTraining = useCallback(async () => {
     await updateProfile({ onboarding: false })
+    const { id: newWorkoutId } = await refetchRecommendedWorkoutId()
+
+    // Find the workout from your workouts list using newWorkoutId
+    const newWorkout = workouts?.find((w) => w.id === newWorkoutId)
+
+    const prompt = `
+      ### THIS IS THE NEW WORKOUT FOR THIS SESSION
+      - Tell the user that we have selected a workout based on their profile and context.
+      - WORKOUT ID: \`${newWorkoutId}\`
+      - INSTRUCTIONS: ${newWorkout?.instructions ?? session.instructions}
+      - GUIDANCE: ${newWorkout?.guidance ?? session.guidance}`.trim()
+
+    sendCoachPrompt(prompt)
     setSessionStep('waiting_instruction_approval')
+
     addDebugEvent('onboarding-complete')
   }, [addDebugEvent, sendCoachPrompt, updateProfile, setSessionStep])
 
