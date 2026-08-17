@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
-import { useTranslation } from 'react-i18next'
+import { useCurrentTrainer } from '../../hooks/useCurrentTrainer'
+import useCurrentUser from '../../hooks/useCurrentUser'
+import useCurrentWorkout from '../../hooks/useCurrentWorkout'
 import { useCoachSession } from '../ai-conversation'
 import { SessionCall } from './components/SessionCall'
-import { useCoachCallSession } from './query'
 import type { CoachCallSession, SessionPanel, Workout } from './types'
-import useCurrentWorkout from '../../hooks/useCurrentWorkout'
 
 const LOADING_SESSION: CoachCallSession = {
-  id: '',
+  workoutId: '',
   isAuthenticated: false,
 }
 
@@ -23,20 +23,50 @@ export function SessionPage({
   alreadyCompletedToday?: boolean
   onEnd: () => void
 }) {
-  const { currentWorkout: workout } = useCurrentWorkout()
   const {
-    data: session,
-    isLoading,
-    isError,
-    error,
-  } = useCoachCallSession(workout)
-  const { t } = useTranslation()
+    currentWorkout: workout,
+    isLoading: isCurrentWorkoutLoading,
+    isError: isCurrentWorkoutError,
+  } = useCurrentWorkout()
+  const { user, isProfileLoading, isProfileError } = useCurrentUser()
+  const { trainer } = useCurrentTrainer(
+    user?.trainerId ? String(user.trainerId) : '1',
+  )
+  const isLoading =
+    isProfileLoading || isCurrentWorkoutLoading || workout === undefined
+
+  useEffect(() => {
+    console.log('SessionPage state', {
+      user,
+      workout,
+    })
+  }, [user, workout])
+  const isError = isProfileError || isCurrentWorkoutError
+  const session: CoachCallSession = {
+    workoutId: workout?.id ?? '',
+    isAuthenticated: user?.id ? true : false,
+    workoutName: workout?.name,
+    dashboardName: workout?.dashboardName,
+    description: workout?.description,
+    dashboardDescription: workout?.dashboardDescription,
+    instructions: workout?.instructions,
+    guidance: workout?.guidance,
+    level: workout?.level,
+    type: workout?.type,
+    image: workout?.image,
+    video: workout?.video,
+    userName: user?.name,
+    intensityLevel: user?.intensityLevel,
+    context: user?.context,
+    currentStreak: user?.currentStreak,
+    completedWorkouts: user?.completedWorkouts,
+    onboarding: user?.onboarding,
+    trainer: trainer,
+  }
 
   if (isError) {
     return (
-      <div className="flex h-full w-full items-center justify-center bg-[#fbf8ff] px-8 text-center text-base font-semibold text-[#221447]">
-        {error instanceof Error ? error.message : t('sessionPage.genericError')}
-      </div>
+      <div className="flex h-full w-full items-center justify-center bg-[#fbf8ff] px-8 text-center text-base font-semibold text-[#221447]"></div>
     )
   }
 
@@ -91,7 +121,7 @@ function ReadySessionPage({
   const [elapsedSeconds, setElapsedSeconds] = useState(0)
   const [isEnding, setIsEnding] = useState(false)
   const callAnsweredAtRef = useRef<number | null>(null)
-
+  const { currentWorkout, refetchRecommendedWorkoutId } = useCurrentWorkout()
   const {
     step,
     debugEvents,
@@ -109,12 +139,14 @@ function ReadySessionPage({
     toggleCaptions,
     captionHistory,
   } = useCoachSession({
-    session,
-    workouts,
+    session: session,
+    workouts: workouts,
     trainerId: session.trainer?.id ? String(session.trainer.id) : undefined,
+    currentWorkout: currentWorkout,
     autoStart: true,
-    alreadyCompletedToday,
-    updateCurrentWorkout,
+    alreadyCompletedToday: alreadyCompletedToday,
+    updateCurrentWorkout: updateCurrentWorkout,
+    refetchRecommendedWorkoutId,
   })
 
   const isAiSpeaking =
@@ -162,7 +194,7 @@ function ReadySessionPage({
   return (
     <SessionCall
       session={session}
-      workoutName={session.name ?? session.workoutName}
+      workoutName={session.workoutName}
       elapsedSeconds={elapsedSeconds}
       activePanel={activePanel}
       debugEvents={debugEvents}
