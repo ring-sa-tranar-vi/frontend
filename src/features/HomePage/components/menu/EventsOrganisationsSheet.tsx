@@ -1,3 +1,5 @@
+import { useAuth } from '@clerk/react'
+import { useQuery } from '@tanstack/react-query'
 import {
   ArrowLeft,
   Building2,
@@ -18,6 +20,11 @@ import {
   appSheetCardClass,
 } from '../../../../components/AppSheet'
 import {
+  fetchMyOrganizationApplication,
+  type ApplicationStatus,
+  OrganizationApplicationError,
+} from '../../../../api/organizationApplications'
+import {
   type EventDto,
   type OrganisationDto,
   useEventsAndOrganisations,
@@ -31,6 +38,28 @@ const organisationAvatarClasses = [
   'bg-(--brand-surface-soft) text-(--brand-primary-deep)',
   'bg-(--menu-control-bg) text-(--brand-primary-deep)',
 ]
+
+const applicationStatusClasses: Record<
+  ApplicationStatus,
+  { card: string; icon: string; action: string }
+> = {
+  PENDING: {
+    card: '!border-amber-200 !bg-amber-50',
+    icon: 'bg-amber-100 text-amber-700',
+    action: 'border-amber-300 bg-amber-100 text-amber-800 hover:bg-amber-200',
+  },
+  APPROVED: {
+    card: '!border-emerald-200 !bg-emerald-50',
+    icon: 'bg-emerald-100 text-emerald-700',
+    action:
+      'border-emerald-300 bg-emerald-100 text-emerald-800 hover:bg-emerald-200',
+  },
+  REJECTED: {
+    card: '!border-red-200 !bg-red-50',
+    icon: 'bg-red-100 text-red-700',
+    action: 'border-red-300 bg-red-100 text-red-800 hover:bg-red-200',
+  },
+}
 
 function toEventDate(event: EventDto) {
   const date = new Date(event.time)
@@ -151,7 +180,10 @@ function EventCard({
     month: 'short',
     year: 'numeric',
   }).format(date)
-  const location = [event.venue, event.city].filter(Boolean).join(' · ')
+  const location =
+    event.eventType === 'ONLINE'
+      ? t('menu.events.directory.online')
+      : [event.venue, event.city].filter(Boolean).join(' · ')
   const buttonLabel = isPending
     ? t('menu.events.directory.saving')
     : isAttending
@@ -174,22 +206,14 @@ function EventCard({
             {event.name}
           </h3>
 
-          {isAttending || typeof event.attendeesCount === 'number' ? (
+          {typeof event.attendeesCount === 'number' ? (
             <div className="menu-event-status-row">
-              {isAttending ? (
-                <span className="menu-card-badge inline-flex items-center gap-1 rounded-full bg-(--brand-soft) px-2 py-1 text-(--brand-primary-deep)">
-                  <Check size={12} strokeWidth={2.8} aria-hidden="true" />
-                  {t('menu.events.directory.registered')}
-                </span>
-              ) : null}
-              {typeof event.attendeesCount === 'number' ? (
-                <span className="menu-card-badge inline-flex items-center gap-1.5 rounded-full bg-(--brand-soft) px-2 py-1 text-(--brand-primary-deep)">
-                  <UsersRound size={13} aria-hidden="true" />
-                  {t('menu.events.directory.attendeeCount', {
-                    count: event.attendeesCount,
-                  })}
-                </span>
-              ) : null}
+              <span className="menu-card-badge inline-flex items-center gap-1.5 rounded-full bg-(--brand-soft) px-2 py-1 text-(--brand-primary-deep)">
+                <UsersRound size={13} aria-hidden="true" />
+                {t('menu.events.directory.attendeeCount', {
+                  count: event.attendeesCount,
+                })}
+              </span>
             </div>
           ) : null}
 
@@ -251,12 +275,15 @@ function EventCard({
                     })
                   : t('menu.events.directory.registerFor', { name: event.name })
             }
-            className={`min-h-11 min-w-[5.75rem] rounded-xl px-3 py-2.5 text-[length:var(--text-sm)] font-extrabold transition focus-visible:ring-2 focus-visible:ring-(--brand-border-strong) focus-visible:ring-offset-2 focus-visible:outline-none active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-55 ${
+            className={`inline-flex min-h-11 min-w-[5.75rem] items-center justify-center gap-1.5 rounded-xl px-3 py-2.5 text-[length:var(--text-sm)] font-extrabold transition focus-visible:ring-2 focus-visible:ring-(--brand-border-strong) focus-visible:ring-offset-2 focus-visible:outline-none active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-55 ${
               isAttending
                 ? 'border border-(--brand-border-field) bg-(--brand-soft) text-(--brand-primary-deep)'
                 : 'bg-(--brand-primary) text-(--brand-on-primary) hover:bg-(--brand-primary-strong)'
             }`}
           >
+            {isAttending ? (
+              <Check size={15} strokeWidth={2.8} aria-hidden="true" />
+            ) : null}
             {buttonLabel}
           </button>
         </div>
@@ -351,14 +378,6 @@ function OrganisationCard({
           >
             {organisation.name}
           </h3>
-          {isFollowing ? (
-            <div className="menu-event-status-row">
-              <span className="menu-card-badge inline-flex items-center gap-1 rounded-full bg-(--brand-soft) px-2 py-1 text-(--brand-primary-deep)">
-                <Check size={12} strokeWidth={2.8} aria-hidden="true" />
-                {t('menu.events.directory.following')}
-              </span>
-            </div>
-          ) : null}
         </div>
 
         <div className="menu-organisation-actions shrink-0">
@@ -379,12 +398,15 @@ function OrganisationCard({
                       name: organisation.name,
                     })
             }
-            className={`min-h-11 rounded-xl px-3 py-2.5 text-[length:var(--text-sm)] font-extrabold transition focus-visible:ring-2 focus-visible:ring-(--brand-border-strong) focus-visible:ring-offset-2 focus-visible:outline-none active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-55 ${
+            className={`inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl px-3 py-2.5 text-[length:var(--text-sm)] font-extrabold transition focus-visible:ring-2 focus-visible:ring-(--brand-border-strong) focus-visible:ring-offset-2 focus-visible:outline-none active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-55 ${
               isFollowing
                 ? 'border border-(--brand-border-field) bg-(--brand-soft) text-(--brand-primary-deep)'
                 : 'bg-(--brand-primary) text-(--brand-on-primary) hover:bg-(--brand-primary-strong)'
             }`}
           >
+            {isFollowing ? (
+              <Check size={15} strokeWidth={2.8} aria-hidden="true" />
+            ) : null}
             {buttonLabel}
           </button>
         </div>
@@ -476,6 +498,7 @@ export default function EventsOrganisationsSheet({
   userCity?: string | null
 }) {
   const { t, i18n } = useTranslation()
+  const { getToken, isLoaded, isSignedIn, userId } = useAuth()
   const [activeTab, setActiveTab] = useState<DirectoryTab>('events')
   const [search, setSearch] = useState('')
   const [eventFilter, setEventFilter] = useState<EventFilter>('all')
@@ -488,7 +511,34 @@ export default function EventsOrganisationsSheet({
     followingMutation,
   } = useEventsAndOrganisations(open)
 
+  const myApplicationQuery = useQuery({
+    queryKey: ['organisation-application', 'me', userId],
+    queryFn: async () => {
+      const token = await getToken()
+      if (!token) throw new Error('Missing Clerk token')
+
+      try {
+        return await fetchMyOrganizationApplication(token)
+      } catch (error) {
+        if (
+          error instanceof OrganizationApplicationError &&
+          error.status === 404
+        ) {
+          return null
+        }
+        throw error
+      }
+    },
+    enabled: open && isLoaded && Boolean(isSignedIn) && Boolean(userId),
+    retry: false,
+  })
+
   const locale = i18n.resolvedLanguage ?? i18n.language ?? 'sv'
+  const existingApplication = myApplicationQuery.data
+  const isApplicationUnavailable = myApplicationQuery.isError
+  const applicationStatusClass = existingApplication
+    ? applicationStatusClasses[existingApplication.status]
+    : null
   const normalizedSearch = normalizeSearchText(search)
   const normalizedUserCity = normalizeSearchText(userCity)
   const organisations = useMemo(
@@ -637,8 +687,14 @@ export default function EventsOrganisationsSheet({
         <div
           role="tablist"
           aria-label={t('menu.events.directory.tabsLabel')}
-          className="grid grid-cols-2 rounded-2xl border border-(--brand-border-field) bg-(--menu-content-bg) p-1"
+          className="relative grid grid-cols-2 overflow-hidden rounded-2xl border border-(--brand-border-field) bg-(--brand-soft) p-1"
         >
+          <span
+            aria-hidden="true"
+            className={`pointer-events-none absolute inset-y-1 left-1 w-[calc(50%-0.25rem)] rounded-xl border border-(--brand-primary) bg-(--menu-content-bg) transition-transform duration-200 ease-out motion-reduce:transition-none ${
+              activeTab === 'organisations' ? 'translate-x-full' : ''
+            }`}
+          />
           {(['events', 'organisations'] as const).map((tab) => {
             const isActive = activeTab === tab
             return (
@@ -652,10 +708,10 @@ export default function EventsOrganisationsSheet({
                 tabIndex={isActive ? 0 : -1}
                 onClick={() => switchTab(tab)}
                 onKeyDown={(event) => handleTabKeyDown(event, tab)}
-                className={`min-h-11 rounded-xl border px-3 py-2.5 text-[length:var(--text-sm)] font-extrabold transition focus-visible:ring-2 focus-visible:ring-(--brand-border-strong) focus-visible:outline-none active:scale-[0.985] ${
+                className={`relative z-10 min-h-11 rounded-xl border border-transparent bg-transparent px-3 py-2.5 text-[length:var(--text-sm)] font-extrabold transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-(--brand-border-strong) focus-visible:outline-none active:scale-[0.985] ${
                   isActive
-                    ? 'border-(--brand-primary) bg-(--brand-soft) text-(--brand-primary-deep)'
-                    : 'border-transparent bg-(--menu-content-bg) text-(--brand-ink-soft) hover:bg-(--brand-surface-soft)'
+                    ? 'text-(--brand-primary-deep)'
+                    : 'text-(--brand-ink-soft) hover:text-(--brand-primary-deep)'
                 }`}
               >
                 {t(`menu.events.directory.tabs.${tab}`)}
@@ -836,26 +892,60 @@ export default function EventsOrganisationsSheet({
               {t('menu.events.directory.organisationsIntro')}
             </div>
 
-            <div className={`mt-4 ${appSheetCardClass}`}>
+            <div
+              className={`mt-4 ${appSheetCardClass} ${applicationStatusClass?.card ?? ''}`}
+            >
               <div className="flex items-start gap-3">
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-(--brand-soft) text-(--brand-primary-deep)">
+                <div
+                  className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${applicationStatusClass?.icon ?? 'bg-(--brand-soft) text-(--brand-primary-deep)'}`}
+                >
                   <Building2 size={21} strokeWidth={2.3} aria-hidden="true" />
                 </div>
                 <div className="min-w-0">
                   <h2 className="menu-card-title text-(--brand-title-ink)">
-                    {t('menu.events.application.cardTitle')}
+                    {isApplicationUnavailable
+                      ? t('menu.events.application.statusError')
+                      : existingApplication
+                        ? t(
+                            `menu.events.application.statusTitle.${existingApplication.status.toLowerCase()}`,
+                          )
+                        : t('menu.events.application.cardTitle')}
                   </h2>
                   <p className="menu-card-copy mt-1">
-                    {t('menu.events.application.cardText')}
+                    {isApplicationUnavailable
+                      ? t('menu.events.application.cardText')
+                      : existingApplication
+                        ? t(
+                            `menu.events.application.statusText.${existingApplication.status.toLowerCase()}`,
+                          )
+                        : t('menu.events.application.cardText')}
                   </p>
                 </div>
               </div>
               <button
                 type="button"
-                onClick={onApply}
-                className="mt-4 min-h-11 w-full rounded-xl bg-(--brand-primary) px-4 py-3 text-[length:var(--text-sm)] font-extrabold text-(--brand-on-primary) transition hover:bg-(--brand-primary-strong) focus-visible:ring-2 focus-visible:ring-(--brand-border-strong) focus-visible:ring-offset-2 focus-visible:outline-none active:scale-[0.985]"
+                onClick={() => {
+                  if (isApplicationUnavailable) {
+                    void myApplicationQuery.refetch()
+                    return
+                  }
+                  onApply()
+                }}
+                disabled={myApplicationQuery.isLoading}
+                className={`mt-4 min-h-11 w-full rounded-xl border px-4 py-3 text-[length:var(--text-sm)] font-extrabold transition focus-visible:ring-2 focus-visible:ring-(--brand-border-strong) focus-visible:ring-offset-2 focus-visible:outline-none active:scale-[0.985] disabled:cursor-wait disabled:opacity-70 ${
+                  applicationStatusClass?.action ??
+                  'border-transparent bg-(--brand-primary) text-(--brand-on-primary) hover:bg-(--brand-primary-strong)'
+                }`}
               >
-                {t('menu.events.application.cardAction')}
+                {myApplicationQuery.isLoading
+                  ? t('menu.events.application.checkingStatus')
+                  : isApplicationUnavailable
+                    ? t('menu.events.directory.retry')
+                    : existingApplication
+                      ? t(
+                          `menu.events.application.status.${existingApplication.status.toLowerCase()}`,
+                        )
+                      : t('menu.events.application.cardAction')}
               </button>
             </div>
 

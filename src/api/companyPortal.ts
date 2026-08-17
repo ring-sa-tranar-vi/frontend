@@ -8,7 +8,7 @@ export type CompanyOrganisation = {
   description: string | null
   orgCity: string
   organizerId?: number | null
-  followersCount?: number
+  followerCount?: number
 }
 
 export type CompanyEvent = {

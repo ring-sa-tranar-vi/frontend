@@ -1,14 +1,13 @@
-import { SignOutButton, useAuth, useClerk, useUser } from '@clerk/react'
+import {
+  SignOutButton,
+  UserButton,
+  useAuth,
+  useClerk,
+  useUser,
+} from '@clerk/react'
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
-import {
-  CircleHelp,
-  Building2,
-  Globe,
-  Menu,
-  ShieldCheck,
-  User,
-} from 'lucide-react'
+import { CircleHelp, Building2, Globe, Menu, ShieldCheck } from 'lucide-react'
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useUpdateProfile } from '../../../hooks/useUpdateProfile'
 import ContextModel from './ContextModal'
@@ -52,16 +51,25 @@ type ProfileSettings = {
   onboarding?: boolean | null
 }
 
-const INTENSITY_MIN = 0
-const INTENSITY_MAX = 4
-const DEFAULT_INTENSITY_LEVEL = 0
+const UI_INTENSITY_MIN = 0
+const UI_INTENSITY_MAX = 4
+const API_INTENSITY_OFFSET = 1
+const DEFAULT_UI_INTENSITY_LEVEL = 0
 
-function normalizeIntensityLevel(value?: number | null) {
+function toUiIntensityLevel(value?: number | null) {
   if (typeof value !== 'number' || Number.isNaN(value)) {
-    return DEFAULT_INTENSITY_LEVEL
+    return DEFAULT_UI_INTENSITY_LEVEL
   }
 
-  return Math.min(INTENSITY_MAX, Math.max(INTENSITY_MIN, value))
+  return Math.min(
+    UI_INTENSITY_MAX,
+    Math.max(UI_INTENSITY_MIN, value - API_INTENSITY_OFFSET),
+  )
+}
+
+function toApiIntensityLevel(value: number) {
+  const uiValue = Math.min(UI_INTENSITY_MAX, Math.max(UI_INTENSITY_MIN, value))
+  return uiValue + API_INTENSITY_OFFSET
 }
 
 function normalizeTrainerId(value?: number | null) {
@@ -140,42 +148,83 @@ function ProfilePreferenceSections({
   setPrivacyOpen: (value: boolean) => void
 }) {
   const { t, i18n } = useTranslation()
+  const [isEditingName, setIsEditingName] = useState(!fullName.trim())
+  const nameInputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (isEditingName) {
+      nameInputRef.current?.focus({ preventScroll: true })
+    }
+  }, [isEditingName])
 
   return (
     <div className="space-y-4 border-t border-(--brand-border)/60 pt-4 pb-3">
       <section className={appSheetCategoryClass}>
         <div className={appSheetContentClass}>
-          <div className="mb-2 flex items-center gap-2">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-(--menu-choice-bg) text-(--brand-primary-deep)">
-              <User size={20} />
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-(--menu-choice-bg)">
+              <UserButton
+                appearance={{
+                  elements: {
+                    avatarBox: 'h-9 w-9',
+                    userButtonTrigger:
+                      'rounded-xl focus-visible:ring-2 focus-visible:ring-(--brand-primary)',
+                  },
+                }}
+              />
             </div>
-            <label htmlFor="fullName">
+            <div className="min-w-0 flex-1">
               <AppSheetSectionTitle>
                 {t('settings.fullName')}
               </AppSheetSectionTitle>
-            </label>
+              {!isEditingName ? (
+                <p
+                  className="mt-0.5 truncate text-[length:var(--text-sm)] font-semibold text-(--brand-body-ink)"
+                  title={fullName}
+                >
+                  {fullName}
+                </p>
+              ) : null}
+            </div>
+            {!isEditingName ? (
+              <button
+                type="button"
+                className={appSheetInlineActionButtonClass}
+                aria-controls="fullName"
+                onClick={() => setIsEditingName(true)}
+              >
+                {t('settings.changeName')}
+              </button>
+            ) : null}
           </div>
 
-          <AppSheetSectionText>
-            {t('settings.fullNameDescription')}
-          </AppSheetSectionText>
-
-          <input
-            id="fullName"
-            name="fullName"
-            type="text"
-            autoComplete="off"
-            value={fullName}
-            onChange={(event) => setFullName(event.target.value)}
-            placeholder={t('settings.fullNamePlaceholder')}
-            className={`${appSheetFormFieldClass} mt-3 transition placeholder:text-(--brand-muted)`}
-          />
-
-          <p className="mt-2 text-[length:var(--text-xs)] leading-snug font-semibold text-(--brand-body-ink)">
-            {fullName.trim()
-              ? t('settings.fullNameFound')
-              : t('settings.noFullNameFound')}
-          </p>
+          {isEditingName ? (
+            <>
+              <AppSheetSectionText>
+                {t('settings.fullNameDescription')}
+              </AppSheetSectionText>
+              <label htmlFor="fullName" className="sr-only">
+                {t('settings.fullName')}
+              </label>
+              <input
+                ref={nameInputRef}
+                id="fullName"
+                name="fullName"
+                type="text"
+                autoComplete="off"
+                value={fullName}
+                onChange={(event) => setFullName(event.target.value)}
+                onBlur={() => {
+                  if (fullName.trim()) setIsEditingName(false)
+                }}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter') event.currentTarget.blur()
+                }}
+                placeholder={t('settings.fullNamePlaceholder')}
+                className={`${appSheetFormFieldClass} mt-3 transition placeholder:text-(--brand-muted)`}
+              />
+            </>
+          ) : null}
         </div>
       </section>
 
@@ -343,7 +392,7 @@ function SettingsModalBody({
   const { signOut } = useClerk()
   const [fullName, setFullName] = useState(profile.name?.trim() ?? '')
   const [intensityLevel, setIntensityLevel] = useState(() =>
-    normalizeIntensityLevel(profile.intensityLevel),
+    toUiIntensityLevel(profile.intensityLevel),
   )
   const [context, setContext] = useState(profile.context ?? '')
   const [selectedTrainerId, setSelectedTrainerId] = useState<number | null>(
@@ -374,6 +423,9 @@ function SettingsModalBody({
     enabled: open && isAuthLoaded && Boolean(isSignedIn),
     retry: false,
   })
+  const canManageOrganisation =
+    companyQuery.data?.canManageOrganisation === true &&
+    companyQuery.data.organisationId != null
 
   function onTrainerSelect(trainerId: number) {
     setSelectedTrainerId(trainerId)
@@ -410,7 +462,7 @@ function SettingsModalBody({
     try {
       await updateProfile.mutateAsync({
         name: fullName.trim(),
-        intensityLevel: normalizeIntensityLevel(intensityLevel),
+        intensityLevel: toApiIntensityLevel(intensityLevel),
         context,
         trainerId: selectedTrainerId,
         city: profile.city ?? null,
@@ -463,6 +515,8 @@ function SettingsModalBody({
         onClose={() => setOpen(false)}
         height="large"
         motion="instant"
+        showScrollProgress
+        scrollProgressLabel={t('menu.progress')}
         footer={
           <section className="space-y-2.5 pb-1">
             {saveFeedback ? (
@@ -506,7 +560,7 @@ function SettingsModalBody({
           />
 
           <section className="space-y-2 border-t border-(--brand-border)/60 pt-6 pb-4">
-            {companyQuery.data?.canManageOrganisation ? (
+            {canManageOrganisation ? (
               <button
                 className={`${appSheetSecondaryButtonClass} flex items-center justify-center gap-2`}
                 onClick={() => setCompanyOpen(true)}

@@ -14,6 +14,7 @@ export type EventDto = {
   venue?: string | null
   eventType?: 'IN_PERSON' | 'ONLINE' | null
   attendeesCount?: number
+  num_of_attendees?: number
 }
 
 export type OrganisationDto = {
@@ -23,6 +24,7 @@ export type OrganisationDto = {
   events?: EventDto[] | null
   orgCity?: string | null
   followersCount?: number
+  num_of_followers?: number
 }
 
 type ToggleEventVariables = {
@@ -44,6 +46,22 @@ type EventsAndOrganisationsOptions = {
 
 function adjustOptionalCount(value: number | undefined, delta: number) {
   return typeof value === 'number' ? Math.max(0, value + delta) : undefined
+}
+
+function normalizeEvent(event: EventDto): EventDto {
+  return {
+    ...event,
+    attendeesCount: event.attendeesCount ?? event.num_of_attendees,
+  }
+}
+
+function normalizeOrganisation(organisation: OrganisationDto): OrganisationDto {
+  return {
+    ...organisation,
+    followersCount:
+      organisation.followersCount ?? organisation.num_of_followers,
+    events: organisation.events?.map(normalizeEvent),
+  }
 }
 
 async function request(
@@ -123,7 +141,7 @@ export function useEventsAndOrganisations(
         throw new Error('Backend returned invalid event data')
       }
 
-      return events
+      return events.map(normalizeEvent)
     },
     enabled: canFetch && fetchEvents,
     staleTime: 60_000,
@@ -143,7 +161,7 @@ export function useEventsAndOrganisations(
         throw new Error('Backend returned invalid organisation data')
       }
 
-      return organisations
+      return organisations.map(normalizeOrganisation)
     },
     enabled: canFetch && fetchOrganisations,
     staleTime: 60_000,
@@ -163,7 +181,7 @@ export function useEventsAndOrganisations(
         throw new Error('Backend returned invalid attendance data')
       }
 
-      return events
+      return events.map(normalizeEvent)
     },
     enabled: canFetch && fetchAttendance,
     staleTime: 60_000,
@@ -183,7 +201,7 @@ export function useEventsAndOrganisations(
         throw new Error('Backend returned invalid following data')
       }
 
-      return organisations
+      return organisations.map(normalizeOrganisation)
     },
     enabled: canFetch && fetchFollowing,
     staleTime: 60_000,

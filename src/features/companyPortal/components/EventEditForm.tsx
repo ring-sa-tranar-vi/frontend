@@ -25,6 +25,13 @@ export default function EventEditForm({
   isSaving,
   onCancel,
 }: Props) {
+  const now = new Date()
+  const minimumDateTime = new Date(
+    now.getTime() - now.getTimezoneOffset() * 60_000,
+  )
+    .toISOString()
+    .slice(0, 16)
+
   return (
     <div className="grid gap-3">
       <label className="block">
@@ -39,6 +46,7 @@ export default function EventEditForm({
         <span className={appSheetFormLabelClass}>Datum och tid</span>
         <input
           type="datetime-local"
+          min={minimumDateTime}
           value={form.time}
           onChange={(e) => setForm((f) => ({ ...f, time: e.target.value }))}
           className={appSheetFormFieldClass}

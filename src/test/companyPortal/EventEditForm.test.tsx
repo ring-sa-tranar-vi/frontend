@@ -29,7 +29,6 @@ function StatefulEventEditForm({
 
   return (
     <EventEditForm
-      isWideLayout={false}
       canSave={true}
       isSaving={false}
       onSave={vi.fn()}

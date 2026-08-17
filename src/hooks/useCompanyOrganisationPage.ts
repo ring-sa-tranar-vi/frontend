@@ -84,6 +84,18 @@ export function useCompanyOrganisationPage(enabled = true) {
     return token
   }
 
+  async function invalidateEventViews() {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['company-events'] }),
+      queryClient.invalidateQueries({ queryKey: ['events', 'list'] }),
+      queryClient.invalidateQueries({ queryKey: ['organisations', 'list'] }),
+      queryClient.invalidateQueries({ queryKey: ['calendar'] }),
+      queryClient.invalidateQueries({
+        queryKey: ['viewer', userId, 'attending-events'],
+      }),
+    ])
+  }
+
   const companyQuery = useQuery({
     queryKey: ['company-me', userId],
     queryFn: async () => fetchCompanyMe(await getRequiredToken()),
@@ -164,11 +176,9 @@ export function useCompanyOrganisationPage(enabled = true) {
       }),
     onSuccess: async () => {
       setEventForm(emptyEventForm)
+      setShowCreateEvent(false)
       setStatusMessage('Event skapades.')
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['company-events'] }),
-        queryClient.invalidateQueries({ queryKey: ['events', 'list'] }),
-      ])
+      await invalidateEventViews()
     },
     onError: (error) => {
       setStatusMessage((error as Error).message)
@@ -194,10 +204,7 @@ export function useCompanyOrganisationPage(enabled = true) {
       setEditingEventId(null)
       setEditingEventForm(emptyEventForm)
       setStatusMessage('Event uppdaterades.')
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['company-events'] }),
-        queryClient.invalidateQueries({ queryKey: ['events', 'list'] }),
-      ])
+      await invalidateEventViews()
     },
     onError: (error) => {
       setStatusMessage((error as Error).message)
@@ -209,10 +216,7 @@ export function useCompanyOrganisationPage(enabled = true) {
       deleteCompanyEvent(await getRequiredToken(), eventId),
     onSuccess: async () => {
       setStatusMessage('Event togs bort.')
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['company-events'] }),
-        queryClient.invalidateQueries({ queryKey: ['events', 'list'] }),
-      ])
+      await invalidateEventViews()
     },
     onError: (error) => {
       setStatusMessage((error as Error).message)
@@ -223,12 +227,14 @@ export function useCompanyOrganisationPage(enabled = true) {
   const canCreateEvent =
     eventForm.name.trim().length > 1 &&
     eventForm.time.trim().length > 0 &&
+    new Date(eventForm.time).getTime() > Date.now() &&
     eventForm.city.trim().length > 0 &&
     eventForm.eventType !== ''
 
   const canSaveEditedEvent =
     editingEventForm.name.trim().length > 1 &&
     editingEventForm.time.trim().length > 0 &&
+    new Date(editingEventForm.time).getTime() > Date.now() &&
     editingEventForm.city.trim().length > 0 &&
     editingEventForm.eventType !== ''
 
@@ -284,7 +290,7 @@ export function useCompanyOrganisationPage(enabled = true) {
     canCreateEvent,
     canSaveEditedEvent,
     orgCharacterCount: orgDescription.length,
-    followersCount: activeOrganisation?.followersCount,
+    followersCount: activeOrganisation?.followerCount,
     saveOrganisation: () => orgMutation.mutate(),
     createEvent: () => createEventMutation.mutate(),
     updateEvent: () => updateEventMutation.mutate(),

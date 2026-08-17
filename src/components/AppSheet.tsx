@@ -46,6 +46,8 @@ type AppSheetProps = {
   height?: 'compact' | 'default' | 'large'
   fillHeight?: boolean
   motion?: 'slide' | 'instant'
+  showScrollProgress?: boolean
+  scrollProgressLabel?: string
 }
 
 const maxHeightClass = {
@@ -73,10 +75,15 @@ export function AppSheet({
   height = 'default',
   fillHeight = false,
   motion = 'slide',
+  showScrollProgress = false,
+  scrollProgressLabel,
 }: AppSheetProps) {
   const sectionRef = useRef<HTMLElement>(null)
   const backdropRef = useRef<HTMLDivElement>(null)
   const scrollBodyRef = useRef<HTMLDivElement>(null)
+  const scrollProgressRef = useRef<HTMLDivElement>(null)
+  const scrollProgressFillRef = useRef<HTMLDivElement>(null)
+  const scrollProgressFrameRef = useRef<number | null>(null)
   const closeButtonRef = useRef<HTMLButtonElement>(null)
   const previouslyFocusedElementRef = useRef<HTMLElement | null>(null)
   const onCloseRef = useRef(onClose)
@@ -92,6 +99,15 @@ export function AppSheet({
   const [backdropVisible, setBackdropVisible] = useState(false)
   const titleId = useId()
   const subtitleId = useId()
+
+  useEffect(
+    () => () => {
+      if (scrollProgressFrameRef.current !== null) {
+        cancelAnimationFrame(scrollProgressFrameRef.current)
+      }
+    },
+    [],
+  )
 
   useEffect(() => {
     onCloseRef.current = onClose
@@ -414,7 +430,7 @@ export function AppSheet({
         <div className="flex min-h-0 flex-1 flex-col px-5 pt-4 pb-[max(1.25rem,var(--stage-safe-bottom))]">
           <header className="flex shrink-0 items-start justify-between gap-3">
             <div className="min-w-0">
-              <div className="flex items-center gap-2 text-(--brand-primary)">
+              <div className="flex min-w-0 items-center gap-2 text-(--brand-primary)">
                 {icon ? (
                   <div
                     className={`flex shrink-0 items-center justify-center rounded-2xl bg-(--brand-soft) ${
@@ -438,7 +454,7 @@ export function AppSheet({
 
                 <h2
                   id={titleId}
-                  className="text-[length:var(--text-2xl)] leading-none font-extrabold tracking-tight text-(--brand-title-ink)"
+                  className="min-w-0 text-[length:var(--text-2xl)] leading-tight font-extrabold tracking-tight [overflow-wrap:anywhere] text-(--brand-title-ink)"
                 >
                   {title}
                 </h2>
@@ -465,10 +481,57 @@ export function AppSheet({
             </button>
           </header>
 
+          {showScrollProgress ? (
+            <div
+              ref={scrollProgressRef}
+              role="progressbar"
+              aria-label={scrollProgressLabel}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuenow={0}
+              className="mt-3 h-1 shrink-0 overflow-hidden rounded-full bg-(--brand-border)"
+            >
+              <div
+                ref={scrollProgressFillRef}
+                className="h-full rounded-full bg-(--brand-primary) transition-[width] duration-100 motion-reduce:transition-none"
+                style={{ width: '0%' }}
+              />
+            </div>
+          ) : null}
+
           <div
             ref={scrollBodyRef}
             data-app-sheet-scroll="true"
-            className="app-sheet-scroll mt-4 min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain pr-1 pb-1"
+            onScroll={(event) => {
+              if (
+                !showScrollProgress ||
+                scrollProgressFrameRef.current !== null
+              ) {
+                return
+              }
+
+              const scrollElement = event.currentTarget
+              scrollProgressFrameRef.current = requestAnimationFrame(() => {
+                const maxScroll =
+                  scrollElement.scrollHeight - scrollElement.clientHeight
+                const progress =
+                  maxScroll > 0
+                    ? Math.min(100, (scrollElement.scrollTop / maxScroll) * 100)
+                    : 0
+
+                scrollProgressRef.current?.setAttribute(
+                  'aria-valuenow',
+                  String(Math.round(progress)),
+                )
+                if (scrollProgressFillRef.current) {
+                  scrollProgressFillRef.current.style.width = `${progress}%`
+                }
+                scrollProgressFrameRef.current = null
+              })
+            }}
+            className={`app-sheet-scroll min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain pr-1 pb-1 ${
+              showScrollProgress ? 'mt-3' : 'mt-4'
+            }`}
           >
             {children}
           </div>
