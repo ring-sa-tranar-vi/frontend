@@ -66,6 +66,18 @@ export function fetchMyOrganizationApplication(token: string) {
   )
 }
 
+export async function fetchMyOrganizationApplicationOrNull(token: string) {
+  try {
+    return await fetchMyOrganizationApplication(token)
+  } catch (error) {
+    if (error instanceof OrganizationApplicationError && error.status === 404) {
+      return null
+    }
+
+    throw error
+  }
+}
+
 export async function createOrganizationApplication(
   payload: CreateOrganizationApplication,
   token: string,

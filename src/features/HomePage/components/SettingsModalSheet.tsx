@@ -562,10 +562,12 @@ function SettingsModalBody({
           <section className="space-y-2 border-t border-(--brand-border)/60 pt-6 pb-4">
             {canManageOrganisation ? (
               <button
+                type="button"
                 className={`${appSheetSecondaryButtonClass} flex items-center justify-center gap-2`}
                 onClick={() => setCompanyOpen(true)}
               >
-                <Building2 size={18} /> Organisations-sida
+                <Building2 size={18} aria-hidden="true" />
+                {t('admin.companyOrg.title')}
               </button>
             ) : null}
             {profile.isAdmin && (
@@ -603,13 +605,23 @@ function SettingsModalBody({
       <PrivacyPolicySheet open={privacyOpen} setOpen={setPrivacyOpen} />
       <SupportSheet open={supportOpen} setOpen={setSupportOpen} />
       <EventsOrganisationsSheet
-        open={open && eventsOpen && !applicationOpen}
+        open={open && eventsOpen && !applicationOpen && !companyOpen}
         onBack={() => setEventsOpen(false)}
         onClose={() => {
           setEventsOpen(false)
           setOpen(false)
         }}
         onApply={() => setApplicationOpen(true)}
+        onManageOrganisation={() => {
+          setApplicationOpen(false)
+          setCompanyOpen(true)
+        }}
+        organisationAccess={{
+          canManage: canManageOrganisation,
+          organisationName: companyQuery.data?.organisationName ?? null,
+          isLoading: companyQuery.isLoading || companyQuery.isFetching,
+          isError: companyQuery.isError,
+        }}
         userCity={profile.city}
       />
       <OrganisationApplicationSheet
@@ -627,6 +639,7 @@ function SettingsModalBody({
         onBack={() => setCompanyOpen(false)}
         onClose={() => {
           setCompanyOpen(false)
+          setEventsOpen(false)
           setOpen(false)
         }}
       />

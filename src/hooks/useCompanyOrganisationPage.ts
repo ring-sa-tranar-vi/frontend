@@ -103,7 +103,8 @@ export function useCompanyOrganisationPage(enabled = true) {
   })
 
   const canManageOrganisation =
-    companyQuery.data?.canManageOrganisation === true
+    companyQuery.data?.canManageOrganisation === true &&
+    companyQuery.data.organisationId != null
 
   const organisationQuery = useQuery({
     queryKey: ['company-organisation', companyQuery.data?.organisationId],
@@ -114,13 +115,19 @@ export function useCompanyOrganisationPage(enabled = true) {
 
   const activeOrganisation = organisationQuery.data ?? null
   const activeOrganisationId = activeOrganisation?.id ?? null
+  const companyOrganisationId = canManageOrganisation
+    ? (companyQuery.data?.organisationId ?? null)
+    : null
 
   const eventsQuery = useQuery({
-    queryKey: ['company-events', activeOrganisationId],
+    queryKey: ['company-events', companyOrganisationId],
     queryFn: async () =>
       fetchManagedOrganisationEvents(await getRequiredToken()),
     enabled:
-      enabled && isLoaded && Boolean(isSignedIn) && canManageOrganisation,
+      enabled &&
+      isLoaded &&
+      Boolean(isSignedIn) &&
+      companyOrganisationId != null,
   })
 
   const events = useMemo(() => {

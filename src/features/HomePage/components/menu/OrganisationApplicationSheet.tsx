@@ -21,7 +21,7 @@ import {
 import {
   createOrganizationApplication,
   type ApplicationStatus,
-  fetchMyOrganizationApplication,
+  fetchMyOrganizationApplicationOrNull,
   OrganizationApplicationError,
 } from '../../../../api/organizationApplications'
 
@@ -96,7 +96,7 @@ export default function OrganisationApplicationSheet({
     queryFn: async () => {
       const token = await getToken()
       if (!token) throw new Error('Missing Clerk token')
-      return fetchMyOrganizationApplication(token)
+      return fetchMyOrganizationApplicationOrNull(token)
     },
     enabled: open && isLoaded && Boolean(isSignedIn) && Boolean(userId),
     retry: false,
@@ -117,19 +117,33 @@ export default function OrganisationApplicationSheet({
         queryKey: ['organisation-application', 'me', userId],
       })
     },
+    onError: async (error) => {
+      if (
+        !(error instanceof OrganizationApplicationError) ||
+        error.status !== 409
+      ) {
+        return
+      }
+
+      setShowNewApplicationForm(false)
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: ['organisation-application', 'me', userId],
+        }),
+        queryClient.invalidateQueries({ queryKey: ['company-me', userId] }),
+      ])
+      returnToOrganisations()
+    },
   })
 
   const isComplete = Object.values(form).every((value) => value.trim())
-  const hasNoPreviousApplication =
-    myApplicationQuery.error instanceof OrganizationApplicationError &&
-    myApplicationQuery.error.status === 404
   const existingApplication = myApplicationQuery.data
   const showingApplicationStatus =
     !showNewApplicationForm && existingApplication != null
   const isCheckingApplication =
     open &&
     !showNewApplicationForm &&
-    myApplicationQuery.isLoading &&
+    (myApplicationQuery.isLoading || myApplicationQuery.isFetching) &&
     !applicationMutation.isSuccess
   const statusTone = existingApplication
     ? applicationStatusTone[existingApplication.status]
@@ -180,6 +194,17 @@ export default function OrganisationApplicationSheet({
           >
             {t('menu.events.application.backToOrganisations')}
           </button>
+        ) : myApplicationQuery.isError ? (
+          <button
+            type="button"
+            className={appSheetSecondaryButtonClass}
+            onClick={() => void myApplicationQuery.refetch()}
+            disabled={myApplicationQuery.isFetching}
+          >
+            {myApplicationQuery.isFetching
+              ? t('menu.events.application.checkingStatus')
+              : t('menu.events.directory.retry')}
+          </button>
         ) : (
           <button
             type="submit"
@@ -189,12 +214,14 @@ export default function OrganisationApplicationSheet({
               !isComplete ||
               applicationMutation.isPending ||
               isCheckingApplication ||
-              (myApplicationQuery.isError && !hasNoPreviousApplication)
+              myApplicationQuery.isError
             }
           >
-            {applicationMutation.isPending
-              ? t('menu.events.application.submitting')
-              : t('menu.events.application.submit')}
+            {isCheckingApplication
+              ? t('menu.events.application.checkingStatus')
+              : applicationMutation.isPending
+                ? t('menu.events.application.submitting')
+                : t('menu.events.application.submit')}
           </button>
         )
       }
@@ -308,43 +335,27 @@ export default function OrganisationApplicationSheet({
             </button>
           ) : null}
         </div>
+      ) : myApplicationQuery.isError ? (
+        <div className={appSheetCategoryClass}>
+          <AppSheetNotice tone="danger">
+            {t('menu.events.application.statusError')}
+          </AppSheetNotice>
+        </div>
       ) : (
         <form
           id="organisation-application-form"
-          className={appSheetCategoryClass}
+          className="space-y-3"
           onSubmit={submitApplication}
         >
-          {applicationMutation.isError ||
-          (myApplicationQuery.isError && !hasNoPreviousApplication) ? (
+          {applicationMutation.isError ? (
             <div className="mb-3 space-y-2">
-              {applicationMutation.isError ? (
-                <AppSheetNotice tone="danger">
-                  {t('menu.events.application.error')}
-                </AppSheetNotice>
-              ) : null}
-              {myApplicationQuery.isError && !hasNoPreviousApplication ? (
-                <AppSheetNotice tone="danger">
-                  {t('menu.events.application.statusError')}
-                </AppSheetNotice>
-              ) : null}
+              <AppSheetNotice tone="danger">
+                {t('menu.events.application.error')}
+              </AppSheetNotice>
             </div>
           ) : null}
 
-          <div className="flex items-center gap-2.5 px-1">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-(--menu-content-bg) text-(--brand-primary)">
-              <Building2 size={18} strokeWidth={2.3} aria-hidden="true" />
-            </div>
-            <div className="min-w-0">
-              <h2 className="text-[length:var(--text-lg)] leading-tight font-extrabold tracking-tight text-(--brand-ink)">
-                {t('menu.events.application.subtitle')}
-              </h2>
-              <p className="mt-0.5 text-[length:var(--text-sm)] leading-snug font-semibold text-(--brand-body-ink)">
-                {t('menu.events.application.cardText')}
-              </p>
-            </div>
-          </div>
-
-          <div className="mt-3 space-y-3">
+          <div className="space-y-3">
             <div>
               <label
                 htmlFor="organisation-application-name"

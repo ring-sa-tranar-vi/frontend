@@ -1,5 +1,5 @@
 import { useAuth } from '@clerk/react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   ArrowLeft,
   Building2,
@@ -11,7 +11,7 @@ import {
   Search,
   UsersRound,
 } from 'lucide-react'
-import { type KeyboardEvent, useMemo, useState } from 'react'
+import { type KeyboardEvent, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   AppSheet,
@@ -20,9 +20,8 @@ import {
   appSheetCardClass,
 } from '../../../../components/AppSheet'
 import {
-  fetchMyOrganizationApplication,
   type ApplicationStatus,
-  OrganizationApplicationError,
+  fetchMyOrganizationApplicationOrNull,
 } from '../../../../api/organizationApplications'
 import {
   type EventDto,
@@ -32,6 +31,13 @@ import {
 
 type DirectoryTab = 'events' | 'organisations'
 type EventFilter = 'all' | 'nearby' | 'week'
+
+type OrganisationAccess = {
+  canManage: boolean
+  organisationName: string | null
+  isLoading: boolean
+  isError: boolean
+}
 
 const organisationAvatarClasses = [
   'bg-(--menu-choice-bg) text-(--brand-primary-deep)',
@@ -489,16 +495,21 @@ export default function EventsOrganisationsSheet({
   onBack,
   onClose,
   onApply,
+  onManageOrganisation,
+  organisationAccess,
   userCity,
 }: {
   open: boolean
   onBack: () => void
   onClose: () => void
   onApply: () => void
+  onManageOrganisation: () => void
+  organisationAccess: OrganisationAccess
   userCity?: string | null
 }) {
   const { t, i18n } = useTranslation()
   const { getToken, isLoaded, isSignedIn, userId } = useAuth()
+  const queryClient = useQueryClient()
   const [activeTab, setActiveTab] = useState<DirectoryTab>('events')
   const [search, setSearch] = useState('')
   const [eventFilter, setEventFilter] = useState<EventFilter>('all')
@@ -517,28 +528,104 @@ export default function EventsOrganisationsSheet({
       const token = await getToken()
       if (!token) throw new Error('Missing Clerk token')
 
-      try {
-        return await fetchMyOrganizationApplication(token)
-      } catch (error) {
-        if (
-          error instanceof OrganizationApplicationError &&
-          error.status === 404
-        ) {
-          return null
-        }
-        throw error
-      }
+      return fetchMyOrganizationApplicationOrNull(token)
     },
-    enabled: open && isLoaded && Boolean(isSignedIn) && Boolean(userId),
+    enabled:
+      open &&
+      isLoaded &&
+      Boolean(isSignedIn) &&
+      Boolean(userId) &&
+      !organisationAccess.canManage,
     retry: false,
   })
 
   const locale = i18n.resolvedLanguage ?? i18n.language ?? 'sv'
   const existingApplication = myApplicationQuery.data
-  const isApplicationUnavailable = myApplicationQuery.isError
-  const applicationStatusClass = existingApplication
-    ? applicationStatusClasses[existingApplication.status]
+  const applicationStatus = organisationAccess.canManage
+    ? 'APPROVED'
+    : existingApplication?.status
+  const isCheckingApplication =
+    organisationAccess.isLoading ||
+    (!organisationAccess.canManage &&
+      (myApplicationQuery.isLoading || myApplicationQuery.isFetching))
+  const isApplicationUnavailable =
+    !organisationAccess.canManage &&
+    ((myApplicationQuery.isError && !existingApplication) ||
+      (organisationAccess.isError &&
+        (!existingApplication || existingApplication.status === 'APPROVED')))
+  const applicationStatusClass = applicationStatus
+    ? applicationStatusClasses[applicationStatus]
     : null
+
+  useEffect(() => {
+    if (
+      existingApplication?.status !== 'APPROVED' ||
+      organisationAccess.canManage ||
+      !userId
+    ) {
+      return
+    }
+
+    void Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['company-me', userId] }),
+      queryClient.invalidateQueries({ queryKey: ['organisations', 'list'] }),
+    ])
+  }, [
+    existingApplication?.status,
+    organisationAccess.canManage,
+    queryClient,
+    userId,
+  ])
+
+  let applicationTitle = t('menu.events.application.cardTitle')
+  let applicationText = t('menu.events.application.cardText')
+  let applicationActionLabel = t('menu.events.application.cardAction')
+
+  if (isApplicationUnavailable) {
+    applicationTitle = t('menu.events.application.statusError')
+    applicationActionLabel = t('menu.events.directory.retry')
+  } else if (organisationAccess.canManage) {
+    applicationTitle =
+      organisationAccess.organisationName ??
+      t('menu.events.application.statusTitle.approved')
+    applicationText = t('menu.events.application.statusText.approved')
+    applicationActionLabel = t('admin.companyOrg.title')
+  } else if (existingApplication) {
+    const status = existingApplication.status.toLowerCase()
+    applicationTitle = t(`menu.events.application.statusTitle.${status}`)
+    applicationText = t(`menu.events.application.statusText.${status}`)
+    applicationActionLabel =
+      existingApplication.status === 'APPROVED'
+        ? t('menu.events.directory.retry')
+        : t(`menu.events.application.status.${status}`)
+  }
+
+  function handleApplicationAction() {
+    if (organisationAccess.canManage) {
+      onManageOrganisation()
+      return
+    }
+
+    if (isApplicationUnavailable) {
+      void Promise.all([
+        myApplicationQuery.refetch(),
+        queryClient.invalidateQueries({
+          queryKey: ['company-me', userId],
+        }),
+      ])
+      return
+    }
+
+    if (existingApplication?.status === 'APPROVED') {
+      void queryClient.invalidateQueries({
+        queryKey: ['company-me', userId],
+      })
+      return
+    }
+
+    onApply()
+  }
+
   const normalizedSearch = normalizeSearchText(search)
   const normalizedUserCity = normalizeSearchText(userCity)
   const organisations = useMemo(
@@ -893,6 +980,7 @@ export default function EventsOrganisationsSheet({
             </div>
 
             <div
+              aria-busy={isCheckingApplication}
               className={`mt-4 ${appSheetCardClass} ${applicationStatusClass?.card ?? ''}`}
             >
               <div className="flex items-start gap-3">
@@ -903,49 +991,23 @@ export default function EventsOrganisationsSheet({
                 </div>
                 <div className="min-w-0">
                   <h2 className="menu-card-title text-(--brand-title-ink)">
-                    {isApplicationUnavailable
-                      ? t('menu.events.application.statusError')
-                      : existingApplication
-                        ? t(
-                            `menu.events.application.statusTitle.${existingApplication.status.toLowerCase()}`,
-                          )
-                        : t('menu.events.application.cardTitle')}
+                    {applicationTitle}
                   </h2>
-                  <p className="menu-card-copy mt-1">
-                    {isApplicationUnavailable
-                      ? t('menu.events.application.cardText')
-                      : existingApplication
-                        ? t(
-                            `menu.events.application.statusText.${existingApplication.status.toLowerCase()}`,
-                          )
-                        : t('menu.events.application.cardText')}
-                  </p>
+                  <p className="menu-card-copy mt-1">{applicationText}</p>
                 </div>
               </div>
               <button
                 type="button"
-                onClick={() => {
-                  if (isApplicationUnavailable) {
-                    void myApplicationQuery.refetch()
-                    return
-                  }
-                  onApply()
-                }}
-                disabled={myApplicationQuery.isLoading}
+                onClick={handleApplicationAction}
+                disabled={isCheckingApplication}
                 className={`mt-4 min-h-11 w-full rounded-xl border px-4 py-3 text-[length:var(--text-sm)] font-extrabold transition focus-visible:ring-2 focus-visible:ring-(--brand-border-strong) focus-visible:ring-offset-2 focus-visible:outline-none active:scale-[0.985] disabled:cursor-wait disabled:opacity-70 ${
                   applicationStatusClass?.action ??
                   'border-transparent bg-(--brand-primary) text-(--brand-on-primary) hover:bg-(--brand-primary-strong)'
                 }`}
               >
-                {myApplicationQuery.isLoading
+                {isCheckingApplication
                   ? t('menu.events.application.checkingStatus')
-                  : isApplicationUnavailable
-                    ? t('menu.events.directory.retry')
-                    : existingApplication
-                      ? t(
-                          `menu.events.application.status.${existingApplication.status.toLowerCase()}`,
-                        )
-                      : t('menu.events.application.cardAction')}
+                  : applicationActionLabel}
               </button>
             </div>
 
