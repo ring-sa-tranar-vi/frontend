@@ -21,9 +21,8 @@ export async function buildScenario(
   ])
 
   const baseSession: CoachCallSession = {
-    id: workout.id,
+    workoutId: workout.id,
     isAuthenticated: cfg.scenarioType !== 'guest',
-    name: workout.name,
     workoutName: workout.name,
     instructions: workout.instructions,
     guidance: workout.guidance,
