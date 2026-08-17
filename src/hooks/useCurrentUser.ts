@@ -3,17 +3,8 @@ import { useAuth } from '@clerk/react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { getJson } from '../lib/api/fetcher'
 import { useUpdateProfile } from './useUpdateProfile'
-
-type CurrentUserProfile = {
-  id: number
-  trainerId: number | null
-  intensityLevel: number | null
-  name?: string | null
-  context?: string | null
-  isAdmin?: boolean
-  city?: string | null
-  onboarding?: boolean
-}
+import type { BackendProgressResponse } from '../features/session/api'
+import type { CurrentUserProfile } from '../features/session/types'
 
 export default function useCurrentUser() {
   const { userId: clerkId, isSignedIn, getToken } = useAuth()
@@ -40,10 +31,28 @@ export default function useCurrentUser() {
     retry: 1,
   })
 
+  const { data: progress } = useQuery<BackendProgressResponse | null>({
+    queryKey: ['myProgress'],
+    queryFn: async () => {
+      if (!isSignedIn) return null
+      const rawToken = await getToken()
+      const token: string | undefined = rawToken ?? undefined
+      return await getJson<BackendProgressResponse>(`/api/users/me/progress`, {
+        token,
+      })
+    },
+    enabled: isSignedIn,
+    staleTime: 1000 * 60 * 5,
+    retry: 1,
+  })
+
   const trainerId = profile?.trainerId ?? null
   const userId = profile?.id ? String(profile.id) : null
   const level = profile?.intensityLevel ?? null
   const context = profile?.context ?? null
+
+  const currentStreak = progress?.currentStreak ?? null
+  const completedWorkouts = progress?.completedWorkouts ?? null
 
   const updateProfile = useCallback(
     async (data: Partial<CurrentUserProfile>) => {
@@ -85,6 +94,8 @@ export default function useCurrentUser() {
       context,
       refetchProfile,
       updateProfile,
+      currentStreak,
+      completedWorkouts,
     }),
     [
       clerkId,

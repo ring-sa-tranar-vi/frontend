@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useAuth } from '@clerk/react'
-import { useQuery } from '@tanstack/react-query'
+import { type RefetchOptions, useQuery } from '@tanstack/react-query'
 import { getJson } from '../lib/api/fetcher'
 import useCurrentUser from './useCurrentUser'
 import { type Workout } from '../features/session/types'
@@ -144,38 +144,68 @@ export default function useCurrentWorkout() {
     (!DAILY_WORKOUT_LIMIT_ENABLED || !alreadyCompletedToday) &&
     !sameProfile(storedProfile, currentProfile)
 
-  const { data: recommendation } = useQuery<RecommendedWorkoutResponse>({
-    queryKey: ['recommended-workout', userId, level, context],
-    queryFn: async () => {
-      if (DEBUG) {
-        console.debug('[useCurrentWorkout] fetching recommendation', {
-          userId,
-          level,
-          context,
-        })
-      }
-      if (!userId || level == null) {
-        console.log(
-          '[useCurrentWorkout] Missing required parameters for recommendation',
-          { userId, level, context },
+  const { data: recommendation, refetch: refetchRecommendation } =
+    useQuery<RecommendedWorkoutResponse>({
+      queryKey: ['recommended-workout', userId, level, context],
+      queryFn: async () => {
+        if (DEBUG) {
+          console.debug('[useCurrentWorkout] fetching recommendation', {
+            userId,
+            level,
+            context,
+          })
+        }
+        if (!userId || level == null) {
+          console.log(
+            '[useCurrentWorkout] Missing required parameters for recommendation',
+            { userId, level, context },
+          )
+          throw new Error(
+            'Cannot fetch recommendation without userId and level',
+          )
+        }
+
+        const rawToken = isSignedIn ? await getToken() : undefined
+        const token: string | undefined = rawToken ?? undefined
+        if (!token) {
+          throw new Error('Cannot fetch recommendation without token')
+        }
+        return await getJson<RecommendedWorkoutResponse>(
+          `/api/trainers/recommend-for/${userId}`,
+          { token },
         )
-        throw new Error('Cannot fetch recommendation without userId and level')
+      },
+      enabled: shouldFetchRecommendation,
+      staleTime: 1000 * 60 * 5,
+      retry: 1,
+    })
+
+  // Typed wrapper function that resets state and returns { id, reasoning }
+  const refetchRecommendedWorkoutId = useCallback(
+    async (
+      options?: RefetchOptions,
+    ): Promise<{ id: number; reasoning?: string }> => {
+      // Clear manual selection and cached profile so new recommendations apply
+      setSelectedWorkoutId(undefined)
+      setStoredProfile(null)
+      if (typeof window !== 'undefined') {
+        window.localStorage.removeItem(CURRENT_WORKOUT_PROFILE_KEY)
+        window.localStorage.removeItem(CURRENT_WORKOUT_RECOMMENDATION_KEY)
       }
 
-      const rawToken = isSignedIn ? await getToken() : undefined
-      const token: string | undefined = rawToken ?? undefined
-      if (!token) {
-        throw new Error('Cannot fetch recommendation without token')
+      const result = await refetchRecommendation(options)
+
+      if (!result.data) {
+        throw new Error('Failed to fetch recommended workout')
       }
-      return await getJson<RecommendedWorkoutResponse>(
-        `/api/trainers/recommend-for/${userId}`,
-        { token },
-      )
+
+      return {
+        id: result.data.workoutId,
+        reasoning: result.data.reasoning,
+      }
     },
-    enabled: shouldFetchRecommendation,
-    staleTime: 1000 * 60 * 5,
-    retry: 1,
-  })
+    [refetchRecommendation],
+  )
 
   useEffect(() => {
     if (!recommendation || !userId || level == null) return
@@ -255,6 +285,7 @@ export default function useCurrentWorkout() {
       console.debug('[useCurrentWorkout] state', {
         userId,
         currentWorkoutId,
+        currentWorkout,
         recommendedWorkoutReasoning,
         workouts,
       })
@@ -272,7 +303,7 @@ export default function useCurrentWorkout() {
     workouts,
     isLoading,
     isError,
-    refetch,
+    refetchRecommendedWorkoutId,
     recommendedWorkoutReasoning,
     alreadyCompletedToday,
   }

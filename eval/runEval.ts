@@ -23,7 +23,7 @@ async function main() {
   )
   const scenario = await buildScenario(evalConfig, cfg.apiBaseUrl)
   console.log(
-    `    ✓ ${scenario.label} — tränare "${scenario.trainerName}", övning "${scenario.session.name}"`,
+    `    ✓ ${scenario.label} — tränare "${scenario.trainerName}", övning "${scenario.session.workoutName}"`,
   )
 
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-')

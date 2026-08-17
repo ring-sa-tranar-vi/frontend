@@ -353,6 +353,14 @@ export const useGeminiLive = ({
       })
 
       async function handleLiveMessage(message: LiveServerMessage) {
+        const userSpeechText = message.serverContent?.inputTranscription?.text
+        if (userSpeechText) {
+          console.debug(
+            '[GeminiLive] Message received (User Speech Transcribed):',
+            userSpeechText,
+          )
+        }
+
         if (message.serverContent) {
           const content = message.serverContent
 
@@ -426,6 +434,10 @@ export const useGeminiLive = ({
 
         const functionCalls = message.toolCall?.functionCalls ?? []
         if (functionCalls.length > 0) {
+          console.debug(
+            '[GeminiLive] Instruction recognized (Tool Call Request):',
+            functionCalls.map((fc) => fc.name ?? 'unknown_tool'),
+          )
           await handleToolCalls(functionCalls)
         }
 

@@ -66,7 +66,7 @@ function getTrainerImage(session: CoachCallSession) {
 }
 
 function getWorkoutName(session: CoachCallSession, workoutName?: string) {
-  return session.name ?? session.workoutName ?? workoutName ?? ''
+  return session.workoutName ?? workoutName ?? ''
 }
 
 export function SessionCall(props: SessionCallProps) {

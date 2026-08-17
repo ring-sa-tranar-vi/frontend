@@ -116,10 +116,9 @@ export async function getCoachCallSession(
       : null)
 
   return {
-    id: workout?.id ?? 0,
+    workoutId: workout?.id ?? 0,
     isAuthenticated: Boolean(token && user),
 
-    name: workout ? workout.dashboardName || workout.name : undefined,
     workoutName: workout ? workout.dashboardName || workout.name : undefined,
     dashboardName: workout?.dashboardName,
     description: workout
