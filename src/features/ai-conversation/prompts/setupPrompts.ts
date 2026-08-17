@@ -28,7 +28,10 @@ export function buildUserContext(
     parts.push(`- CONTEXT: ${session.context.trim()}`)
   }
 
-  const activities = calendarEvents?.filter((e) => !e.completed).map((e) => e)
+  // Map to title/name property to avoid stringifying raw objects as "[object Object]"
+  const activities = calendarEvents
+    ?.filter((e) => !e.completed)
+    .map((e) => e.title ?? String(e))
 
   if (activities && activities.length > 0) {
     parts.push(`- UPCOMING ACTIVITIES: ${activities.join(', ')}.`)
@@ -41,7 +44,7 @@ export function buildUserContext(
 
 export function buildWorkoutContext(session: CoachCallSession): string {
   const parts: string[] = ["# TODAY'S WORKOUT"]
-  const workoutName = session.workoutName ?? session.name
+  const workoutName = session.workoutName
 
   if (workoutName) {
     parts.push(`- WORKOUT NAME: "${workoutName}".`)
@@ -72,14 +75,16 @@ This applies to all trainers:
 
 export const COACH_PROMPTS = {
   INSTRUCTIONS_DONE: `
-    # STATUS UPDATE
-    - The instructions have just finished playing. Await the user's response regarding whether they are ready to start the workout.`,
+# STATUS UPDATE
+- The instructions have just finished playing. Await the user's response regarding whether they are ready to start the workout.
+`.trim(),
+
   WORKOUT_DONE: (workoutName: string, progressSummary = '') =>
-    `# WORKOUT COMPLETED
-  - The workout "${workoutName}" is complete and saved.${
-    progressSummary ? ` ${progressSummary}` : ''
-  }
-    - Await the user's response on how it felt.`,
+    `
+# WORKOUT COMPLETED
+- The workout "${workoutName}" is complete and saved.${progressSummary ? ` ${progressSummary}` : ''}
+- Await the user's response on how it felt.
+`.trim(),
 
   NO_TOKEN_ERROR: 'Could not start the coach session.',
   NO_WORKOUT_ERROR: 'Could not retrieve the workout.',
@@ -94,14 +99,14 @@ export const COACH_PROMPTS = {
 // ============================================================================
 
 export function buildGuestContext(session: CoachCallSession): string {
-  const workoutName = session.workoutName ?? session.name
+  const workoutName = session.workoutName
 
   const parts = [
     '# USER INFORMATION',
     workoutName && `- TODAY'S WORKOUT: "${workoutName}".`,
     session.instructions?.trim() &&
-      `- ## INSTRUCTIONS:\n${session.instructions.trim()}`,
-    session.guidance?.trim() && `- ## GUIDANCE:\n${session.guidance.trim()}`,
+      `## INSTRUCTIONS:\n${session.instructions.trim()}`,
+    session.guidance?.trim() && `## GUIDANCE:\n${session.guidance.trim()}`,
   ].filter(Boolean)
 
   return parts.join('\n')
