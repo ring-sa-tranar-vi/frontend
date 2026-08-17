@@ -1,10 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
+import { useEffect } from 'react'
 import type { Trainer } from '../features/session/types'
 import { getJson } from '../lib/api/fetcher'
-import { useAuth } from '@clerk/react'
 
 export const useCurrentTrainer = (trainerId: string) => {
-  const { getToken, isSignedIn } = useAuth()
   const {
     data: trainer,
     isLoading: isTrainerLoading,
@@ -13,21 +12,30 @@ export const useCurrentTrainer = (trainerId: string) => {
   } = useQuery<Trainer | null>({
     queryKey: ['trainer', trainerId == null ? 'null' : String(trainerId)],
     queryFn: async () => {
-      if (!trainerId || !isSignedIn) return null
-      const rawToken = await getToken()
-      const token: string | undefined = rawToken ?? undefined
-      return await getJson<Trainer>(`/api/trainers/${trainerId}`, { token })
+      if (!trainerId) return null
+
+      return await getJson<Trainer>(`/api/trainers/${trainerId}`)
     },
-    enabled: !!trainerId && isSignedIn,
+    enabled: !!trainerId,
     staleTime: 1000 * 60 * 60,
   })
   const voice = (trainer?.voice as string | undefined) ?? 'Kore'
   const coachPrompt = trainer?.prompt ?? null
+
+  useEffect(() => {
+    console.log('[useCurrentTrainer] state', {
+      trainer,
+      voice,
+      coachPrompt,
+      isTrainerLoading,
+      isTrainerError,
+    })
+  }, [trainer, voice, coachPrompt, isTrainerLoading, isTrainerError])
+
   return {
     trainer,
     voice,
     coachPrompt,
-    isSignedIn,
     isTrainerLoading,
     isTrainerError,
     refetchTrainer,
