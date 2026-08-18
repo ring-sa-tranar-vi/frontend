@@ -2,16 +2,14 @@
 
 ## Overview
 
-This frontend powers the Ring så tränar vi fitness app for older adults. It provides a user interface for starting
-AI-guided workout sessions, managing user preferences, and allowing administrators to manage workouts, trainers, and
+This frontend powers the Ring så tränar vi fitness app. It provides a user interface for starting AI-guided workout sessions, managing user preferences, and allowing administrators to manage workouts, trainers, and
 feedback.
 
 The application connects to the backend API for authentication, data management, and workout functionality.
 
 ## Features / Responsibilities
 
-The frontend is responsible for providing the user interface and coordinating interactions between users, the backend
-API, and authentication services.
+The frontend is responsible for providing the user interface and coordinating interactions between users, the backend API, and authentication services.
 
 #### Core Responsibilities
 
@@ -24,7 +22,7 @@ API, and authentication services.
 
 #### User Features
 
-- **AI trainer sessions** — AI-powered trainer calls and conversation experience
+- **AI trainer sessions** — AI-driven workout selection with trainer calls and conversation experience
 - **Personalized workouts** — Selecting and starting workouts based on user preferences
 - **Workout tracking** — Tracking workout progress and completion
 - **Trainer preferences** — Managing trainer preferences
@@ -92,16 +90,16 @@ src/
 │ ├── session/              # Conversation screen  
 │ ├── ai-conversation/      # Gemini, microphone, and conversation logic 
 │ ├── auth/                 # Creates/synchronizes the user  
-│ ├── companyPortal/        # Company pages
+│ ├── companyPortal/         # Company pages
 │ └── adminPage/            # Admin pages 
 │
-├── test/                   # Frontend tests
-│ ├── adminPage/            # Admin page tests
-│ ├── companyPortal/        # Company portal tests
+├── test/                   # Frontend tests
+│ ├── adminPage/            # Admin page tests
+│ ├── companyPortal/        # Company portal tests
 │
 ├── hooks/                  # Fetches and updates data 
 ├── api/                    # API calls  
-├── components/             # Shared UI components  
+├── components/             # Shared UI components  
 ├── lib/                    # Shared utility functions  
 ├── locales/                # Translations  
 └── index.css               # Design variables and global CSS
@@ -138,13 +136,14 @@ npm install
 
 ### Environment Variables
 
-| Variable                     | Required                   | Description                                     |
-|------------------------------|----------------------------|-------------------------------------------------|
-| `VITE_CLERK_PUBLISHABLE_KEY` | `yes`                      | `Clerk publishable key`                         |
-| `VITE_API_URL`               | `yes`                      | `Url of the backend API`                        |
-| `Eval key`                   | `For ai-conversation eval` | `Gemini api key for AI-conversation evaluation` |
+| Variable | Required | Description |
+| --- | --- | --- |
+| `VITE_CLERK_PUBLISHABLE_KEY` | `yes` | `Clerk publishable key` |
+| `VITE_API_URL` | `yes` | `Url of the backend API` |
+| `GEMINI_API_KEY` | `For ai-conversation eva` | `Gemini api key for AI-conversation evaluation` |
+| `VITE_FARO_URL` | `For deployment` | `Grafana Faro endpoint used for frontend monitoring and observability.` |
 
-grafana - faro info
+The frontend uses **Grafana Faro** for monitoring and observability, including frontend errors and performance data. The Faro configuration is only required for deployed environments and is not needed for local development.
 
 ### Run Locally
 
@@ -222,18 +221,15 @@ The application uses TanStack Router for client-side routing.
 
 Main routes:
 
-| Route                      | Description                              |
-|----------------------------|------------------------------------------|
-| `/`                        | Main landing page and workout start flow |
-| `/admin`                   | Admin dashboard                          |
-| `/admin/workouts`          | Admin workout management                 |
-| `/admin/trainers`          | Admin trainer management                 |
-| `/admin/feedback`          | Admin feedback management                |
-| `/admin/organisations`     | Admin organization management            |
-| `/admin/applications`      | Admin application management             |
-| `/company/organisation`    | Company organization management          |
-| `/company/organisation/me` | Current user's organization management   |
-| `/company/organisations`   | Company organization management          |
+| Route | Description |
+| --- | --- |
+| `/` | Main landing page and workout start flow |
+| `/admin` | Admin dashboard |
+| `/admin/workouts` | Admin workout management |
+| `/admin/trainers` | Admin trainer management |
+| `/admin/feedback` | Admin feedback management |
+| `/admin/organisations` | Admin organization management |
+| `/admin/applications` | Admin application management |
 
 ### State Management
 
@@ -256,26 +252,25 @@ state manually.
 
 The main frontend features are organized under `src/features`:
 
-| Directory                  | Responsibility                                                        |
-|----------------------------|-----------------------------------------------------------------------|
-| `features/HomePage`        | Landing page and workout start flow and the menu                      |
-| `features/session`         | AI trainer session experience                                         |
-| `features/adminPage`       | Admin dashboard and management tools                                  |
-| `features/auth`            | User profile synchronization and authentication-related functionality |
-| `features/companyPortal`   | Landing page for companies to mange their events                      |
-| `features/ai-conversation` | AI cconversation and training                                         |
+| Directory | Responsibility |
+| --- | --- |
+| `features/HomePage` | Landing page and workout start flow and the menu |
+| `features/session` | AI trainer session experience |
+| `features/adminPage` | Admin dashboard and management tools |
+| `features/auth` | User profile synchronization and authentication-related functionality |
+| `features/companyPortal` | Landing page for companies to mange their events |
 
 ### Available Scripts
 
-| Command                | Description                          |
-|------------------------|--------------------------------------|
-| `npm run dev`          | Start development server             |
-| `npm run build`        | Create production build              |
-| `npm run preview`      | Preview production build             |
-| `npm run lint`         | Run linting                          |
-| `npm run format`       | Format code                          |
-| `npm run format:check` | Check formatting                     |
-| `npm run eval`         | Evaluation check for AI conversation |
+| Command | Description |
+| --- | --- |
+| `npm run dev` | Start development server |
+| `npm run build` | Create production build |
+| `npm run preview` | Preview production build |
+| `npm run lint` | Run linting |
+| `npm run format` | Format code |
+| `npm run format:check` | Check formatting |
+| `npm run eval` | Evaluation check for AI conversation |
 
 ### Error Handling
 
@@ -320,6 +315,7 @@ Run the AI conversation evaluation with:
 ```bash
 npm run eval
 ```
+To read more about the running the eval test read the [eval documentation](./eval/README.md)
 
 ### Linting and Formatting
 
@@ -354,8 +350,7 @@ npm run format:check
 
 ### Development Workflow
 
-The project uses Trunk-Based Development. Developers work on short-lived branches and create pull requests against the
-`main` branch.
+The project uses Trunk-Based Development. Developers work on short-lived branches and create pull requests against the `main` branch.
 
 Changes should be kept small and focused to make them easier to review and integrate.
 
@@ -368,12 +363,13 @@ npx vitest run
 ```
 
 2. Run the AI conversation evaluation when relevant:
-
+  
   ```bash
   npm run eval
   ```
-
+  
 3. Run linting and formatting:
+  
 
 ```bash
 npm run lint
@@ -392,26 +388,23 @@ CI runs the relevant checks again before changes can be merged.
 
 The React application is deployed to **Firebase Hosting** using GitHub Actions.
 
-Because the application is a Single Page Application (SPA), the environment-specific variables (like backend API URLs)
-must be baked into the code at build time.
+Because the application is a Single Page Application (SPA), the environment-specific variables (like backend API URLs) must be baked into the code at build time.
 
 ### Workflow
 
 Merging changes into the `main` branch triggers the deployment workflow.
 
 1. **Staging Build & Deploy:**
-
-- The pipeline builds the React app injecting the Staging API URL (`VITE_API_URL`), Clerk Publishable Key (
-  `VITE_CLERK_PUBLISHABLE_KEY`) and the Faro URL (`VITE_FARO_URL`).
-
-- The compiled code is deployed to our Staging Firebase Hosting site using Firebase Deploy Targets.
-
+  
+  - The pipeline builds the React app injecting the Staging API URL (`VITE_API_URL`), Clerk Publishable Key (`VITE_CLERK_PUBLISHABLE_KEY`) and the Faro URL (`VITE_FARO_URL`).
+    
+  - The compiled code is deployed to our Staging Firebase Hosting site using Firebase Deploy Targets.
+    
 2. **Production Build & Deploy:**
-
-- The pipeline pauses and waits for manual approval via GitHub Environments.
-- Once approved, the pipeline runs a _fresh build_, injecting the Production API URL, Clerk Publishable Key and the Faro
-  URL.
-- The compiled code is deployed to our Production Firebase Hosting site.
+  
+  - The pipeline pauses and waits for manual approval via GitHub Environments.
+  - Once approved, the pipeline runs a _fresh build_, injecting the Production API URL, Clerk Publishable Key and the Faro URL.
+  - The compiled code is deployed to our Production Firebase Hosting site.
 
 ### Firebase Configuration (`firebase.json`)
 
@@ -421,8 +414,7 @@ The configuration ensures that:
 
 - The appropriate Firebase Hosting deployment targets are used for each environment (`staging` vs `prod`).
 - Requests to unknown paths are rewritten to /index.html.
-- React Router can handle client-side navigation and direct access to application routes without resulting in 404
-  errors.
+- React Router can handle client-side navigation and direct access to application routes without resulting in 404 errors.
 
 ## Troubleshooting
 
@@ -444,8 +436,7 @@ npm install
 npm run dev
 ```
 
-If dependencies or the build appear to be in an inconsistent state, remove `node_modules` and reinstall the
-dependencies.
+If dependencies or the build appear to be in an inconsistent state, remove `node_modules` and reinstall the dependencies.
 
 ### Backend connection fails
 
