@@ -489,12 +489,14 @@ export default function EventsOrganisationsSheet({
   onBack,
   onClose,
   onApply,
+  canManageOrganisation,
   userCity,
 }: {
   open: boolean
   onBack: () => void
   onClose: () => void
   onApply: () => void
+  canManageOrganisation: boolean
   userCity?: string | null
 }) {
   const { t, i18n } = useTranslation()
@@ -893,6 +895,7 @@ export default function EventsOrganisationsSheet({
             </div>
 
             <div
+              hidden={canManageOrganisation}
               className={`mt-4 ${appSheetCardClass} ${applicationStatusClass?.card ?? ''}`}
             >
               <div className="flex items-start gap-3">

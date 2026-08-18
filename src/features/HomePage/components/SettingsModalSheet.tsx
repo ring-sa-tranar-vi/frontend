@@ -610,6 +610,7 @@ function SettingsModalBody({
           setOpen(false)
         }}
         onApply={() => setApplicationOpen(true)}
+        canManageOrganisation={canManageOrganisation}
         userCity={profile.city}
       />
       <OrganisationApplicationSheet

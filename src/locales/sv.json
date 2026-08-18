@@ -287,7 +287,7 @@
     },
     "calendar": {
       "title": "Kalender",
-      "description": "Se dina träningspass, bokade event och uppringningar på samma plats.",
+      "description": "Se dina träningspass och bokade event på samma plats.",
       "previousMonth": "Föregående månad",
       "nextMonth": "Nästa månad",
       "workout": "Träningspass",

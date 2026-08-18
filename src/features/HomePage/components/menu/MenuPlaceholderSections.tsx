@@ -1,33 +1,10 @@
 import ActivitySummarySection from './ActivitySummarySection'
-import CallbackSchedulerSection from './CallbackSchedulerSection'
 import MenuCalendarSection from './MenuCalendarSection'
 import PhysicalEventsSection from './PhysicalEventsSection'
 import { useActivitySummary } from '../../../../hooks/useActivitySummary'
-import { useCallbackPreferences } from '../../../../hooks/useCallbackPreferences'
 import { useEventsAndOrganisations } from '../../../../hooks/useEventsAndOrganisations'
-import type {
-  CalendarActivity,
-  CallbackRequest,
-  CallbackWeekday,
-} from './types'
+import type { CalendarActivity } from './types'
 import { useMemo } from 'react'
-
-const callbackWeekdayByDayIndex: CallbackWeekday[] = [
-  'sunday',
-  'monday',
-  'tuesday',
-  'wednesday',
-  'thursday',
-  'friday',
-  'saturday',
-]
-
-function getCallbackWeekday(dateKey: string): CallbackWeekday | null {
-  const date = new Date(`${dateKey}T12:00:00`)
-
-  if (Number.isNaN(date.getTime())) return null
-  return callbackWeekdayByDayIndex[date.getDay()] ?? null
-}
 
 function toCalendarEventId(eventId: string | number): string {
   return `EVENT-${eventId}`
@@ -41,11 +18,9 @@ function getEventIdFromCalendarActivity(activityId: string): string {
 
 export default function MenuPlaceholderSections({
   onFindEvents,
-  onConfirmCallback,
   dataEnabled = false,
 }: {
   onFindEvents: () => void
-  onConfirmCallback?: (request: CallbackRequest) => void | Promise<void>
   dataEnabled?: boolean
 }) {
   const activityQuery = useActivitySummary(dataEnabled)
@@ -54,8 +29,6 @@ export default function MenuPlaceholderSections({
     fetchOrganisations: false,
     fetchFollowing: false,
   })
-  const callbackPreferences = useCallbackPreferences()
-
   const attendedEventsById = useMemo(
     () =>
       new Map(
@@ -82,15 +55,6 @@ export default function MenuPlaceholderSections({
         calendarAttendance.attendanceMutation.variables?.event.id ?? '',
       )
     : undefined
-  const cancellingCallbackId = callbackPreferences.removeCallbackMutation
-    .isPending
-    ? callbackPreferences.removeCallbackMutation.variables?.activityId
-    : undefined
-  const cancelledCallbackId = callbackPreferences.removeCallbackMutation
-    .isSuccess
-    ? callbackPreferences.removeCallbackMutation.variables?.activityId
-    : undefined
-
   function cancelCalendarEvent(activity: CalendarActivity) {
     const eventId = getEventIdFromCalendarActivity(activity.id)
     const event = attendedEventsById.get(eventId)
@@ -101,21 +65,6 @@ export default function MenuPlaceholderSections({
       event,
       isAttending: true,
     })
-  }
-
-  function cancelCalendarCallback(activity: CalendarActivity) {
-    const weekday = getCallbackWeekday(activity.date)
-
-    if (!weekday || callbackPreferences.removeCallbackMutation.isPending) return
-
-    callbackPreferences.removeCallbackMutation.mutate({
-      weekday,
-      activityId: activity.id,
-    })
-  }
-
-  async function saveCallback(request: CallbackRequest) {
-    await callbackPreferences.saveCallbackMutation.mutateAsync(request)
   }
 
   return (
@@ -130,22 +79,14 @@ export default function MenuPlaceholderSections({
       <MenuCalendarSection
         enabled={dataEnabled}
         cancelableEventIds={calendarEventIds}
-        cancellingActivityId={
-          calendarCancellationEventId ?? cancellingCallbackId
-        }
-        cancelledActivityId={cancelledCalendarEventId ?? cancelledCallbackId}
-        cancellationError={
-          calendarAttendance.attendanceMutation.isError ||
-          callbackPreferences.removeCallbackMutation.isError
-        }
+        cancellingActivityId={calendarCancellationEventId}
+        cancelledActivityId={cancelledCalendarEventId}
+        cancellationError={calendarAttendance.attendanceMutation.isError}
         onCancelEvent={cancelCalendarEvent}
-        onCancelCallback={cancelCalendarCallback}
         onDismissCancellationError={() => {
           calendarAttendance.attendanceMutation.reset()
-          callbackPreferences.removeCallbackMutation.reset()
         }}
       />
-      <CallbackSchedulerSection onConfirm={onConfirmCallback ?? saveCallback} />
     </div>
   )
 }

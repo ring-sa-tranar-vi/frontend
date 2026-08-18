@@ -78,13 +78,15 @@ export default function ConfirmModal({
     }
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && !isConfirming) {
+      if (event.key === 'Escape') {
         event.preventDefault()
-        onCancel()
+        event.stopImmediatePropagation()
+        if (!isConfirming) onCancel()
         return
       }
 
       if (event.key !== 'Tab') return
+      event.stopImmediatePropagation()
 
       const focusable = Array.from(
         dialogRef.current?.querySelectorAll<HTMLElement>(
@@ -108,10 +110,10 @@ export default function ConfirmModal({
       }
     }
 
-    document.addEventListener('keydown', handleKeyDown)
+    document.addEventListener('keydown', handleKeyDown, true)
     return () => {
       window.clearTimeout(focusTimer)
-      document.removeEventListener('keydown', handleKeyDown)
+      document.removeEventListener('keydown', handleKeyDown, true)
       temporarilyInertElements.forEach((element) => {
         element.inert = false
       })

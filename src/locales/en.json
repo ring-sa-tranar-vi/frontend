@@ -285,7 +285,7 @@
     },
     "calendar": {
       "title": "Calendar",
-      "description": "See your workouts, booked events, and callbacks in one place.",
+      "description": "See your workouts and booked events in one place.",
       "previousMonth": "Previous month",
       "nextMonth": "Next month",
       "workout": "Workout",
