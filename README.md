@@ -379,11 +379,6 @@ npm run format
 3. Commit and push the changes.
 4. Create a pull request for review.
 
-The project also uses a pre-push Git hook that runs linting on staged files to help prevent incorrectly formatted code
-from being pushed.
-
-CI runs the relevant checks again before changes can be merged.
-
 ## Deployment & CI/CD
 
 The React application is deployed to **Firebase Hosting** using GitHub Actions.
