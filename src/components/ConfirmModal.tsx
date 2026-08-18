@@ -31,8 +31,15 @@ export default function ConfirmModal({
   const overlayRef = useRef<HTMLDivElement>(null)
   const cancelButtonRef = useRef<HTMLButtonElement>(null)
   const previouslyFocusedElementRef = useRef<HTMLElement | null>(null)
+  const onCancelRef = useRef(onCancel)
+  const isConfirmingRef = useRef(isConfirming)
   const titleId = useId()
   const bodyId = useId()
+
+  useEffect(() => {
+    onCancelRef.current = onCancel
+    isConfirmingRef.current = isConfirming
+  }, [isConfirming, onCancel])
 
   useEffect(() => {
     if (!open) {
@@ -81,7 +88,7 @@ export default function ConfirmModal({
       if (event.key === 'Escape') {
         event.preventDefault()
         event.stopImmediatePropagation()
-        if (!isConfirming) onCancel()
+        if (!isConfirmingRef.current) onCancelRef.current()
         return
       }
 
@@ -118,7 +125,7 @@ export default function ConfirmModal({
         element.inert = false
       })
     }
-  }, [isConfirming, onCancel, open])
+  }, [open])
 
   if (!open) return null
 
@@ -164,7 +171,7 @@ export default function ConfirmModal({
 
         {error ? (
           <p
-            role="status"
+            role="alert"
             className="mt-4 rounded-2xl border border-(--brand-danger-border) bg-(--brand-danger-surface) px-4 py-3 text-[length:var(--text-sm)] font-bold text-(--brand-danger-ink)"
           >
             {error}

@@ -37,7 +37,9 @@ export default function CompanyOrganisationLayout({
           </>
         ) : vm.statusMessage ? (
           <div className="mb-3">
-            <AppSheetNotice>{vm.statusMessage}</AppSheetNotice>
+            <AppSheetNotice tone={vm.statusTone}>
+              {vm.statusMessage}
+            </AppSheetNotice>
           </div>
         ) : null}
 
@@ -94,6 +96,8 @@ export default function CompanyOrganisationLayout({
               updateEvent={vm.updateEvent}
               isUpdatingEvent={vm.isUpdatingEvent}
               deletingEventId={vm.deletingEventId}
+              deleteEventError={vm.deleteEventError}
+              resetDeleteEvent={vm.resetDeleteEvent}
               stopEditingEvent={vm.stopEditingEvent}
               startEditingEvent={vm.startEditingEvent}
               deleteEvent={vm.deleteEvent}

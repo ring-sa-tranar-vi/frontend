@@ -13,6 +13,7 @@ import {
 import { fetchTrainersWithToken } from '../../../api/trainers'
 import { useVoicePlayer } from '../../../hooks/useVoicePlayer'
 import { useTranslation } from 'react-i18next'
+import type { TFunction } from 'i18next'
 import {
   appSheetFieldClass,
   appSheetFormFieldClass,
@@ -40,40 +41,20 @@ function wrap(index: number, length: number): number {
   return ((index % length) + length) % length
 }
 
-function getBundledLocalTrainerImage(source?: string | null) {
-  if (!import.meta.env.DEV || !source || typeof window === 'undefined') {
-    return null
-  }
-
-  try {
-    const segments = new URL(source, window.location.origin).pathname
-      .split('/')
-      .filter(Boolean)
-    const trainerSegmentIndex = segments.lastIndexOf('trainers')
-    const trainerSlug = segments[trainerSegmentIndex + 1]
-
-    if (!trainerSlug || !/^[a-z0-9-]+$/i.test(trainerSlug)) {
-      return null
-    }
-
-    return `/start-page/${trainerSlug}-start.webp`
-  } catch {
-    return null
-  }
-}
-
 export default function TrainerSelectionModal({
   onTrainerSelect,
   selectedTrainerId,
   trainersOverride,
+  active = true,
 }: {
   onTrainerSelect?: (trainerId: number) => void
   selectedTrainerId?: number | null
   trainersOverride?: readonly TrainerSelectionItem[]
+  active?: boolean
 }) {
   const { getToken, isSignedIn } = useAuth()
   const { play, stop, loadingId, playingId } = useVoicePlayer()
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
 
   const {
     data: fetchedTrainers = [],
@@ -87,7 +68,8 @@ export default function TrainerSelectionModal({
       return fetchTrainersWithToken(token)
     },
     enabled: trainersOverride === undefined && isSignedIn === true,
-    refetchOnWindowFocus: false,
+    staleTime: 10 * 60_000,
+    refetchOnWindowFocus: true,
   })
   const trainers = useMemo(
     () => (trainersOverride ?? fetchedTrainers) as TrainerSelectionItem[],
@@ -95,6 +77,9 @@ export default function TrainerSelectionModal({
   )
   const isLoading = trainersOverride === undefined && isFetchingTrainers
   const isError = trainersOverride === undefined && didTrainerFetchFail
+  const prefersReducedMotion =
+    typeof window !== 'undefined' &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
   const [activeLanguages, setActiveLanguages] = useState<string[]>(
     () => getStoredLanguageFilter() ?? [],
@@ -114,6 +99,11 @@ export default function TrainerSelectionModal({
   const isHorizontalSwipe = useRef<boolean | null>(null)
   const isSnappingBack = useRef(false)
   const hasInitialisedFilter = useRef(false)
+  const stopRef = useRef(stop)
+
+  useEffect(() => {
+    stopRef.current = stop
+  }, [stop])
 
   const allLanguages = useMemo(() => {
     const langs = (trainers as TrainerSelectionItem[])
@@ -132,8 +122,20 @@ export default function TrainerSelectionModal({
     const storedLanguage = stored?.find((language) =>
       allLanguages.includes(language),
     )
+    const normalizedAppLanguage = (
+      i18n.resolvedLanguage ?? i18n.language
+    ).toLocaleLowerCase()
+    const languageAliases: Record<string, string[]> = {
+      en: ['en', 'english', 'engelska'],
+      pl: ['pl', 'polish', 'polski', 'polska'],
+      so: ['so', 'somali'],
+      sv: ['sv', 'swedish', 'svenska'],
+      ta: ['ta', 'tamil'],
+      ur: ['ur', 'urdu'],
+    }
+    const preferredAliases = languageAliases[normalizedAppLanguage] ?? []
     const defaultLanguage = allLanguages.find((language) =>
-      /sv|svenska|en|english|engelska/i.test(language),
+      preferredAliases.includes(language.trim().toLocaleLowerCase()),
     )
     const nextLanguage =
       selectedTrainerLanguage ??
@@ -143,7 +145,17 @@ export default function TrainerSelectionModal({
 
     setActiveLanguages([nextLanguage])
     setStoredLanguageFilter([nextLanguage])
-  }, [allLanguages, selectedTrainerId, trainers])
+  }, [
+    allLanguages,
+    i18n.language,
+    i18n.resolvedLanguage,
+    selectedTrainerId,
+    trainers,
+  ])
+
+  useEffect(() => {
+    if (!active) stopRef.current()
+  }, [active])
 
   const filteredTrainers = useMemo(() => {
     if (activeLanguages.length === 0) return trainers as TrainerSelectionItem[]
@@ -156,6 +168,11 @@ export default function TrainerSelectionModal({
   // When filtered list changes, snap to selected trainer without animation
   useEffect(() => {
     const idx = filteredTrainers.findIndex((t) => t.id === selectedTrainerId)
+    setIsAnimating(false)
+    setIsDragging(false)
+    setDragX(0)
+    isHorizontalSwipe.current = null
+    isSnappingBack.current = false
     setTransitionEnabled(false)
     setCenterIndex(idx >= 0 ? idx : 0)
     setTrackOffset(-100)
@@ -172,6 +189,14 @@ export default function TrainerSelectionModal({
 
   const navigate = (direction: 1 | -1) => {
     if (isAnimating || n <= 1) return
+    stop()
+
+    if (prefersReducedMotion) {
+      setCenterIndex((current) => wrap(current + direction, n))
+      setTrackOffset(-100)
+      return
+    }
+
     setIsAnimating(true)
     setTrackOffset(direction === 1 ? -200 : 0)
   }
@@ -201,6 +226,7 @@ export default function TrainerSelectionModal({
   }
 
   const selectLanguage = (language: string) => {
+    stop()
     setActiveLanguages([language])
     setStoredLanguageFilter([language])
   }
@@ -259,7 +285,7 @@ export default function TrainerSelectionModal({
       ? `translateX(calc(-100% + ${dragX}px))`
       : `translateX(${trackOffset}%)`,
     transition:
-      transitionEnabled && !isDragging
+      transitionEnabled && !isDragging && !prefersReducedMotion
         ? 'transform 0.38s cubic-bezier(0.25,0.46,0.45,0.94)'
         : 'none',
     willChange: 'transform',
@@ -297,7 +323,7 @@ export default function TrainerSelectionModal({
 
           {/* Language filter */}
           {allLanguages.length > 1 && (
-            <div className="mt-3 ml-[52px]">
+            <div className="ms-[52px] mt-3">
               <label
                 htmlFor="trainer-language-filter"
                 className="mb-2 block text-[length:var(--text-sm)] font-extrabold text-(--brand-title-ink)"
@@ -366,6 +392,7 @@ export default function TrainerSelectionModal({
                           key={`${slot}-${trainer?.id ?? 'empty'}`}
                           className="w-full shrink-0"
                           aria-hidden={slot !== 1}
+                          inert={slot !== 1}
                         >
                           {trainer ? (
                             <TrainerCard
@@ -441,20 +468,17 @@ function TrainerCard({
   onStop: () => void
   onSelect: () => void
   showAudioPreview: boolean
-  t: (key: string) => string
+  t: TFunction
 }) {
   const id = String(trainer.id)
   const isPlaying = playingId === id
   const isLoading = loadingId === id
-  const [useBundledFallback, setUseBundledFallback] = useState(false)
   const [imageUnavailable, setImageUnavailable] = useState(false)
-  const bundledFallback = getBundledLocalTrainerImage(
-    trainer.imageStart ?? trainer.imageSelect,
-  )
-  const imageSource =
-    useBundledFallback || !trainer.imageSelect
-      ? bundledFallback
-      : trainer.imageSelect
+  const imageSource = trainer.imageSelect || null
+
+  useEffect(() => {
+    setImageUnavailable(false)
+  }, [imageSource])
 
   return (
     <div className="relative aspect-[8/9] overflow-hidden bg-(--menu-choice-bg)">
@@ -464,19 +488,10 @@ function TrainerCard({
           src={imageSource}
           alt={trainer.name}
           loading="lazy"
+          width={320}
+          height={360}
           draggable={false}
-          onError={() => {
-            if (
-              !useBundledFallback &&
-              bundledFallback &&
-              imageSource !== bundledFallback
-            ) {
-              setUseBundledFallback(true)
-              return
-            }
-
-            setImageUnavailable(true)
-          }}
+          onError={() => setImageUnavailable(true)}
           className="absolute bottom-0 left-0 h-full w-1/2 object-contain object-bottom select-none"
         />
       ) : (
@@ -497,7 +512,11 @@ function TrainerCard({
           {t('trainerSelection.trainerTitle')}
         </p>
         {trainer.language && (
-          <p className="menu-card-meta">{t(`languages.${trainer.language}`)}</p>
+          <p className="menu-card-meta">
+            {t(`languages.${trainer.language}`, {
+              defaultValue: trainer.language,
+            })}
+          </p>
         )}
         {isSelected && (
           <div className="mt-2 flex justify-end">
@@ -524,7 +543,10 @@ function TrainerCard({
           >
             {isLoading ? (
               <>
-                <Loader size={14} className="animate-spin" />
+                <Loader
+                  size={14}
+                  className="animate-spin motion-reduce:animate-none"
+                />
                 {t('trainerSelection.loadingAudio')}
               </>
             ) : isPlaying ? (

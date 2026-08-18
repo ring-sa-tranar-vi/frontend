@@ -42,13 +42,13 @@ export default function OrganisationInfoCard({
           <Building2 size={18} strokeWidth={2.3} />
         </div>
         <div className="min-w-0">
-          <h2 className="text-[length:var(--text-lg)] leading-tight font-extrabold tracking-tight text-(--brand-ink)">
+          <h2 className="text-[length:var(--text-lg)] leading-tight font-extrabold tracking-tight [overflow-wrap:anywhere] text-(--brand-ink)">
             Organisationsinformation
           </h2>
           <p className="mt-0.5 text-[length:var(--text-sm)] leading-snug font-semibold text-(--brand-body-ink)">
             Det här ser andra i appen.
             {typeof followersCount === 'number' ? (
-              <span className="ml-2 inline-flex items-center gap-1 whitespace-nowrap text-(--brand-primary)">
+              <span className="ms-2 inline-flex items-center gap-1 whitespace-nowrap text-(--brand-primary)">
                 <UsersRound size={13} aria-hidden="true" />
                 {followersCount} följare
               </span>

@@ -189,7 +189,7 @@
         "filtersLabel": "Filtruj wydarzenia",
         "filters": {
           "all": "Wszystkie",
-          "nearby": "W pobliżu",
+          "nearby": "W moim mieście",
           "week": "W tym tygodniu"
         },
         "upcomingEvents": "Nadchodzące wydarzenia",
@@ -338,6 +338,12 @@
     "saveError": "Nie udało się zapisać zmian",
     "saveSuccess": "Ustawienia zapisane ✓",
     "selectTrainerFirst": "Musisz najpierw wybrać trenera",
+    "nameRequired": "Wpisz swoje imię.",
+    "organisationPage": "Strona organizacji",
+    "discardChangesTitle": "Niezapisane zmiany",
+    "discardChangesText": "Zmiany nie zostały zapisane. Czy mimo to chcesz zamknąć?",
+    "discardChangesConfirm": "Zamknij bez zapisywania",
+    "discardChangesCancel": "Kontynuuj edycję",
     "language": "Język",
     "getHelp": "Uzyskaj pomoc i wsparcie",
     "getHelpButton": "Uzyskaj pomoc",

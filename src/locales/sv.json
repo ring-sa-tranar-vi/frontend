@@ -189,7 +189,7 @@
         "filtersLabel": "Filtrera event",
         "filters": {
           "all": "Alla",
-          "nearby": "Nära mig",
+          "nearby": "I min stad",
           "week": "Den här veckan"
         },
         "upcomingEvents": "Kommande event",
@@ -340,6 +340,12 @@
     "saveError": "Kunde inte spara ändringarna",
     "saveSuccess": "Inställningar sparade ✓",
     "selectTrainerFirst": "Du måste välja en tränare först",
+    "nameRequired": "Skriv in ditt namn.",
+    "organisationPage": "Organisationssida",
+    "discardChangesTitle": "Osparade ändringar",
+    "discardChangesText": "Dina ändringar har inte sparats. Vill du stänga ändå?",
+    "discardChangesConfirm": "Stäng utan att spara",
+    "discardChangesCancel": "Fortsätt redigera",
     "language": "Språk",
     "getHelp": "Hjälp & support",
     "getHelpButton": "Hjälp",
