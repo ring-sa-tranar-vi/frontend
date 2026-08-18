@@ -189,7 +189,7 @@
         "filtersLabel": "Filter events",
         "filters": {
           "all": "All",
-          "nearby": "Near me",
+          "nearby": "In my city",
           "week": "This week"
         },
         "upcomingEvents": "Upcoming events",
@@ -285,7 +285,7 @@
     },
     "calendar": {
       "title": "Calendar",
-      "description": "See your workouts, booked events, and callbacks in one place.",
+      "description": "See your workouts and booked events in one place.",
       "previousMonth": "Previous month",
       "nextMonth": "Next month",
       "workout": "Workout",
@@ -338,6 +338,12 @@
     "saveError": "Could not save changes",
     "saveSuccess": "Settings saved ✓",
     "selectTrainerFirst": "You must select a trainer first",
+    "nameRequired": "Enter your name.",
+    "organisationPage": "Organisation page",
+    "discardChangesTitle": "Unsaved changes",
+    "discardChangesText": "Your changes have not been saved. Do you still want to close?",
+    "discardChangesConfirm": "Close without saving",
+    "discardChangesCancel": "Continue editing",
     "language": "Language",
     "getHelp": "Get help & support",
     "getHelpButton": "Get help",
