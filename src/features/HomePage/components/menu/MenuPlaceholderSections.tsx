@@ -75,7 +75,6 @@ export default function MenuPlaceholderSections({
         isError={activityQuery.isError && !activityQuery.data}
         onRetry={() => void activityQuery.refetch()}
       />
-      <PhysicalEventsSection onFindEvents={onFindEvents} />
       <MenuCalendarSection
         enabled={dataEnabled}
         cancelableEventIds={calendarEventIds}
@@ -87,6 +86,7 @@ export default function MenuPlaceholderSections({
           calendarAttendance.attendanceMutation.reset()
         }}
       />
+      <PhysicalEventsSection onFindEvents={onFindEvents} />
     </div>
   )
 }

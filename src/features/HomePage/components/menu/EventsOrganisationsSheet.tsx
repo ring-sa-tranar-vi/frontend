@@ -370,9 +370,9 @@ function OrganisationCard({
           {getInitials(organisation.name)}
         </div>
 
-        <div className="min-w-0 flex-1">
+        <div className="flex min-h-12 min-w-0 flex-1 items-center">
           <h3
-            className="menu-card-title line-clamp-2 min-h-10"
+            className="menu-card-title line-clamp-2"
             title={organisation.name}
           >
             {organisation.name}
@@ -692,11 +692,11 @@ export default function EventsOrganisationsSheet({
         <div
           role="tablist"
           aria-label={t('menu.events.directory.tabsLabel')}
-          className="relative grid grid-cols-2 overflow-hidden rounded-2xl border border-(--brand-border-field) bg-(--brand-soft) p-1"
+          className="relative grid grid-cols-2 overflow-hidden rounded-2xl border border-(--brand-border-field) bg-(--menu-content-bg) p-1"
         >
           <span
             aria-hidden="true"
-            className={`pointer-events-none absolute inset-y-1 start-1 w-[calc(50%-0.25rem)] rounded-xl border border-(--brand-primary) bg-(--menu-content-bg) transition-transform duration-200 ease-out motion-reduce:transition-none ${
+            className={`pointer-events-none absolute inset-y-1 start-1 w-[calc(50%-0.25rem)] rounded-xl bg-(--brand-primary-deep) transition-transform duration-200 ease-out motion-reduce:transition-none ${
               activeTab === 'organisations'
                 ? 'translate-x-full rtl:-translate-x-full'
                 : ''
@@ -715,10 +715,10 @@ export default function EventsOrganisationsSheet({
                 tabIndex={isActive ? 0 : -1}
                 onClick={() => switchTab(tab)}
                 onKeyDown={(event) => handleTabKeyDown(event, tab)}
-                className={`relative z-10 min-h-11 rounded-xl border border-transparent bg-transparent px-3 py-2.5 text-[length:var(--text-sm)] font-extrabold transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-(--brand-border-strong) focus-visible:outline-none active:scale-[0.985] ${
+                className={`relative z-10 min-h-11 rounded-xl border border-transparent bg-transparent px-3 py-2.5 text-[length:var(--text-sm)] font-extrabold transition-colors duration-200 focus-visible:ring-2 focus-visible:outline-none focus-visible:ring-inset motion-reduce:transition-none ${
                   isActive
-                    ? 'text-(--brand-primary-deep)'
-                    : 'text-(--brand-ink-soft) hover:text-(--brand-primary-deep)'
+                    ? 'text-(--brand-on-primary) focus-visible:ring-(--brand-on-primary)'
+                    : 'text-(--brand-ink-soft) hover:bg-(--brand-soft) hover:text-(--brand-primary-deep) focus-visible:ring-(--brand-border-strong)'
                 }`}
               >
                 {t(`menu.events.directory.tabs.${tab}`)}

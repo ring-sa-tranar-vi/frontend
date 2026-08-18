@@ -2,6 +2,7 @@ import { UserButton, useAuth, useClerk, useUser } from '@clerk/react'
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { CircleHelp, Building2, Globe, Menu, ShieldCheck } from 'lucide-react'
+import type { ReactNode } from 'react'
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useUpdateProfile } from '../../../hooks/useUpdateProfile'
 import ContextModel from './ContextModal'
@@ -123,6 +124,7 @@ function SettingsStatusSheet({
 function ProfilePreferenceSections({
   fullName,
   setFullName,
+  overviewSections,
   selectedTrainerId,
   setSelectedTrainerId,
   intensityLevel,
@@ -135,6 +137,7 @@ function ProfilePreferenceSections({
 }: {
   fullName: string
   setFullName: (value: string) => void
+  overviewSections: ReactNode
   selectedTrainerId: number | null
   setSelectedTrainerId: (value: number) => void
   intensityLevel: number
@@ -156,7 +159,7 @@ function ProfilePreferenceSections({
   }, [isEditingName])
 
   return (
-    <div className="space-y-4 border-t border-(--brand-border)/60 pt-4 pb-3">
+    <div className="space-y-4 pb-3">
       <section className={appSheetCategoryClass}>
         <div className={appSheetContentClass}>
           <div className="flex flex-wrap items-center gap-3">
@@ -172,16 +175,13 @@ function ProfilePreferenceSections({
               />
             </div>
             <div className="min-w-0 flex-1">
-              <AppSheetSectionTitle>
-                {t('settings.fullName')}
-              </AppSheetSectionTitle>
               {!isEditingName ? (
-                <p
-                  className="mt-0.5 truncate text-[length:var(--text-sm)] font-semibold text-(--brand-body-ink)"
+                <h3
+                  className="truncate text-[length:var(--text-lg)] leading-tight font-extrabold text-(--brand-primary-deep)"
                   title={fullName}
                 >
                   {fullName}
-                </p>
+                </h3>
               ) : null}
             </div>
             {!isEditingName ? (
@@ -226,16 +226,18 @@ function ProfilePreferenceSections({
         </div>
       </section>
 
+      {overviewSections}
+
+      <section className={appSheetCategoryClass}>
+        <IntensitySlider value={intensityLevel} onChange={setIntensityLevel} />
+      </section>
+
       <section className={appSheetCategoryClass}>
         <TrainerSelectionModal
           selectedTrainerId={selectedTrainerId}
           onTrainerSelect={setSelectedTrainerId}
           active={isActive}
         />
-      </section>
-
-      <section className={appSheetCategoryClass}>
-        <IntensitySlider value={intensityLevel} onChange={setIntensityLevel} />
       </section>
 
       <section className={appSheetCategoryClass}>
@@ -580,14 +582,15 @@ function SettingsModalBody({
         }
       >
         <div className="pb-2">
-          <MenuPlaceholderSections
-            dataEnabled={mainSheetOpen}
-            onFindEvents={() => setEventsOpen(true)}
-          />
-
           <ProfilePreferenceSections
             fullName={fullName}
             setFullName={setFullName}
+            overviewSections={
+              <MenuPlaceholderSections
+                dataEnabled={mainSheetOpen}
+                onFindEvents={() => setEventsOpen(true)}
+              />
+            }
             selectedTrainerId={selectedTrainerId}
             setSelectedTrainerId={onTrainerSelect}
             intensityLevel={intensityLevel}
