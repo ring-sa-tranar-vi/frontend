@@ -1,10 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
-import { useCurrentTrainer } from '../../hooks/useCurrentTrainer'
 import useCurrentUser from '../../hooks/useCurrentUser'
 import useCurrentWorkout from '../../hooks/useCurrentWorkout'
 import { useCoachSession } from '../ai-conversation'
 import { SessionCall } from './components/SessionCall'
-import type { CoachCallSession, SessionPanel, Workout } from './types'
+import type { CoachCallSession, SessionPanel, Trainer, Workout } from './types'
 
 const LOADING_SESSION: CoachCallSession = {
   workoutId: '',
@@ -13,12 +12,14 @@ const LOADING_SESSION: CoachCallSession = {
 
 export function SessionPage({
   workouts,
+  trainer,
   updateCurrentWorkout,
   alreadyCompletedToday = false,
   onEnd,
 }: {
   workoutId: string | undefined
   workouts: Workout[] | undefined
+  trainer: Trainer | undefined
   updateCurrentWorkout: (workoutId: number, reasoning?: string) => void
   alreadyCompletedToday?: boolean
   onEnd: () => void
@@ -29,11 +30,8 @@ export function SessionPage({
     isError: isCurrentWorkoutError,
   } = useCurrentWorkout()
   const { user, isProfileLoading, isProfileError } = useCurrentUser()
-  const { trainer } = useCurrentTrainer(
-    user?.trainerId ? String(user.trainerId) : '1',
-  )
-  const isLoading =
-    isProfileLoading || isCurrentWorkoutLoading || workout === undefined
+
+  const isLoading = isProfileLoading || isCurrentWorkoutLoading
 
   useEffect(() => {
     console.log('SessionPage state', {
