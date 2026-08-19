@@ -287,6 +287,10 @@ The application handles errors at both the API and UI levels.
 
 This section describes the tools and workflows used when developing the frontend.
 
+Onboarding
+
+For a step-by-step guide to getting started with the frontend project, see the [Frontend Onboarding Guide](./ONBOARDING.md).
+
 ### Testing
 
 The project uses **Vitest** for automated tests. The AI conversation also has a separate evaluation test.
