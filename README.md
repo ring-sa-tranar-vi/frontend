@@ -93,13 +93,13 @@ src/
 │ ├── companyPortal/         # Company pages
 │ └── adminPage/            # Admin pages 
 │
-├── test/                   # Frontend tests
-│ ├── adminPage/            # Admin page tests
-│ ├── companyPortal/        # Company portal tests
+├── test/                   # Frontend tests
+│ ├── adminPage/            # Admin page tests
+│ ├── companyPortal/        # Company portal tests
 │
 ├── hooks/                  # Fetches and updates data 
 ├── api/                    # API calls  
-├── components/             # Shared UI components  
+├── components/             # Shared UI components  
 ├── lib/                    # Shared utility functions  
 ├── locales/                # Translations  
 └── index.css               # Design variables and global CSS
@@ -252,25 +252,26 @@ state manually.
 
 The main frontend features are organized under `src/features`:
 
-| Directory | Responsibility |
-| --- | --- |
-| `features/HomePage` | Landing page and workout start flow and the menu |
-| `features/session` | AI trainer session experience |
-| `features/adminPage` | Admin dashboard and management tools |
-| `features/auth` | User profile synchronization and authentication-related functionality |
-| `features/companyPortal` | Landing page for companies to mange their events |
+| Directory                  | Responsibility                                                        |
+| -------------------------- | --------------------------------------------------------------------- |
+| `features/HomePage`        | Landing page and workout start flow and the menu                      |
+| `features/session`         | AI trainer session experience                                         |
+| `features/adminPage`       | Admin dashboard and management tools                                  |
+| `features/auth`            | User profile synchronization and authentication-related functionality |
+| `features/companyPortal`   | Landing page for companies to mange their events                      |
+| `features/ai-conversation` | AI cconversation and training                                         |
 
 ### Available Scripts
 
-| Command | Description |
-| --- | --- |
-| `npm run dev` | Start development server |
-| `npm run build` | Create production build |
-| `npm run preview` | Preview production build |
-| `npm run lint` | Run linting |
-| `npm run format` | Format code |
-| `npm run format:check` | Check formatting |
-| `npm run eval` | Evaluation check for AI conversation |
+| Command                | Description                          |
+| ---------------------- | ------------------------------------ |
+| `npm run dev`          | Start development server             |
+| `npm run build`        | Create production build              |
+| `npm run preview`      | Preview production build             |
+| `npm run lint`         | Run linting                          |
+| `npm run format`       | Format code                          |
+| `npm run format:check` | Check formatting                     |
+| `npm run eval`         | Evaluation check for AI conversation |
 
 ### Error Handling
 
