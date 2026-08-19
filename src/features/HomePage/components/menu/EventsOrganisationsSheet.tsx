@@ -20,9 +20,8 @@ import {
   appSheetCardClass,
 } from '../../../../components/AppSheet'
 import {
-  fetchMyOrganizationApplication,
+  fetchMyOrganizationApplicationOrNull,
   type ApplicationStatus,
-  OrganizationApplicationError,
 } from '../../../../api/organizationApplications'
 import {
   type EventDto,
@@ -305,7 +304,7 @@ function EventCard({
             </span>
             <ChevronDown
               size={19}
-              className={`shrink-0 transition-transform duration-200 ${
+              className={`shrink-0 transition-transform duration-200 motion-reduce:transition-none ${
                 descriptionOpen ? 'rotate-180' : ''
               }`}
               aria-hidden="true"
@@ -371,9 +370,9 @@ function OrganisationCard({
           {getInitials(organisation.name)}
         </div>
 
-        <div className="min-w-0 flex-1">
+        <div className="flex min-h-12 min-w-0 flex-1 items-center">
           <h3
-            className="menu-card-title line-clamp-2 min-h-10"
+            className="menu-card-title line-clamp-2"
             title={organisation.name}
           >
             {organisation.name}
@@ -398,7 +397,7 @@ function OrganisationCard({
                       name: organisation.name,
                     })
             }
-            className={`inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl px-3 py-2.5 text-[length:var(--text-sm)] font-extrabold transition focus-visible:ring-2 focus-visible:ring-(--brand-border-strong) focus-visible:ring-offset-2 focus-visible:outline-none active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-55 ${
+            className={`inline-flex min-h-11 min-w-[5.75rem] items-center justify-center gap-1.5 rounded-xl px-3 py-2.5 text-[length:var(--text-sm)] font-extrabold transition focus-visible:ring-2 focus-visible:ring-(--brand-border-strong) focus-visible:ring-offset-2 focus-visible:outline-none active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-55 ${
               isFollowing
                 ? 'border border-(--brand-border-field) bg-(--brand-soft) text-(--brand-primary-deep)'
                 : 'bg-(--brand-primary) text-(--brand-on-primary) hover:bg-(--brand-primary-strong)'
@@ -447,7 +446,7 @@ function OrganisationCard({
           <span>{t('menu.events.directory.organisationEvents')}</span>
           <ChevronDown
             size={19}
-            className={`shrink-0 transition-transform duration-200 ${
+            className={`shrink-0 transition-transform duration-200 motion-reduce:transition-none ${
               eventsOpen ? 'rotate-180' : ''
             }`}
             aria-hidden="true"
@@ -489,12 +488,20 @@ export default function EventsOrganisationsSheet({
   onBack,
   onClose,
   onApply,
+  canManageOrganisation,
+  isOrganisationAccessLoading,
+  isOrganisationAccessError,
+  onRetryOrganisationAccess,
   userCity,
 }: {
   open: boolean
   onBack: () => void
   onClose: () => void
   onApply: () => void
+  canManageOrganisation: boolean
+  isOrganisationAccessLoading: boolean
+  isOrganisationAccessError: boolean
+  onRetryOrganisationAccess: () => void
   userCity?: string | null
 }) {
   const { t, i18n } = useTranslation()
@@ -517,25 +524,23 @@ export default function EventsOrganisationsSheet({
       const token = await getToken()
       if (!token) throw new Error('Missing Clerk token')
 
-      try {
-        return await fetchMyOrganizationApplication(token)
-      } catch (error) {
-        if (
-          error instanceof OrganizationApplicationError &&
-          error.status === 404
-        ) {
-          return null
-        }
-        throw error
-      }
+      return fetchMyOrganizationApplicationOrNull(token)
     },
-    enabled: open && isLoaded && Boolean(isSignedIn) && Boolean(userId),
+    enabled:
+      open &&
+      isLoaded &&
+      Boolean(isSignedIn) &&
+      Boolean(userId) &&
+      !isOrganisationAccessLoading &&
+      !isOrganisationAccessError &&
+      !canManageOrganisation,
     retry: false,
   })
 
   const locale = i18n.resolvedLanguage ?? i18n.language ?? 'sv'
   const existingApplication = myApplicationQuery.data
-  const isApplicationUnavailable = myApplicationQuery.isError
+  const isApplicationUnavailable =
+    myApplicationQuery.isError && !existingApplication
   const applicationStatusClass = existingApplication
     ? applicationStatusClasses[existingApplication.status]
     : null
@@ -687,12 +692,14 @@ export default function EventsOrganisationsSheet({
         <div
           role="tablist"
           aria-label={t('menu.events.directory.tabsLabel')}
-          className="relative grid grid-cols-2 overflow-hidden rounded-2xl border border-(--brand-border-field) bg-(--brand-soft) p-1"
+          className="relative grid grid-cols-2 overflow-hidden rounded-2xl border border-(--brand-border-field) bg-(--menu-content-bg) p-1"
         >
           <span
             aria-hidden="true"
-            className={`pointer-events-none absolute inset-y-1 left-1 w-[calc(50%-0.25rem)] rounded-xl border border-(--brand-primary) bg-(--menu-content-bg) transition-transform duration-200 ease-out motion-reduce:transition-none ${
-              activeTab === 'organisations' ? 'translate-x-full' : ''
+            className={`pointer-events-none absolute inset-y-1 start-1 w-[calc(50%-0.25rem)] rounded-xl bg-(--brand-primary-deep) transition-transform duration-200 ease-out motion-reduce:transition-none ${
+              activeTab === 'organisations'
+                ? 'translate-x-full rtl:-translate-x-full'
+                : ''
             }`}
           />
           {(['events', 'organisations'] as const).map((tab) => {
@@ -708,10 +715,10 @@ export default function EventsOrganisationsSheet({
                 tabIndex={isActive ? 0 : -1}
                 onClick={() => switchTab(tab)}
                 onKeyDown={(event) => handleTabKeyDown(event, tab)}
-                className={`relative z-10 min-h-11 rounded-xl border border-transparent bg-transparent px-3 py-2.5 text-[length:var(--text-sm)] font-extrabold transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-(--brand-border-strong) focus-visible:outline-none active:scale-[0.985] ${
+                className={`relative z-10 min-h-11 rounded-xl border border-transparent bg-transparent px-3 py-2.5 text-[length:var(--text-sm)] font-extrabold transition-colors duration-200 focus-visible:ring-2 focus-visible:outline-none focus-visible:ring-inset motion-reduce:transition-none ${
                   isActive
-                    ? 'text-(--brand-primary-deep)'
-                    : 'text-(--brand-ink-soft) hover:text-(--brand-primary-deep)'
+                    ? 'text-(--brand-on-primary) focus-visible:ring-(--brand-on-primary)'
+                    : 'text-(--brand-ink-soft) hover:bg-(--brand-soft) hover:text-(--brand-primary-deep) focus-visible:ring-(--brand-border-strong)'
                 }`}
               >
                 {t(`menu.events.directory.tabs.${tab}`)}
@@ -728,7 +735,7 @@ export default function EventsOrganisationsSheet({
           </span>
           <Search
             size={18}
-            className="pointer-events-none absolute top-1/2 left-4 -translate-y-1/2 text-(--brand-muted)"
+            className="pointer-events-none absolute start-4 top-1/2 -translate-y-1/2 text-(--brand-muted)"
             aria-hidden="true"
           />
           <input
@@ -740,7 +747,7 @@ export default function EventsOrganisationsSheet({
                 ? t('menu.events.directory.searchEvents')
                 : t('menu.events.directory.searchOrganisations')
             }
-            className="min-h-12 w-full rounded-2xl border border-(--menu-control-border) bg-(--menu-field-bg) py-3 pr-4 pl-11 text-[length:var(--text-sm)] font-semibold text-(--brand-ink) placeholder:text-(--brand-muted) focus-visible:border-(--brand-border-strong) focus-visible:ring-2 focus-visible:ring-(--brand-selection) focus-visible:outline-none"
+            className="min-h-12 w-full rounded-2xl border border-(--menu-control-border) bg-(--menu-field-bg) py-3 ps-11 pe-4 text-[length:var(--text-sm)] font-semibold text-(--brand-ink) placeholder:text-(--brand-muted) focus-visible:border-(--brand-border-strong) focus-visible:ring-2 focus-visible:ring-(--brand-selection) focus-visible:outline-none"
           />
         </label>
 
@@ -892,62 +899,91 @@ export default function EventsOrganisationsSheet({
               {t('menu.events.directory.organisationsIntro')}
             </div>
 
-            <div
-              className={`mt-4 ${appSheetCardClass} ${applicationStatusClass?.card ?? ''}`}
-            >
-              <div className="flex items-start gap-3">
-                <div
-                  className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${applicationStatusClass?.icon ?? 'bg-(--brand-soft) text-(--brand-primary-deep)'}`}
-                >
-                  <Building2 size={21} strokeWidth={2.3} aria-hidden="true" />
-                </div>
-                <div className="min-w-0">
-                  <h2 className="menu-card-title text-(--brand-title-ink)">
-                    {isApplicationUnavailable
-                      ? t('menu.events.application.statusError')
-                      : existingApplication
-                        ? t(
-                            `menu.events.application.statusTitle.${existingApplication.status.toLowerCase()}`,
-                          )
-                        : t('menu.events.application.cardTitle')}
-                  </h2>
-                  <p className="menu-card-copy mt-1">
-                    {isApplicationUnavailable
-                      ? t('menu.events.application.cardText')
-                      : existingApplication
-                        ? t(
-                            `menu.events.application.statusText.${existingApplication.status.toLowerCase()}`,
-                          )
-                        : t('menu.events.application.cardText')}
-                  </p>
+            {isOrganisationAccessLoading ? (
+              <div
+                className={`mt-4 ${appSheetCardClass}`}
+                role="status"
+                aria-label={t('menu.events.application.checkingStatus')}
+              >
+                <div className="flex items-center gap-3" aria-hidden="true">
+                  <div className="h-11 w-11 shrink-0 animate-pulse rounded-2xl bg-(--menu-skeleton-bg) motion-reduce:animate-none" />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-4 w-3/4 animate-pulse rounded-full bg-(--menu-skeleton-bg) motion-reduce:animate-none" />
+                    <div className="h-3 w-full animate-pulse rounded-full bg-(--menu-skeleton-bg) motion-reduce:animate-none" />
+                  </div>
                 </div>
               </div>
-              <button
-                type="button"
-                onClick={() => {
-                  if (isApplicationUnavailable) {
-                    void myApplicationQuery.refetch()
-                    return
-                  }
-                  onApply()
-                }}
-                disabled={myApplicationQuery.isLoading}
-                className={`mt-4 min-h-11 w-full rounded-xl border px-4 py-3 text-[length:var(--text-sm)] font-extrabold transition focus-visible:ring-2 focus-visible:ring-(--brand-border-strong) focus-visible:ring-offset-2 focus-visible:outline-none active:scale-[0.985] disabled:cursor-wait disabled:opacity-70 ${
-                  applicationStatusClass?.action ??
-                  'border-transparent bg-(--brand-primary) text-(--brand-on-primary) hover:bg-(--brand-primary-strong)'
-                }`}
+            ) : isOrganisationAccessError ? (
+              <div className={`mt-4 ${appSheetCardClass}`}>
+                <AppSheetNotice tone="danger">
+                  {t('menu.events.application.statusError')}
+                </AppSheetNotice>
+                <button
+                  type="button"
+                  onClick={onRetryOrganisationAccess}
+                  className="mt-3 min-h-11 w-full rounded-xl border border-(--brand-btn-secondary-border) bg-(--brand-btn-secondary-bg) px-4 py-3 text-[length:var(--text-sm)] font-extrabold text-(--brand-btn-secondary-text) transition hover:bg-(--brand-btn-secondary-hover) focus-visible:ring-2 focus-visible:ring-(--brand-border-strong) focus-visible:outline-none"
+                >
+                  {t('menu.events.directory.retry')}
+                </button>
+              </div>
+            ) : !canManageOrganisation ? (
+              <div
+                className={`mt-4 ${appSheetCardClass} ${applicationStatusClass?.card ?? ''}`}
               >
-                {myApplicationQuery.isLoading
-                  ? t('menu.events.application.checkingStatus')
-                  : isApplicationUnavailable
-                    ? t('menu.events.directory.retry')
-                    : existingApplication
-                      ? t(
-                          `menu.events.application.status.${existingApplication.status.toLowerCase()}`,
-                        )
-                      : t('menu.events.application.cardAction')}
-              </button>
-            </div>
+                <div className="flex items-start gap-3">
+                  <div
+                    className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${applicationStatusClass?.icon ?? 'bg-(--brand-soft) text-(--brand-primary-deep)'}`}
+                  >
+                    <Building2 size={21} strokeWidth={2.3} aria-hidden="true" />
+                  </div>
+                  <div className="min-w-0">
+                    <h2 className="menu-card-title text-(--brand-title-ink)">
+                      {isApplicationUnavailable
+                        ? t('menu.events.application.statusError')
+                        : existingApplication
+                          ? t(
+                              `menu.events.application.statusTitle.${existingApplication.status.toLowerCase()}`,
+                            )
+                          : t('menu.events.application.cardTitle')}
+                    </h2>
+                    <p className="menu-card-copy mt-1">
+                      {isApplicationUnavailable
+                        ? t('menu.events.application.cardText')
+                        : existingApplication
+                          ? t(
+                              `menu.events.application.statusText.${existingApplication.status.toLowerCase()}`,
+                            )
+                          : t('menu.events.application.cardText')}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (isApplicationUnavailable) {
+                      void myApplicationQuery.refetch()
+                      return
+                    }
+                    onApply()
+                  }}
+                  disabled={myApplicationQuery.isFetching}
+                  className={`mt-4 min-h-11 w-full rounded-xl border px-4 py-3 text-[length:var(--text-sm)] font-extrabold transition focus-visible:ring-2 focus-visible:ring-(--brand-border-strong) focus-visible:ring-offset-2 focus-visible:outline-none active:scale-[0.985] disabled:cursor-wait disabled:opacity-70 ${
+                    applicationStatusClass?.action ??
+                    'border-transparent bg-(--brand-primary) text-(--brand-on-primary) hover:bg-(--brand-primary-strong)'
+                  }`}
+                >
+                  {myApplicationQuery.isFetching
+                    ? t('menu.events.application.checkingStatus')
+                    : isApplicationUnavailable
+                      ? t('menu.events.directory.retry')
+                      : existingApplication
+                        ? t(
+                            `menu.events.application.status.${existingApplication.status.toLowerCase()}`,
+                          )
+                        : t('menu.events.application.cardAction')}
+                </button>
+              </div>
+            ) : null}
 
             <div className="mt-5 mb-3 flex items-end justify-between gap-3">
               <h2 className="text-[length:var(--text-xl)] leading-tight font-extrabold text-(--brand-ink)">

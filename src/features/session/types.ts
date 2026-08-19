@@ -28,6 +28,8 @@ export type CurrentUserProfile = {
   isAdmin?: boolean
   city?: string | null
   onboarding?: boolean
+  currentStreak?: number | null
+  completedWorkouts?: CompletedWorkout[] | null
 }
 
 export type Trainer = {
@@ -44,9 +46,8 @@ export type Trainer = {
 }
 
 export type CoachCallSession = {
-  id: number | string
+  workoutId: number | string
   isAuthenticated: boolean
-  name?: string
   workoutName?: string
   dashboardName?: string | null
   description?: string | null

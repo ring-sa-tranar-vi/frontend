@@ -35,6 +35,23 @@ export type CreateOrganizationApplication = {
   motivation: string
 }
 
+async function readErrorMessage(response: Response) {
+  const text = await response.text().catch(() => '')
+  if (!text) return `Request failed (${response.status})`
+
+  try {
+    const problem = JSON.parse(text) as {
+      detail?: unknown
+      message?: unknown
+      title?: unknown
+    }
+    const message = problem.detail ?? problem.message ?? problem.title
+    return typeof message === 'string' && message.trim() ? message : text
+  } catch {
+    return text
+  }
+}
+
 async function request<T>(path: string, token: string, init?: RequestInit) {
   const headers = new Headers(init?.headers)
   headers.set('Accept', 'application/json')
@@ -42,11 +59,8 @@ async function request<T>(path: string, token: string, init?: RequestInit) {
 
   const response = await fetch(`${API_URL}${path}`, { ...init, headers })
   if (!response.ok) {
-    const message = await response.text().catch(() => '')
-    throw new OrganizationApplicationError(
-      message || `Request failed (${response.status})`,
-      response.status,
-    )
+    const message = await readErrorMessage(response)
+    throw new OrganizationApplicationError(message, response.status)
   }
 
   return response.json() as Promise<T>
@@ -66,6 +80,18 @@ export function fetchMyOrganizationApplication(token: string) {
   )
 }
 
+export async function fetchMyOrganizationApplicationOrNull(token: string) {
+  try {
+    return await fetchMyOrganizationApplication(token)
+  } catch (error) {
+    if (error instanceof OrganizationApplicationError && error.status === 404) {
+      return null
+    }
+
+    throw error
+  }
+}
+
 export async function createOrganizationApplication(
   payload: CreateOrganizationApplication,
   token: string,
@@ -81,11 +107,8 @@ export async function createOrganizationApplication(
   })
 
   if (!response.ok) {
-    const message = await response.text().catch(() => '')
-    throw new OrganizationApplicationError(
-      message || `Request failed (${response.status})`,
-      response.status,
-    )
+    const message = await readErrorMessage(response)
+    throw new OrganizationApplicationError(message, response.status)
   }
 }
 

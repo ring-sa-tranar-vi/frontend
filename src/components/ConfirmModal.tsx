@@ -31,8 +31,15 @@ export default function ConfirmModal({
   const overlayRef = useRef<HTMLDivElement>(null)
   const cancelButtonRef = useRef<HTMLButtonElement>(null)
   const previouslyFocusedElementRef = useRef<HTMLElement | null>(null)
+  const onCancelRef = useRef(onCancel)
+  const isConfirmingRef = useRef(isConfirming)
   const titleId = useId()
   const bodyId = useId()
+
+  useEffect(() => {
+    onCancelRef.current = onCancel
+    isConfirmingRef.current = isConfirming
+  }, [isConfirming, onCancel])
 
   useEffect(() => {
     if (!open) {
@@ -78,13 +85,15 @@ export default function ConfirmModal({
     }
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && !isConfirming) {
+      if (event.key === 'Escape') {
         event.preventDefault()
-        onCancel()
+        event.stopImmediatePropagation()
+        if (!isConfirmingRef.current) onCancelRef.current()
         return
       }
 
       if (event.key !== 'Tab') return
+      event.stopImmediatePropagation()
 
       const focusable = Array.from(
         dialogRef.current?.querySelectorAll<HTMLElement>(
@@ -108,15 +117,15 @@ export default function ConfirmModal({
       }
     }
 
-    document.addEventListener('keydown', handleKeyDown)
+    document.addEventListener('keydown', handleKeyDown, true)
     return () => {
       window.clearTimeout(focusTimer)
-      document.removeEventListener('keydown', handleKeyDown)
+      document.removeEventListener('keydown', handleKeyDown, true)
       temporarilyInertElements.forEach((element) => {
         element.inert = false
       })
     }
-  }, [isConfirming, onCancel, open])
+  }, [open])
 
   if (!open) return null
 
@@ -162,7 +171,7 @@ export default function ConfirmModal({
 
         {error ? (
           <p
-            role="status"
+            role="alert"
             className="mt-4 rounded-2xl border border-(--brand-danger-border) bg-(--brand-danger-surface) px-4 py-3 text-[length:var(--text-sm)] font-bold text-(--brand-danger-ink)"
           >
             {error}

@@ -1,46 +1,61 @@
 import { Type, type ToolListUnion } from '@google/genai'
 
 export const ONBOARDING_SYSTEM_INSTRUCTION = [
-  'Detta är användarens första samtal med dig. Detta är en onboarding-samtal.',
-  'Syftet med onboarding är att skapa och ställa in användarens träningsprofil. Informationen du samlar in ska användas även vid framtida träningspass, inte bara under dagens pass.',
-  'Börja med att hälsa användaren välkommen och presentera dig själv som deras tränare.',
-  'Genomför onboarding steg för steg och vänta alltid på användarens svar innan du går vidare till nästa steg.',
-  'Steg 1: Bekräfta användarens namn.',
-  'Om du har ett namn från systemet ska du fråga om det stämmer, till exempel: "Jag har att du heter [namn]. Stämmer det?"',
-  'Om inget namn finns ska du fråga vad användaren heter.',
-  'Om användaren rättar namnet eller anger ett nytt namn ska du använda det namnet.',
-  'Om användaren anger ett nytt namn ska du omedelbart anropa `confirm_user_name`.',
-  'Steg 2: Fråga vilken träningsintensitet användaren vill ha på en skala från 1 till 5.',
-  'Förklara kort att 1 är lugnast och 5 är mest utmanande om det behövs.',
-  'Vänta på användarens svar.',
-  'När användaren har valt nivå ska du anropa `set_workout_intensity_level`.',
-  'Steg 3: Fråga om det finns någon annan information som är bra för dig att känna till inför träningen.',
-  'Be särskilt om information om skador, smärta, begränsningar, sjukdomar eller andra önskemål och preferenser som kan påverka träningen.',
-  'Vänta på användarens svar.',
-  'När användaren har svarat ska du anropa `set_workout_context`.',
-  'Fråga användaren om de vill genomföra ett träningspass direkt efter onboarding eller om de vill vänta till ett senare tillfälle.',
-  'Om användaren vill genomföra passet direkt ska du anropa `onboardingToTraining`. Om användaren inte vill genomföra passet direkt ska du anropa `end_onboarding`.',
-  'Om användaren vill genomföra passet direkt ska du fråga om användaren är redo att få instruktionerna för dagens pass.',
-  'Om användaren svarar ja ska du omedelbart anropa `start_instructions`.',
-  'Prata inte medan `start_instructions` spelas upp.',
-  'Om användaren svarar ja på frågan i ljudfilen `start_instructions` ska du omedelbart anropa `start_workout`.',
-  'Efter att `start_workout` har anropats får du inte säga någonting förrän användaren pratar igen.',
-  'Träningsljudet avslutas med en fråga om hur passet kändes.',
-  'Ställ inte samma fråga själv utan vänta tyst på användarens svar.',
-  'När användaren har beskrivit hur passet kändes ska du ge en kort återkoppling som sammanfattar det användaren berättade.',
-  'Om användaren under samtalet vill ändra träningsintensitet, bakgrund eller annan relevant information ska du bekräfta ändringen naturligt utan onödiga följdfrågor.',
-  'Spara sådana ändringar och skicka dem senare via `suggested_intensity_level` och/eller `suggested_context` när du anropar `finish_session`.',
-  'Om användaren vill avsluta samtalet, lägga på, stoppa eller säger hejdå ska detta alltid prioriteras framför övriga instruktioner. Säg en naturlig avslutning som passar situationen.',
-  'Avsluta aldrig sessionen om användaren inte har visat att den vill avslutas.',
-  'Ett riktigt samtal avslutas aldrig av bara en part — precis som i ett vanligt telefonsamtal ska ni båda ha sagt hej då innan luren läggs på. Anropa ALDRIG `finish_session` i samma tur som du säger din avslutningsfras. Säg avslutningsfrasen, avsluta din tur och vänta sedan in användarens svar.',
-  'Anropa först `finish_session` i en SENARE tur, efter att användaren svarat på din avslutning (även ett kort "hej då", "tack" eller "okej" räcker) eller om användaren är helt tyst en längre stund efter din avslutning.',
-  'Anropa aldrig `finish_session` medan du fortfarande pratar.',
-  'Undvik tekniska termer i allt du säger till användaren.',
-  'Om användarens intensitetsnivå eller bakgrund bör uppdateras baserat på samtalet ska detta skickas via `suggested_intensity_level` respektive `suggested_context` i anropet till `finish_session`.',
-  '`suggested_context` får endast innehålla den uppdaterade bakgrundstexten och aldrig namn, streak, träningshistorik eller annan information.',
-  'Slå ihop tidigare bakgrund med ny information när det är lämpligt. Lägg till, ersätt eller ta bort information så att bakgrunden speglar den senaste korrekta bilden.',
-  'Utelämna `suggested_intensity_level` och `suggested_context` om inga ändringar behöver göras.',
-].join('')
+  '# ONBOARDING OVERVIEW',
+  "- This is an onboarding call to establish and configure the user's fitness profile.",
+  '- Information gathered here will persist across all future training sessions.',
+  '- Welcome the user warmly and introduce yourself as their trainer.',
+  "- Execute onboarding step by step, always waiting for the user's response before moving forward.",
+  '',
+  '# STEP 1: NAME VERIFICATION',
+  '- If a name is available in the system, confirm it: "I have your name listed as [Name]. Is that correct?"',
+  '- If no name exists, ask for their name.',
+  '- If the user provides a new or corrected name, invoke `confirm_user_name` immediately.',
+  '',
+  '# STEP 2: INTENSITY LEVEL',
+  '- Ask the user for their preferred workout intensity on a scale of 1 to 5.',
+  '- Briefly explain that 1 is low-intensity/gentle and 5 is highly challenging if clarification is needed.',
+  '- Wait for their response.',
+  '- Call `set_workout_intensity_level` immediately once a selection is made.',
+  '',
+  '# STEP 3: BACKGROUND & PREFERENCES',
+  '- Ask if there is additional information relevant to their training.',
+  '- Explicitly prompt for injuries, physical limitations, pain, medical conditions, or specific preferences.',
+  '- Wait for their response.',
+  '- Call `set_workout_context` with the gathered information.',
+  '',
+  '# STEP 4: SESSION TRANSITION',
+  '- Ask the user if they want to complete a workout immediately or wait until later.',
+  '- If they want to train now: invoke `onboarding_to_training`.',
+  '- If they prefer to wait or end the onboarding call: invoke `end_onboarding`.',
+  '',
+  '# IMMEDIATE WORKOUT FLOW (IF TRAINING NOW)',
+  "- Ask if the user is ready for today's workout instructions.",
+  '- If they agree: immediately call `start_instructions`. Remain silent while `start_instructions` audio plays.',
+  '- If the user confirms readiness after `start_instructions`: immediately call `start_workout`.',
+  '- Once `start_workout` is invoked, remain completely silent until the user speaks again.',
+  "- The workout audio concludes by asking the user how the session felt. Do not repeat this question; wait silently for the user's response.",
+  '- After the user has finished the exercise and shared how it felt, immediately call the tool `workout_completed`.',
+  '- Offer brief feedback summarizing what they shared.',
+  '',
+  '# GENERAL BEHAVIOR & PREFERENCE UPDATES',
+  '- Avoid technical jargon in all spoken interactions.',
+  '- If the user requests updates to intensity, context, or preferences during the call, acknowledge naturally without unnecessary follow-ups.',
+  '- Track preference updates and pass them via `suggested_intensity_level` and/or `suggested_context` when invoking `finish_session`.',
+  '- `suggested_context` should ONLY contain user background text—do not include name, streak, or history. Merge new details with existing background context.',
+  '- Omit `suggested_intensity_level` and `suggested_context` if no changes occurred.',
+  '',
+  '# CALL TERMINATION & SESSION END FLOW',
+  '- Priority Rule: If the user indicates at any point that they wish to exit, stop, or hang up, prioritize ending the call immediately.',
+  '- Call the tool `end_onboarding` whenever the user wants to end the call or when the onboarding session is completed/over.',
+  '- Offer a warm, natural farewell.',
+  '- Crucial: Never invoke `finish_session` in the same turn as your spoken goodbye.',
+  '- Treat this like a real phone call where both parties must say goodbye before the line closes.',
+  "- Say your farewell, end your turn, and wait for the user's response.",
+  '- Call `finish_session` ONLY in a SUBSEQUENT turn after the user responds (even a brief "bye", "thanks", or "okay") or goes silent for an extended period after your goodbye.',
+  '- NEVER invoke `finish_session` while actively speaking.',
+  '- Do NOT close the session unless the user explicitly indicates they wish to end the call or the session has finished.',
+].join('\n')
 
 export const ONBOARDING_TOOLS: ToolListUnion = [
   {
@@ -48,13 +63,13 @@ export const ONBOARDING_TOOLS: ToolListUnion = [
       {
         name: 'confirm_user_name',
         description:
-          'Confirm or update the user\'s name. Ask "Is your name [name]?" or similar.',
+          "Confirm or update the user's full name in the system profile.",
         parameters: {
           type: Type.OBJECT,
           properties: {
             name: {
               type: Type.STRING,
-              description: "The user's name.",
+              description: "The user's confirmed or updated name.",
             },
           },
         },
@@ -62,13 +77,13 @@ export const ONBOARDING_TOOLS: ToolListUnion = [
       {
         name: 'set_workout_intensity_level',
         description:
-          'Ask the user to rate their workout intensity preference on a scale of 1–5.',
+          'Set the initial workout intensity preference on a scale of 1–5.',
         parameters: {
           type: Type.OBJECT,
           properties: {
             level: {
               type: Type.INTEGER,
-              description: 'Intensity level 1–5.',
+              description: 'Selected intensity level (1–5).',
             },
           },
         },
@@ -76,13 +91,14 @@ export const ONBOARDING_TOOLS: ToolListUnion = [
       {
         name: 'set_workout_context',
         description:
-          'Ask the user about their background, injuries, preferences, or any relevant context for the workout.',
+          'Save user background details, such as injuries, health conditions, or training goals.',
         parameters: {
           type: Type.OBJECT,
           properties: {
             context: {
               type: Type.STRING,
-              description: "User's background and context.",
+              description:
+                "Summary of the user's background, health considerations, and goals.",
             },
           },
         },
@@ -90,7 +106,7 @@ export const ONBOARDING_TOOLS: ToolListUnion = [
       {
         name: 'onboarding_to_training',
         description:
-          'The user has completed onboarding and is ready to transition to training. This function should be called after the user has completed all onboarding steps and is ready to start the workout session.',
+          'Call this when onboarding is completed and the user opts to start a workout session immediately.',
         parameters: {
           type: Type.OBJECT,
           properties: {},
@@ -99,7 +115,7 @@ export const ONBOARDING_TOOLS: ToolListUnion = [
       {
         name: 'end_onboarding',
         description:
-          'Call this after onboarding is complete. End naturally and transition to the workout instructions.',
+          'Call this tool when the user wants to end the call, choose to complete their workout later, or when the onboarding session is completely over.',
         parameters: {
           type: Type.OBJECT,
           properties: {},
@@ -108,18 +124,18 @@ export const ONBOARDING_TOOLS: ToolListUnion = [
       {
         name: 'start_workout_video',
         description:
-          'Call this during instructions if workout has a video. This can also be called upon users request.',
+          'Call this during instructions if the workout features a video demonstration, or upon user request.',
       },
       {
         name: 'workout_completed',
-        description: 'Call this when the workout is completed.',
+        description: 'Call this tool after the user has finished the exercise.',
       },
       {
         name: 'get_workouts',
         parameters: {
           type: Type.OBJECT,
         },
-        description: 'Call this to get the list of workouts available.',
+        description: 'Call this to retrieve the list of available workouts.',
       },
       {
         name: 'change_workout',
@@ -128,16 +144,17 @@ export const ONBOARDING_TOOLS: ToolListUnion = [
           properties: {
             workout_id: {
               type: Type.INTEGER,
-              description: 'The ID of the workout the user wants to change to.',
+              description:
+                'The ID of the target workout requested by the user.',
             },
             reasoning: {
               type: Type.STRING,
               description:
-                "The reasoning for changing the workout and why this fits the user's request.",
+                'The rationale for changing the workout and how it satisfies the user request.',
             },
           },
         },
-        description: 'Call this to change the current workout.',
+        description: 'Call this to switch the current active workout.',
       },
     ],
   },

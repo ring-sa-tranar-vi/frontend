@@ -9,7 +9,7 @@ import sv from './locales/sv.json'
 import ta from './locales/ta.json'
 import ur from './locales/ur.json'
 
-i18n
+const initialization = i18n
   .use(LanguageDetector)
   .use(initReactI18next)
   .init({
@@ -18,7 +18,7 @@ i18n
       order: ['localStorage'],
       caches: ['localStorage'],
     },
-    debug: true,
+    debug: import.meta.env.DEV,
 
     resources: {
       en: { translation: en },
@@ -33,5 +33,17 @@ i18n
       escapeValue: false,
     },
   })
+
+function syncDocumentLanguage(language: string) {
+  if (typeof document === 'undefined') return
+
+  document.documentElement.lang = language
+  document.documentElement.dir = i18n.dir(language)
+}
+
+void initialization.then(() =>
+  syncDocumentLanguage(i18n.resolvedLanguage ?? i18n.language),
+)
+i18n.on('languageChanged', syncDocumentLanguage)
 
 export default i18n

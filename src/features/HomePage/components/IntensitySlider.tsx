@@ -1,4 +1,5 @@
 import { Settings } from 'lucide-react'
+import type { KeyboardEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   AppSheetSectionText,
@@ -27,6 +28,33 @@ const IntensitySlider = ({ value, onChange }: IntensitySliderProps) => {
   const progress =
     ((safeValue - INTENSITY_MIN) / (INTENSITY_MAX - INTENSITY_MIN)) * 100
 
+  function handleStepKeyDown(
+    event: KeyboardEvent<HTMLButtonElement>,
+    stepValue: number,
+  ) {
+    let nextValue: number | null = null
+
+    if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
+      nextValue = Math.max(INTENSITY_MIN, stepValue - 1)
+    } else if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
+      nextValue = Math.min(INTENSITY_MAX, stepValue + 1)
+    } else if (event.key === 'Home') {
+      nextValue = INTENSITY_MIN
+    } else if (event.key === 'End') {
+      nextValue = INTENSITY_MAX
+    }
+
+    if (nextValue === null) return
+
+    event.preventDefault()
+    if (nextValue === stepValue) return
+
+    onChange(nextValue)
+    const buttons =
+      event.currentTarget.parentElement?.querySelectorAll('button')
+    ;(buttons?.[nextValue] as HTMLButtonElement | undefined)?.focus()
+  }
+
   return (
     <div>
       <div className="mb-2 flex items-center gap-2">
@@ -48,7 +76,7 @@ const IntensitySlider = ({ value, onChange }: IntensitySliderProps) => {
           {steps.map((label) => (
             <span
               key={label}
-              className="flex min-h-9 items-end justify-center whitespace-nowrap"
+              className="flex min-h-9 items-end justify-center px-0.5 [overflow-wrap:anywhere]"
             >
               {label}
             </span>
@@ -58,22 +86,16 @@ const IntensitySlider = ({ value, onChange }: IntensitySliderProps) => {
         <div className="relative mt-3">
           <div className="pointer-events-none absolute top-5 right-[10%] left-[10%] h-1 overflow-hidden rounded-full bg-(--brand-border)">
             <div
-              className="h-full rounded-full bg-(--brand-primary) transition-all duration-150"
+              className="h-full rounded-full bg-(--brand-primary) transition-[width] duration-150 motion-reduce:transition-none"
               style={{ width: `${progress}%` }}
             />
           </div>
 
-          <input
-            type="range"
-            min={INTENSITY_MIN}
-            max={INTENSITY_MAX}
-            value={safeValue}
-            onChange={(e) => onChange(parseInt(e.target.value, 10))}
-            className="absolute top-0 right-[10%] left-[10%] z-20 h-11 cursor-pointer opacity-0"
+          <div
+            className="relative z-30 grid grid-cols-5 items-center"
+            role="radiogroup"
             aria-label={t('intensitySlider.title')}
-          />
-
-          <div className="relative z-30 grid grid-cols-5 items-center">
+          >
             {steps.map((label, stepValue) => {
               const isCurrentStep = stepValue === safeValue
               const isPastStep = stepValue < safeValue
@@ -83,13 +105,15 @@ const IntensitySlider = ({ value, onChange }: IntensitySliderProps) => {
                   key={label}
                   type="button"
                   onClick={() => onChange(stepValue)}
+                  onKeyDown={(event) => handleStepKeyDown(event, stepValue)}
                   className="flex h-11 w-11 items-center justify-center justify-self-center rounded-full"
                   aria-label={`${t('intensitySlider.choose')} ${label}`}
-                  aria-pressed={isCurrentStep}
-                  aria-current={isCurrentStep ? 'step' : undefined}
+                  role="radio"
+                  aria-checked={isCurrentStep}
+                  tabIndex={isCurrentStep ? 0 : -1}
                 >
                   <span
-                    className={`block rounded-full transition-all duration-150 ${
+                    className={`block rounded-full transition-[width,height,border-color,background-color,box-shadow] duration-150 motion-reduce:transition-none ${
                       isCurrentStep
                         ? 'h-9 w-9 border-4 border-(--brand-primary) bg-(--brand-primary) ring-2 ring-(--brand-selection) ring-offset-2 ring-offset-(--menu-content-bg)'
                         : isPastStep

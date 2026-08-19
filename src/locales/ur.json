@@ -113,7 +113,7 @@
         "filtersLabel": "تقریبات فلٹر کریں",
         "filters": {
           "all": "سب",
-          "nearby": "میرے قریب",
+          "nearby": "میرے شہر میں",
           "week": "اس ہفتے"
         },
         "upcomingEvents": "آنے والی تقریبات",
@@ -151,7 +151,7 @@
     },
     "calendar": {
       "title": "کیلنڈر",
-      "description": "ٹریننگ، بک شدہ تقریبات اور کالز ایک جگہ دیکھیں۔",
+      "description": "ٹریننگ اور بک شدہ تقریبات ایک جگہ دیکھیں۔",
       "previousMonth": "پچھلا مہینہ",
       "nextMonth": "اگلا مہینہ",
       "workout": "ٹریننگ",
@@ -204,6 +204,12 @@
     "saveError": "تبدیلیاں محفوظ نہیں ہو سکیں",
     "saveSuccess": "سیٹنگز محفوظ ہو گئیں ✓",
     "selectTrainerFirst": "آپ کو پہلے ٹرینر منتخب کرنا ہوگا",
+    "nameRequired": "اپنا نام درج کریں۔",
+    "organisationPage": "تنظیم کا صفحہ",
+    "discardChangesTitle": "غیر محفوظ تبدیلیاں",
+    "discardChangesText": "آپ کی تبدیلیاں محفوظ نہیں ہوئیں۔ کیا آپ پھر بھی بند کرنا چاہتے ہیں؟",
+    "discardChangesConfirm": "محفوظ کیے بغیر بند کریں",
+    "discardChangesCancel": "ترمیم جاری رکھیں",
     "language": "زبان",
     "getHelp": "مدد اور سپورٹ حاصل کریں",
     "getHelpButton": "مدد حاصل کریں",

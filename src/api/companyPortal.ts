@@ -58,7 +58,22 @@ async function request(path: string, token: string, init?: RequestInit) {
 
   if (!response.ok) {
     const text = await response.text().catch(() => '')
-    throw new Error(text || `Request failed (${response.status})`)
+    if (!text) throw new Error(`Request failed (${response.status})`)
+
+    try {
+      const problem = JSON.parse(text) as {
+        detail?: unknown
+        message?: unknown
+        title?: unknown
+      }
+      const message = problem.detail ?? problem.message ?? problem.title
+      throw new Error(
+        typeof message === 'string' && message.trim() ? message : text,
+      )
+    } catch (error) {
+      if (error instanceof SyntaxError) throw new Error(text)
+      throw error
+    }
   }
 
   return response
