@@ -318,7 +318,19 @@
     "somali": "Soomaali",
     "tamil": "Taamiil",
     "urdu": "Urdu",
-    "polish": "Boolish"
+    "polish": "Boolish",
+    "arabic": "Carabi",
+    "spanish": "Isbaanish",
+    "german": "Jarmal",
+    "french": "Faransiis",
+    "finnish": "Fiinish",
+    "sami": "Saami",
+    "meankieli": "Meänkieli",
+    "mandarin": "Mandarin",
+    "italian": "Talyaani",
+    "dutch": "Holandi",
+    "norwegian": "Noorweyi",
+    "danish": "Deenish"
   },
   "trainerSelection": {
     "notLoggedIn": "Ma aadan gelin.",

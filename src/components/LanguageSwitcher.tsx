@@ -8,6 +8,18 @@ const LANGUAGES = [
   { code: 'ta', label: 'Tamil' },
   { code: 'ur', label: 'Urdu' },
   { code: 'pl', label: 'Polski' },
+  { code: 'ar', label: 'العربية' },
+  { code: 'es', label: 'Español' },
+  { code: 'de', label: 'Deutsch' },
+  { code: 'fr', label: 'Français' },
+  { code: 'fi', label: 'Suomi' },
+  { code: 'se', label: 'Davvisámegiella' },
+  { code: 'fit', label: 'Meänkieli' },
+  { code: 'zh', label: '中文' },
+  { code: 'it', label: 'Italiano' },
+  { code: 'nl', label: 'Nederlands' },
+  { code: 'no', label: 'Norsk' },
+  { code: 'da', label: 'Dansk' },
 ]
 
 export default function LanguageSwitcher({

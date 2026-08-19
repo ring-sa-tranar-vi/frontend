@@ -479,7 +479,19 @@
     "somali": "Somalijski",
     "tamil": "Tamilski",
     "urdu": "Urdu",
-    "polish": "Polski"
+    "polish": "Polski",
+    "arabic": "Arabski",
+    "spanish": "Hiszpański",
+    "german": "Niemiecki",
+    "french": "Francuski",
+    "finnish": "Fiński",
+    "sami": "Lapoński",
+    "meankieli": "Meänkieli",
+    "mandarin": "Mandaryński",
+    "italian": "Włoski",
+    "dutch": "Niderlandzki",
+    "norwegian": "Norweski",
+    "danish": "Duński"
   },
   "trainerSelection": {
     "notLoggedIn": "Nie jesteś zalogowany.",

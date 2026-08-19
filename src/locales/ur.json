@@ -318,7 +318,19 @@
     "somali": "صومالی",
     "tamil": "تامل",
     "urdu": "اردو",
-    "polish": "پولش"
+    "polish": "پولش",
+    "arabic": "عربی",
+    "spanish": "ہسپانوی",
+    "german": "جرمن",
+    "french": "فرانسیسی",
+    "finnish": "فینش",
+    "sami": "سامی",
+    "meankieli": "Meänkieli",
+    "mandarin": "مینڈرین",
+    "italian": "اطالوی",
+    "dutch": "ڈچ",
+    "norwegian": "ناروی",
+    "danish": "ڈینش"
   },
   "trainerSelection": {
     "notLoggedIn": "آپ لاگ اِن نہیں ہیں۔",

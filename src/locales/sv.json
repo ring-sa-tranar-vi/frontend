@@ -480,7 +480,19 @@
     "somali": "Somaliska",
     "tamil": "Tamilska",
     "urdu": "Urdu",
-    "polish": "Polska"
+    "polish": "Polska",
+    "arabic": "Arabiska",
+    "spanish": "Spanska",
+    "german": "Tyska",
+    "french": "Franska",
+    "finnish": "Finska",
+    "sami": "Samiska",
+    "meankieli": "Meänkieli",
+    "mandarin": "Mandarin",
+    "italian": "Italienska",
+    "dutch": "Nederländska",
+    "norwegian": "Norska",
+    "danish": "Danska"
   },
   "trainerSelection": {
     "notLoggedIn": "Du är inte inloggad.",
