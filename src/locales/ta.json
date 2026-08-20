@@ -318,7 +318,19 @@
     "somali": "சோமாலி",
     "tamil": "தமிழ்",
     "urdu": "உருது",
-    "polish": "போலிஷ்"
+    "polish": "போலிஷ்",
+    "arabic": "அரபிக்",
+    "spanish": "ஸ்பானிஷ்",
+    "german": "ஜெர்மன்",
+    "french": "பிரெஞ்சு",
+    "finnish": "ஃபின்னிஷ்",
+    "sami": "சாமி",
+    "meankieli": "Meänkieli",
+    "mandarin": "மாண்டரின்",
+    "italian": "இத்தாலியன்",
+    "dutch": "டச்சு",
+    "norwegian": "நோர்வீஜியன்",
+    "danish": "டேனிஷ்"
   },
   "trainerSelection": {
     "notLoggedIn": "நீங்கள் உள்நுழையவில்லை.",
