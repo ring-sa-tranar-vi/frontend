@@ -8,7 +8,7 @@ import useCurrentUser from './useCurrentUser'
 export const DEBUG = import.meta.env.VITE_DEBUG === 'true'
 export const DEBUG_WORKOUT_ID = import.meta.env.VITE_DEBUG_WORKOUT_ID ?? '1'
 const DAILY_WORKOUT_LIMIT_ENABLED = true
-const DEFAULT_GUEST_WORKOUT_ID = '1'
+const DEFAULT_GUEST_WORKOUT_ID = '18'
 
 const CURRENT_WORKOUT_PROFILE_KEY = 'ringv2.currentWorkout.profile'
 const CURRENT_WORKOUT_RECOMMENDATION_KEY =
