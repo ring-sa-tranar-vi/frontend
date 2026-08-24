@@ -424,7 +424,7 @@ body.admin-shell {
 
 .menu-event-title {
   display: -webkit-box;
-  margin-right: 6.5rem;
+  margin-inline-end: 6.5rem;
   overflow: hidden;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
@@ -464,7 +464,7 @@ body.admin-shell {
 .menu-event-actions {
   position: absolute;
   top: 0;
-  right: 0;
+  inset-inline-end: 0;
   display: flex;
   flex-direction: column;
   align-items: stretch;
@@ -476,11 +476,11 @@ body.admin-shell {
 }
 
 .menu-event-owner .menu-event-content {
-  padding-right: 3.5rem;
+  padding-inline-end: 3.5rem;
 }
 
 .menu-event-owner .menu-event-title {
-  margin-right: 0;
+  margin-inline-end: 0;
 }
 
 .menu-event-icon-action {
@@ -510,10 +510,10 @@ body.admin-shell {
   color: var(--brand-primary-deep);
   font-size: var(--text-sm);
   font-weight: 800;
-  text-align: left;
+  text-align: start;
 }
 
-@container (max-width: 325px) {
+@container (max-width: 285px) {
   .menu-event-grid {
     grid-template-columns: 3rem minmax(0, 1fr);
   }
@@ -531,7 +531,7 @@ body.admin-shell {
   }
 
   .menu-event-title {
-    margin-right: 0;
+    margin-inline-end: 0;
   }
 
   .menu-event-owner .menu-event-grid {
@@ -539,11 +539,11 @@ body.admin-shell {
   }
 
   .menu-event-owner .menu-event-content {
-    padding-right: 0;
+    padding-inline-end: 0;
   }
 
   .menu-event-owner .menu-event-title {
-    margin-right: 0;
+    margin-inline-end: 0;
   }
 
   .menu-event-primary-action {
@@ -601,4 +601,10 @@ body.admin-shell {
   border: 2px solid var(--brand-call-pulse-border);
   pointer-events: none;
   animation: pulse-ring 2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .call-pulse-ring {
+    animation: none;
+  }
 }

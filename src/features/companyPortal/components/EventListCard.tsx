@@ -28,6 +28,8 @@ type Props = {
   updateEvent: () => void
   isUpdatingEvent: boolean
   deletingEventId: number | null
+  deleteEventError?: string | null
+  resetDeleteEvent?: () => void
   stopEditingEvent: () => void
   startEditingEvent: (event: CompanyEvent) => void
   deleteEvent: (id: number) => Promise<void>
@@ -49,6 +51,8 @@ export default function EventListCard({
   updateEvent,
   isUpdatingEvent,
   deletingEventId,
+  deleteEventError = null,
+  resetDeleteEvent = () => undefined,
   stopEditingEvent,
   startEditingEvent,
   deleteEvent,
@@ -61,7 +65,7 @@ export default function EventListCard({
       <div className="px-1">
         <div className="min-w-0">
           <h2 className="text-[length:var(--text-lg)] leading-tight font-extrabold tracking-tight text-(--brand-ink)">
-            Kommande event
+            Organisationens event
           </h2>
           <p className="mt-0.5 text-[length:var(--text-sm)] leading-snug font-semibold text-(--brand-body-ink)">
             Skapa, ändra eller ta bort organisationens event.
@@ -69,7 +73,10 @@ export default function EventListCard({
         </div>
         <button
           type="button"
-          onClick={() => setShowCreateEvent((v) => !v)}
+          onClick={() => {
+            if (!showCreateEvent) stopEditingEvent()
+            setShowCreateEvent((value) => !value)
+          }}
           className="mt-3 flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-(--brand-border) bg-(--menu-content-bg) px-4 py-2.5 text-[length:var(--text-sm)] font-extrabold text-(--brand-primary) transition hover:bg-(--brand-soft) focus-visible:ring-2 focus-visible:ring-(--brand-border-strong) focus-visible:outline-none"
         >
           {showCreateEvent ? <X size={17} /> : <Plus size={17} />}
@@ -114,8 +121,14 @@ export default function EventListCard({
             ) : (
               <EventListItem
                 event={event}
-                onEdit={() => startEditingEvent(event)}
-                onDelete={() => setEventPendingDeletion(event)}
+                onEdit={() => {
+                  setShowCreateEvent(false)
+                  startEditingEvent(event)
+                }}
+                onDelete={() => {
+                  resetDeleteEvent()
+                  setEventPendingDeletion(event)
+                }}
                 isDeleting={deletingEventId === event.id}
               />
             )}
@@ -138,6 +151,7 @@ export default function EventListCard({
           deletingEventId === eventPendingDeletion.id
         }
         confirmingLabel="Tar bort eventet..."
+        error={deleteEventError}
         onConfirm={() => {
           if (!eventPendingDeletion) return
 
@@ -146,7 +160,10 @@ export default function EventListCard({
             .catch(() => undefined)
         }}
         onCancel={() => {
-          if (deletingEventId === null) setEventPendingDeletion(null)
+          if (deletingEventId === null) {
+            resetDeleteEvent()
+            setEventPendingDeletion(null)
+          }
         }}
       />
     </section>

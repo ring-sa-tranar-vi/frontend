@@ -21,7 +21,7 @@ import {
 import {
   createOrganizationApplication,
   type ApplicationStatus,
-  fetchMyOrganizationApplication,
+  fetchMyOrganizationApplicationOrNull,
   OrganizationApplicationError,
 } from '../../../../api/organizationApplications'
 
@@ -96,7 +96,7 @@ export default function OrganisationApplicationSheet({
     queryFn: async () => {
       const token = await getToken()
       if (!token) throw new Error('Missing Clerk token')
-      return fetchMyOrganizationApplication(token)
+      return fetchMyOrganizationApplicationOrNull(token)
     },
     enabled: open && isLoaded && Boolean(isSignedIn) && Boolean(userId),
     retry: false,
@@ -113,23 +113,43 @@ export default function OrganisationApplicationSheet({
       await createOrganizationApplication(application, token)
     },
     onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: ['organisation-application', 'me', userId],
-      })
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: ['organisation-application', 'me', userId],
+        }),
+        queryClient.invalidateQueries({ queryKey: ['company-me', userId] }),
+      ])
+    },
+    onError: async (error) => {
+      if (
+        !(error instanceof OrganizationApplicationError) ||
+        error.status !== 409
+      ) {
+        return
+      }
+
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: ['organisation-application', 'me', userId],
+        }),
+        queryClient.invalidateQueries({ queryKey: ['company-me', userId] }),
+      ])
+      setForm(emptyApplication)
+      setShowNewApplicationForm(false)
+      onBack()
     },
   })
 
   const isComplete = Object.values(form).every((value) => value.trim())
-  const hasNoPreviousApplication =
-    myApplicationQuery.error instanceof OrganizationApplicationError &&
-    myApplicationQuery.error.status === 404
-  const existingApplication = myApplicationQuery.data
+  const existingApplication = myApplicationQuery.data ?? null
   const showingApplicationStatus =
     !showNewApplicationForm && existingApplication != null
   const isCheckingApplication =
     open &&
     !showNewApplicationForm &&
-    myApplicationQuery.isLoading &&
+    (myApplicationQuery.isLoading ||
+      (myApplicationQuery.isFetching &&
+        myApplicationQuery.data === undefined)) &&
     !applicationMutation.isSuccess
   const statusTone = existingApplication
     ? applicationStatusTone[existingApplication.status]
@@ -189,12 +209,14 @@ export default function OrganisationApplicationSheet({
               !isComplete ||
               applicationMutation.isPending ||
               isCheckingApplication ||
-              (myApplicationQuery.isError && !hasNoPreviousApplication)
+              (myApplicationQuery.isError && !existingApplication)
             }
           >
             {applicationMutation.isPending
               ? t('menu.events.application.submitting')
-              : t('menu.events.application.submit')}
+              : isCheckingApplication
+                ? t('menu.events.application.checkingStatus')
+                : t('menu.events.application.submit')}
           </button>
         )
       }
@@ -290,7 +312,7 @@ export default function OrganisationApplicationSheet({
                 <CreditCard size={15} aria-hidden="true" />
                 {t('menu.events.application.payment')}
               </dt>
-              <dd className="text-right font-extrabold text-(--brand-title-ink)">
+              <dd className="text-end font-extrabold text-(--brand-title-ink)">
                 {t(
                   `menu.events.application.paymentStatus.${existingApplication.paymentStatus.toLowerCase()}`,
                 )}
@@ -301,7 +323,10 @@ export default function OrganisationApplicationSheet({
           {existingApplication.status === 'REJECTED' ? (
             <button
               type="button"
-              onClick={() => setShowNewApplicationForm(true)}
+              onClick={() => {
+                applicationMutation.reset()
+                setShowNewApplicationForm(true)
+              }}
               className="mt-5 w-full rounded-2xl border border-(--brand-btn-secondary-border) bg-(--brand-btn-secondary-bg) px-4 py-3.5 text-[length:var(--text-sm)] font-extrabold text-(--brand-btn-secondary-text) transition hover:bg-(--brand-btn-secondary-hover)"
             >
               {t('menu.events.application.submitNew')}
@@ -311,40 +336,38 @@ export default function OrganisationApplicationSheet({
       ) : (
         <form
           id="organisation-application-form"
-          className={appSheetCategoryClass}
+          className="space-y-3"
           onSubmit={submitApplication}
         >
           {applicationMutation.isError ||
-          (myApplicationQuery.isError && !hasNoPreviousApplication) ? (
+          (myApplicationQuery.isError && !existingApplication) ? (
             <div className="mb-3 space-y-2">
               {applicationMutation.isError ? (
                 <AppSheetNotice tone="danger">
                   {t('menu.events.application.error')}
                 </AppSheetNotice>
               ) : null}
-              {myApplicationQuery.isError && !hasNoPreviousApplication ? (
-                <AppSheetNotice tone="danger">
-                  {t('menu.events.application.statusError')}
-                </AppSheetNotice>
+              {myApplicationQuery.isError && !existingApplication ? (
+                <>
+                  <AppSheetNotice tone="danger">
+                    {t('menu.events.application.statusError')}
+                  </AppSheetNotice>
+                  <button
+                    type="button"
+                    disabled={myApplicationQuery.isFetching}
+                    onClick={() => void myApplicationQuery.refetch()}
+                    className={appSheetSecondaryButtonClass}
+                  >
+                    {myApplicationQuery.isFetching
+                      ? t('menu.events.application.checkingStatus')
+                      : t('menu.events.directory.retry')}
+                  </button>
+                </>
               ) : null}
             </div>
           ) : null}
 
-          <div className="flex items-center gap-2.5 px-1">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-(--menu-content-bg) text-(--brand-primary)">
-              <Building2 size={18} strokeWidth={2.3} aria-hidden="true" />
-            </div>
-            <div className="min-w-0">
-              <h2 className="text-[length:var(--text-lg)] leading-tight font-extrabold tracking-tight text-(--brand-ink)">
-                {t('menu.events.application.subtitle')}
-              </h2>
-              <p className="mt-0.5 text-[length:var(--text-sm)] leading-snug font-semibold text-(--brand-body-ink)">
-                {t('menu.events.application.cardText')}
-              </p>
-            </div>
-          </div>
-
-          <div className="mt-3 space-y-3">
+          <div className="space-y-3">
             <div>
               <label
                 htmlFor="organisation-application-name"
@@ -357,7 +380,6 @@ export default function OrganisationApplicationSheet({
                 id="organisation-application-name"
                 required
                 maxLength={100}
-                autoComplete="organization"
                 value={form.organizationName}
                 onChange={(event) =>
                   updateField('organizationName', event.target.value)
@@ -392,7 +414,7 @@ export default function OrganisationApplicationSheet({
                 />
                 <span
                   aria-live="polite"
-                  className="mt-1 block text-right text-[length:var(--text-xs)] font-semibold text-(--brand-muted) tabular-nums"
+                  className="mt-1 block text-end text-[length:var(--text-xs)] font-semibold text-(--brand-muted) tabular-nums"
                 >
                   {form.description.length}/{DESCRIPTION_MAX_LENGTH}
                 </span>
@@ -411,7 +433,6 @@ export default function OrganisationApplicationSheet({
                 id="organisation-application-city"
                 required
                 maxLength={100}
-                autoComplete="address-level2"
                 value={form.city}
                 onChange={(event) => updateField('city', event.target.value)}
                 className={fieldClass}
@@ -444,7 +465,7 @@ export default function OrganisationApplicationSheet({
                 />
                 <span
                   aria-live="polite"
-                  className="mt-1 block text-right text-[length:var(--text-xs)] font-semibold text-(--brand-muted) tabular-nums"
+                  className="mt-1 block text-end text-[length:var(--text-xs)] font-semibold text-(--brand-muted) tabular-nums"
                 >
                   {form.motivation.length}/{MOTIVATION_MAX_LENGTH}
                 </span>

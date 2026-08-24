@@ -1,4 +1,4 @@
-import { ShieldCheck } from 'lucide-react'
+import { ArrowLeft } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import {
   AppSheet,
@@ -14,10 +14,12 @@ const POLICY_SECTIONS = ['data', 'use', 'sharing', 'rights'] as const
 
 export default function PrivacyPolicySheet({
   open,
-  setOpen,
+  onBack,
+  onClose,
 }: {
   open: boolean
-  setOpen: (value: boolean) => void
+  onBack: () => void
+  onClose: () => void
 }) {
   const { t } = useTranslation()
 
@@ -26,15 +28,17 @@ export default function PrivacyPolicySheet({
       open={open}
       title={t('privacy.title')}
       subtitle={t('privacy.subtitle')}
-      icon={<ShieldCheck size={20} strokeWidth={2.4} />}
-      onClose={() => setOpen(false)}
+      icon={<ArrowLeft size={20} strokeWidth={2.4} />}
+      onBack={onBack}
+      backLabel={t('menu.events.directory.back')}
+      onClose={onClose}
       height="large"
       motion="instant"
       footer={
         <button
           type="button"
           className={appSheetSecondaryButtonClass}
-          onClick={() => setOpen(false)}
+          onClick={onBack}
         >
           {t('settings.close')}
         </button>

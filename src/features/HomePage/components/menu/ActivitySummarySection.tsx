@@ -20,14 +20,19 @@ const EMPTY_ACTIVITY_SUMMARY: ActivitySummary = {
 
 function getWeekdayLabels(locale: string) {
   const formatter = new Intl.DateTimeFormat(locale, {
-    weekday: 'narrow',
+    weekday: 'short',
     timeZone: 'UTC',
   })
+  const segmenter = new Intl.Segmenter(locale, { granularity: 'grapheme' })
 
   return callbackWeekdays.map((_, index) => {
     const date = new Date(WEEKDAY_DATE)
     date.setUTCDate(WEEKDAY_DATE.getUTCDate() + index)
-    return formatter.format(date).toLocaleUpperCase(locale)
+    const label = formatter.format(date).replace(/[.\s]/g, '')
+    return Array.from(segmenter.segment(label), ({ segment }) => segment)
+      .slice(0, 2)
+      .join('')
+      .toLocaleUpperCase(locale)
   })
 }
 
@@ -72,13 +77,16 @@ export default function ActivitySummarySection({
           role="status"
           aria-label={t('menu.activity.loading')}
         >
-          <div className="flex items-center gap-4" aria-hidden="true">
-            <div className="h-[104px] w-[104px] shrink-0 animate-pulse rounded-full bg-(--menu-skeleton-bg)" />
+          <div
+            className="flex items-center gap-4 max-[350px]:flex-col max-[350px]:items-stretch"
+            aria-hidden="true"
+          >
+            <div className="h-[104px] w-[104px] shrink-0 animate-pulse self-center rounded-full bg-(--menu-skeleton-bg) motion-reduce:animate-none" />
             <div className="flex-1 space-y-3">
-              <div className="h-5 w-3/4 animate-pulse rounded-full bg-(--menu-skeleton-bg)" />
-              <div className="h-4 w-full animate-pulse rounded-full bg-(--menu-skeleton-bg)" />
-              <div className="h-9 w-full animate-pulse rounded-xl bg-(--menu-skeleton-bg)" />
-              <div className="h-3 w-2/3 animate-pulse rounded-full bg-(--menu-skeleton-bg)" />
+              <div className="h-5 w-3/4 animate-pulse rounded-full bg-(--menu-skeleton-bg) motion-reduce:animate-none" />
+              <div className="h-4 w-full animate-pulse rounded-full bg-(--menu-skeleton-bg) motion-reduce:animate-none" />
+              <div className="h-9 w-full animate-pulse rounded-xl bg-(--menu-skeleton-bg) motion-reduce:animate-none" />
+              <div className="h-3 w-2/3 animate-pulse rounded-full bg-(--menu-skeleton-bg) motion-reduce:animate-none" />
             </div>
           </div>
         </div>
@@ -103,9 +111,9 @@ export default function ActivitySummarySection({
 
       {!isLoading && !isError ? (
         <div className={`mt-4 ${appSheetContentClass}`}>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 max-[350px]:flex-col max-[350px]:items-stretch">
             <div
-              className="relative h-[104px] w-[104px] shrink-0"
+              className="relative h-[104px] w-[104px] shrink-0 self-center"
               role="img"
               aria-label={t('menu.activity.streakAriaLabel', {
                 count: resolvedSummary.currentStreak,
@@ -148,7 +156,7 @@ export default function ActivitySummarySection({
               </div>
             </div>
 
-            <div className="min-w-0 flex-1">
+            <div className="min-w-0 flex-1 max-[350px]:text-center">
               <p className="text-[length:var(--text-lg)] leading-tight font-extrabold text-(--brand-title-ink)">
                 {t(
                   activeCount > 0
@@ -163,7 +171,7 @@ export default function ActivitySummarySection({
                   </p>
 
                   <div
-                    className="mt-3 grid grid-cols-7 gap-1.5"
+                    className="mt-3 grid grid-cols-7 gap-1.5 max-[350px]:gap-1"
                     aria-hidden="true"
                   >
                     {callbackWeekdays.map((weekday, index) => {

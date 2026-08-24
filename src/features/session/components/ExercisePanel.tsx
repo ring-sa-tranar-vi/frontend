@@ -44,9 +44,7 @@ export function ExercisePanel({ session }: ExercisePanelProps) {
         icon={<MessageSquareText size={20} strokeWidth={2.4} />}
       >
         <p className="text-lg leading-snug font-extrabold text-[#100b2f]">
-          {session.workoutName ||
-            session.name ||
-            t('exercisePanel.unnamedWorkout')}
+          {session.workoutName || t('exercisePanel.unnamedWorkout')}
         </p>
 
         {session.type ? (

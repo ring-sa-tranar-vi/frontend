@@ -15,6 +15,7 @@ import {
   setStoredTrainerId,
 } from './trainerPreference'
 import useCurrentUser from '../../hooks/useCurrentUser'
+import { useCurrentTrainer } from '../../hooks/useCurrentTrainer'
 
 const assets = {
   background: '/start-page/background.webp',
@@ -120,6 +121,9 @@ export default function HomePage() {
     : isSignedIn
       ? (profile?.trainerId ?? cachedTrainerId ?? DEFAULT_TRAINER_ID)
       : DEFAULT_TRAINER_ID
+  const { trainer } = useCurrentTrainer(
+    String(activeTrainerId) ?? String(DEFAULT_TRAINER_ID),
+  )
   const selectedWorkoutId = isSignedIn
     ? currentWorkoutId
     : DEFAULT_GUEST_WORKOUT_ID
@@ -165,6 +169,9 @@ export default function HomePage() {
       selectedWorkoutId,
     )
     if (!selectedWorkoutId && !alreadyCompletedToday) {
+      console.warn(
+        '[HomePage] No workout ID available to start session. Aborting.',
+      )
       return
     }
     void primeSessionAudio()
@@ -174,11 +181,12 @@ export default function HomePage() {
     setIsSessionActive(true)
   }
 
-  if (isSessionActive) {
+  if (isSessionActive && trainer && activeWorkoutId) {
     return (
       <SessionPage
         workoutId={activeWorkoutId}
         workouts={workouts}
+        trainer={trainer}
         alreadyCompletedToday={activeAlreadyCompleted}
         updateCurrentWorkout={updateCurrentWorkout}
         onEnd={handleEndSession}

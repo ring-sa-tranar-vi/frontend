@@ -74,6 +74,7 @@ export function useCompanyOrganisationPage(enabled = true) {
     useState<EventForm>(emptyEventForm)
   const [showCreateEvent, setShowCreateEvent] = useState(false)
   const [statusMessage, setStatusMessage] = useState<string | null>(null)
+  const [statusTone, setStatusTone] = useState<'success' | 'danger'>('success')
 
   async function getRequiredToken() {
     const token = await getToken()
@@ -103,10 +104,12 @@ export function useCompanyOrganisationPage(enabled = true) {
   })
 
   const canManageOrganisation =
-    companyQuery.data?.canManageOrganisation === true
+    companyQuery.data?.canManageOrganisation === true &&
+    companyQuery.data.organisationId != null
+  const managedOrganisationId = companyQuery.data?.organisationId ?? null
 
   const organisationQuery = useQuery({
-    queryKey: ['company-organisation', companyQuery.data?.organisationId],
+    queryKey: ['company-organisation', managedOrganisationId],
     queryFn: async () => fetchManagedOrganisation(await getRequiredToken()),
     enabled:
       enabled && isLoaded && Boolean(isSignedIn) && canManageOrganisation,
@@ -116,7 +119,7 @@ export function useCompanyOrganisationPage(enabled = true) {
   const activeOrganisationId = activeOrganisation?.id ?? null
 
   const eventsQuery = useQuery({
-    queryKey: ['company-events', activeOrganisationId],
+    queryKey: ['company-events', managedOrganisationId],
     queryFn: async () =>
       fetchManagedOrganisationEvents(await getRequiredToken()),
     enabled:
@@ -140,6 +143,7 @@ export function useCompanyOrganisationPage(enabled = true) {
   }, [activeOrganisation])
 
   const orgMutation = useMutation({
+    onMutate: () => setStatusMessage(null),
     mutationFn: async () => {
       const organisationId = activeOrganisationId
       if (!organisationId) {
@@ -153,18 +157,22 @@ export function useCompanyOrganisationPage(enabled = true) {
       })
     },
     onSuccess: async () => {
+      setStatusTone('success')
       setStatusMessage('Organisationen sparades.')
       await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['company-me', userId] }),
         queryClient.invalidateQueries({ queryKey: ['company-organisation'] }),
         queryClient.invalidateQueries({ queryKey: ['organisations', 'list'] }),
       ])
     },
     onError: (error) => {
+      setStatusTone('danger')
       setStatusMessage((error as Error).message)
     },
   })
 
   const createEventMutation = useMutation({
+    onMutate: () => setStatusMessage(null),
     mutationFn: async () =>
       createCompanyEvent(await getRequiredToken(), activeOrganisationId!, {
         name: eventForm.name.trim(),
@@ -177,15 +185,18 @@ export function useCompanyOrganisationPage(enabled = true) {
     onSuccess: async () => {
       setEventForm(emptyEventForm)
       setShowCreateEvent(false)
+      setStatusTone('success')
       setStatusMessage('Event skapades.')
       await invalidateEventViews()
     },
     onError: (error) => {
+      setStatusTone('danger')
       setStatusMessage((error as Error).message)
     },
   })
 
   const updateEventMutation = useMutation({
+    onMutate: () => setStatusMessage(null),
     mutationFn: async () => {
       if (editingEventId == null) {
         throw new Error('Välj ett event att redigera.')
@@ -203,22 +214,27 @@ export function useCompanyOrganisationPage(enabled = true) {
     onSuccess: async () => {
       setEditingEventId(null)
       setEditingEventForm(emptyEventForm)
+      setStatusTone('success')
       setStatusMessage('Event uppdaterades.')
       await invalidateEventViews()
     },
     onError: (error) => {
+      setStatusTone('danger')
       setStatusMessage((error as Error).message)
     },
   })
 
   const deleteEventMutation = useMutation({
+    onMutate: () => setStatusMessage(null),
     mutationFn: async (eventId: number) =>
       deleteCompanyEvent(await getRequiredToken(), eventId),
     onSuccess: async () => {
+      setStatusTone('success')
       setStatusMessage('Event togs bort.')
       await invalidateEventViews()
     },
     onError: (error) => {
+      setStatusTone('danger')
       setStatusMessage((error as Error).message)
     },
   })
@@ -266,6 +282,7 @@ export function useCompanyOrganisationPage(enabled = true) {
 
   return {
     statusMessage,
+    statusTone,
     company: companyQuery.data ?? null,
     isLoadingCompany: companyQuery.isLoading,
     isCompanyError: companyQuery.isError,
@@ -297,6 +314,10 @@ export function useCompanyOrganisationPage(enabled = true) {
     deleteEvent: async (id: number) => {
       await deleteEventMutation.mutateAsync(id)
     },
+    deleteEventError: deleteEventMutation.isError
+      ? (deleteEventMutation.error as Error).message
+      : null,
+    resetDeleteEvent: () => deleteEventMutation.reset(),
     startEditingEvent,
     stopEditingEvent,
     isSavingOrganisation: orgMutation.isPending,

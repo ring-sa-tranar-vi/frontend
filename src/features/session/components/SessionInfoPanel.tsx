@@ -47,7 +47,7 @@ export function SessionInfoPanel({
       <AppSheet
         open
         title={t('sessionCall.instructionsTitle')}
-        subtitle={session.workoutName ?? session.name}
+        subtitle={session.workoutName}
         icon={<MessageSquareText size={20} strokeWidth={2.4} />}
         onClose={onClose}
         height="large"

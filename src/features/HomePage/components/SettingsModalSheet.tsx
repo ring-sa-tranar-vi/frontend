@@ -1,13 +1,8 @@
-import {
-  SignOutButton,
-  UserButton,
-  useAuth,
-  useClerk,
-  useUser,
-} from '@clerk/react'
+import { UserButton, useAuth, useClerk, useUser } from '@clerk/react'
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { CircleHelp, Building2, Globe, Menu, ShieldCheck } from 'lucide-react'
+import type { ReactNode } from 'react'
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useUpdateProfile } from '../../../hooks/useUpdateProfile'
 import ContextModel from './ContextModal'
@@ -50,6 +45,8 @@ type ProfileSettings = {
   city?: string | null
   onboarding?: boolean | null
 }
+
+type PendingExitAction = 'close' | 'admin' | 'signOut'
 
 const UI_INTENSITY_MIN = 0
 const UI_INTENSITY_MAX = 4
@@ -127,23 +124,27 @@ function SettingsStatusSheet({
 function ProfilePreferenceSections({
   fullName,
   setFullName,
+  overviewSections,
   selectedTrainerId,
   setSelectedTrainerId,
   intensityLevel,
   setIntensityLevel,
   context,
   setContext,
+  isActive,
   setSupportOpen,
   setPrivacyOpen,
 }: {
   fullName: string
   setFullName: (value: string) => void
+  overviewSections: ReactNode
   selectedTrainerId: number | null
   setSelectedTrainerId: (value: number) => void
   intensityLevel: number
   setIntensityLevel: (value: number) => void
   context: string
   setContext: (value: string) => void
+  isActive: boolean
   setSupportOpen: (value: boolean) => void
   setPrivacyOpen: (value: boolean) => void
 }) {
@@ -158,10 +159,10 @@ function ProfilePreferenceSections({
   }, [isEditingName])
 
   return (
-    <div className="space-y-4 border-t border-(--brand-border)/60 pt-4 pb-3">
+    <div className="space-y-4 pb-3">
       <section className={appSheetCategoryClass}>
         <div className={appSheetContentClass}>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-(--menu-choice-bg)">
               <UserButton
                 appearance={{
@@ -174,22 +175,19 @@ function ProfilePreferenceSections({
               />
             </div>
             <div className="min-w-0 flex-1">
-              <AppSheetSectionTitle>
-                {t('settings.fullName')}
-              </AppSheetSectionTitle>
               {!isEditingName ? (
-                <p
-                  className="mt-0.5 truncate text-[length:var(--text-sm)] font-semibold text-(--brand-body-ink)"
+                <h3
+                  className="truncate text-[length:var(--text-lg)] leading-tight font-extrabold text-(--brand-primary-deep)"
                   title={fullName}
                 >
                   {fullName}
-                </p>
+                </h3>
               ) : null}
             </div>
             {!isEditingName ? (
               <button
                 type="button"
-                className={appSheetInlineActionButtonClass}
+                className={`${appSheetInlineActionButtonClass} max-[350px]:w-full`}
                 aria-controls="fullName"
                 onClick={() => setIsEditingName(true)}
               >
@@ -228,15 +226,18 @@ function ProfilePreferenceSections({
         </div>
       </section>
 
+      {overviewSections}
+
+      <section className={appSheetCategoryClass}>
+        <IntensitySlider value={intensityLevel} onChange={setIntensityLevel} />
+      </section>
+
       <section className={appSheetCategoryClass}>
         <TrainerSelectionModal
           selectedTrainerId={selectedTrainerId}
           onTrainerSelect={setSelectedTrainerId}
+          active={isActive}
         />
-      </section>
-
-      <section className={appSheetCategoryClass}>
-        <IntensitySlider value={intensityLevel} onChange={setIntensityLevel} />
       </section>
 
       <section className={appSheetCategoryClass}>
@@ -245,8 +246,8 @@ function ProfilePreferenceSections({
 
       <section className={appSheetCategoryClass}>
         <div className={appSheetContentClass}>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex min-w-0 flex-1 items-center gap-2">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-(--menu-choice-bg) text-(--brand-primary-deep)">
                 <Globe size={20} />
               </div>
@@ -264,8 +265,8 @@ function ProfilePreferenceSections({
 
       <section className={appSheetCategoryClass}>
         <div className={appSheetContentClass}>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex min-w-0 flex-1 items-center gap-2">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-(--menu-choice-bg) text-(--brand-primary-deep)">
                 <CircleHelp size={20} />
               </div>
@@ -274,7 +275,8 @@ function ProfilePreferenceSections({
               </AppSheetSectionTitle>
             </div>
             <button
-              className={appSheetInlineActionButtonClass}
+              type="button"
+              className={`${appSheetInlineActionButtonClass} max-[350px]:w-full`}
               onClick={() => setSupportOpen(true)}
             >
               {t('settings.getHelpButton')}
@@ -285,8 +287,8 @@ function ProfilePreferenceSections({
 
       <section className={appSheetCategoryClass}>
         <div className={appSheetContentClass}>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex min-w-0 flex-1 items-center gap-2">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-(--menu-choice-bg) text-(--brand-primary-deep)">
                 <ShieldCheck size={20} />
               </div>
@@ -296,7 +298,7 @@ function ProfilePreferenceSections({
             </div>
             <button
               type="button"
-              className={appSheetInlineActionButtonClass}
+              className={`${appSheetInlineActionButtonClass} max-[350px]:w-full`}
               onClick={() => setPrivacyOpen(true)}
             >
               {t('settings.readPolicy')}
@@ -404,6 +406,9 @@ function SettingsModalBody({
   const [eventsOpen, setEventsOpen] = useState(false)
   const [applicationOpen, setApplicationOpen] = useState(false)
   const [companyOpen, setCompanyOpen] = useState(false)
+  const [discardChangesOpen, setDiscardChangesOpen] = useState(false)
+  const [pendingExitAction, setPendingExitAction] =
+    useState<PendingExitAction | null>(null)
   const [deleteAccountOpen, setDeleteAccountOpen] = useState(false)
   const [isDeletingAccount, setIsDeletingAccount] = useState(false)
   const [deleteAccountError, setDeleteAccountError] = useState<string | null>(
@@ -426,6 +431,18 @@ function SettingsModalBody({
   const canManageOrganisation =
     companyQuery.data?.canManageOrganisation === true &&
     companyQuery.data.organisationId != null
+  const isOrganisationAccessLoading =
+    companyQuery.data === undefined &&
+    (companyQuery.isLoading || companyQuery.isFetching)
+  const isOrganisationAccessError =
+    companyQuery.data === undefined && companyQuery.isError
+  const mainSheetOpen =
+    open && !eventsOpen && !companyOpen && !supportOpen && !privacyOpen
+  const isDirty =
+    fullName.trim() !== (profile.name?.trim() ?? '') ||
+    intensityLevel !== toUiIntensityLevel(profile.intensityLevel) ||
+    context !== (profile.context ?? '') ||
+    selectedTrainerId !== normalizeTrainerId(profile.trainerId)
 
   function onTrainerSelect(trainerId: number) {
     setSelectedTrainerId(trainerId)
@@ -454,6 +471,11 @@ function SettingsModalBody({
   const handleSave = async () => {
     setSaveFeedback(null)
 
+    if (!fullName.trim()) {
+      showFeedback(t('settings.nameRequired'))
+      return
+    }
+
     if (selectedTrainerId === null) {
       showFeedback(t('settings.selectTrainerFirst'))
       return
@@ -474,6 +496,32 @@ function SettingsModalBody({
       console.error('[SettingsModalSheet] Save failed:', error)
       showFeedback(t('settings.saveError'))
     }
+  }
+
+  function performExit(action: PendingExitAction) {
+    setOpen(false)
+
+    if (action === 'admin') {
+      void navigate({ to: '/admin/workouts' })
+    } else if (action === 'signOut') {
+      void signOut({ redirectUrl: '/' })
+    }
+  }
+
+  function requestExit(action: PendingExitAction) {
+    if (updateProfile.isPending) return
+
+    if (isDirty) {
+      setPendingExitAction(action)
+      setDiscardChangesOpen(true)
+      return
+    }
+
+    performExit(action)
+  }
+
+  function requestCloseMenu() {
+    requestExit('close')
   }
 
   const handleDeleteAccount = async () => {
@@ -506,13 +554,12 @@ function SettingsModalBody({
   return (
     <>
       <AppSheet
-        open={
-          open && !eventsOpen && !companyOpen && !supportOpen && !privacyOpen
-        }
+        open={mainSheetOpen}
         title={t('menu.title')}
         subtitle=""
         icon={<Menu size={20} strokeWidth={2.4} />}
-        onClose={() => setOpen(false)}
+        onClose={requestCloseMenu}
+        restoreFocus={!open || mainSheetOpen}
         height="large"
         motion="instant"
         showScrollProgress
@@ -524,7 +571,7 @@ function SettingsModalBody({
             ) : null}
             <button
               className={appSheetPrimaryButtonClass}
-              disabled={updateProfile.isPending}
+              disabled={updateProfile.isPending || !isDirty || !fullName.trim()}
               onClick={handleSave}
             >
               {updateProfile.isPending
@@ -535,58 +582,65 @@ function SettingsModalBody({
         }
       >
         <div className="pb-2">
-          <MenuPlaceholderSections
-            dataEnabled={
-              open &&
-              !eventsOpen &&
-              !companyOpen &&
-              !supportOpen &&
-              !privacyOpen
-            }
-            onFindEvents={() => setEventsOpen(true)}
-          />
-
           <ProfilePreferenceSections
             fullName={fullName}
             setFullName={setFullName}
+            overviewSections={
+              <MenuPlaceholderSections
+                dataEnabled={mainSheetOpen}
+                onFindEvents={() => setEventsOpen(true)}
+              />
+            }
             selectedTrainerId={selectedTrainerId}
             setSelectedTrainerId={onTrainerSelect}
             intensityLevel={intensityLevel}
             setIntensityLevel={setIntensityLevel}
             context={context}
             setContext={setContext}
+            isActive={mainSheetOpen}
             setSupportOpen={setSupportOpen}
             setPrivacyOpen={setPrivacyOpen}
           />
 
           <section className="space-y-2 border-t border-(--brand-border)/60 pt-6 pb-4">
-            {canManageOrganisation ? (
+            {isOrganisationAccessError ? (
+              <div className="space-y-2">
+                <AppSheetNotice tone="danger">
+                  {t('menu.events.application.statusError')}
+                </AppSheetNotice>
+                <button
+                  type="button"
+                  className={appSheetSecondaryButtonClass}
+                  onClick={() => void companyQuery.refetch()}
+                >
+                  {t('menu.events.directory.retry')}
+                </button>
+              </div>
+            ) : canManageOrganisation ? (
               <button
+                type="button"
                 className={`${appSheetSecondaryButtonClass} flex items-center justify-center gap-2`}
                 onClick={() => setCompanyOpen(true)}
               >
-                <Building2 size={18} /> Organisations-sida
+                <Building2 size={18} aria-hidden="true" />
+                {t('settings.organisationPage')}
               </button>
             ) : null}
             {profile.isAdmin && (
               <button
                 className={appSheetSecondaryButtonClass}
-                onClick={() => {
-                  setOpen(false)
-                  void navigate({ to: '/admin/workouts' })
-                }}
+                onClick={() => requestExit('admin')}
               >
                 {t('admin.page')}
               </button>
             )}
-            <SignOutButton>
-              <button
-                className={appSheetSecondaryButtonClass}
-                onClick={() => setOpen(false)}
-              >
-                {t('auth.logout')}
-              </button>
-            </SignOutButton>
+            <button
+              type="button"
+              className={appSheetSecondaryButtonClass}
+              onClick={() => requestExit('signOut')}
+            >
+              {t('auth.logout')}
+            </button>
             <button
               type="button"
               className="w-full rounded-xl px-4 py-3 text-[length:var(--text-sm)] font-bold text-(--brand-danger) transition hover:bg-(--brand-danger-surface) focus-visible:ring-2 focus-visible:ring-(--brand-danger-border) focus-visible:outline-none"
@@ -600,16 +654,34 @@ function SettingsModalBody({
           </section>
         </div>
       </AppSheet>
-      <PrivacyPolicySheet open={privacyOpen} setOpen={setPrivacyOpen} />
-      <SupportSheet open={supportOpen} setOpen={setSupportOpen} />
+      <PrivacyPolicySheet
+        open={privacyOpen}
+        onBack={() => setPrivacyOpen(false)}
+        onClose={() => {
+          setPrivacyOpen(false)
+          requestCloseMenu()
+        }}
+      />
+      <SupportSheet
+        open={supportOpen}
+        onBack={() => setSupportOpen(false)}
+        onClose={() => {
+          setSupportOpen(false)
+          requestCloseMenu()
+        }}
+      />
       <EventsOrganisationsSheet
-        open={open && eventsOpen && !applicationOpen}
+        open={open && eventsOpen && !applicationOpen && !companyOpen}
         onBack={() => setEventsOpen(false)}
         onClose={() => {
           setEventsOpen(false)
-          setOpen(false)
+          requestCloseMenu()
         }}
         onApply={() => setApplicationOpen(true)}
+        canManageOrganisation={canManageOrganisation}
+        isOrganisationAccessLoading={isOrganisationAccessLoading}
+        isOrganisationAccessError={isOrganisationAccessError}
+        onRetryOrganisationAccess={() => void companyQuery.refetch()}
         userCity={profile.city}
       />
       <OrganisationApplicationSheet
@@ -618,18 +690,21 @@ function SettingsModalBody({
         onClose={() => {
           setApplicationOpen(false)
           setEventsOpen(false)
-          setOpen(false)
+          requestCloseMenu()
         }}
       />
-      <CompanyOrganisationPage
-        asSheet
-        open={open && companyOpen}
-        onBack={() => setCompanyOpen(false)}
-        onClose={() => {
-          setCompanyOpen(false)
-          setOpen(false)
-        }}
-      />
+      {companyOpen ? (
+        <CompanyOrganisationPage
+          asSheet
+          open={open}
+          onBack={() => setCompanyOpen(false)}
+          onClose={() => {
+            setCompanyOpen(false)
+            setEventsOpen(false)
+            requestCloseMenu()
+          }}
+        />
+      ) : null}
       <ConfirmModal
         open={open && deleteAccountOpen}
         title={t('settings.deleteAccountTitle')}
@@ -643,6 +718,23 @@ function SettingsModalBody({
           if (!isDeletingAccount) setDeleteAccountOpen(false)
         }}
         onConfirm={() => void handleDeleteAccount()}
+      />
+      <ConfirmModal
+        open={open && discardChangesOpen}
+        title={t('settings.discardChangesTitle')}
+        body={t('settings.discardChangesText')}
+        confirmLabel={t('settings.discardChangesConfirm')}
+        cancelLabel={t('settings.discardChangesCancel')}
+        onCancel={() => {
+          setDiscardChangesOpen(false)
+          setPendingExitAction(null)
+        }}
+        onConfirm={() => {
+          const action = pendingExitAction ?? 'close'
+          setDiscardChangesOpen(false)
+          setPendingExitAction(null)
+          performExit(action)
+        }}
       />
     </>
   )

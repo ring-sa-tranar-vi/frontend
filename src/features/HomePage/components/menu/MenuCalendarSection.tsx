@@ -100,7 +100,6 @@ export default function MenuCalendarSection({
   cancelledActivityId,
   cancellationError = false,
   onCancelEvent,
-  onCancelCallback,
   onDismissCancellationError,
 }: {
   enabled?: boolean
@@ -109,7 +108,6 @@ export default function MenuCalendarSection({
   cancelledActivityId?: string
   cancellationError?: boolean
   onCancelEvent?: (activity: CalendarActivity) => void
-  onCancelCallback?: (activity: CalendarActivity) => void
   onDismissCancellationError?: () => void
 }) {
   const { t, i18n } = useTranslation()
@@ -137,6 +135,8 @@ export default function MenuCalendarSection({
   const activitiesByDate = useMemo(() => {
     const map = new Map<string, CalendarActivity[]>()
     for (const activity of activities) {
+      if (activity.kind === 'callback') continue
+
       const existing = map.get(activity.date) ?? []
       map.set(activity.date, [...existing, activity])
     }
@@ -316,10 +316,6 @@ export default function MenuCalendarSection({
             <span className="h-2.5 w-2.5 rounded-full bg-(--brand-primary)" />
             {t('menu.calendar.event')}
           </span>
-          <span className="flex items-center gap-2 text-[length:var(--text-xs)] font-bold text-(--brand-body-ink)">
-            <span className="h-2.5 w-2.5 rounded-full bg-(--brand-warning)" />
-            {t('menu.calendar.callback')}
-          </span>
         </div>
 
         {isLoading ? (
@@ -367,12 +363,6 @@ export default function MenuCalendarSection({
                     act.kind === 'event' &&
                     cancelableEventIds?.has(act.id) &&
                     isUpcomingActivity(act)
-                  const canCancelCallback =
-                    act.kind === 'callback' &&
-                    Boolean(onCancelCallback) &&
-                    isUpcomingActivity(act)
-                  const canCancelActivity = canCancelEvent || canCancelCallback
-
                   return (
                     <div
                       key={act.id}
@@ -386,10 +376,7 @@ export default function MenuCalendarSection({
                         />
                         <div className="min-w-0">
                           <p className="menu-card-title line-clamp-2">
-                            {act.kind === 'callback'
-                              ? t('menu.calendar.callback')
-                              : act.title ||
-                                t('menu.calendar.untitledActivity')}
+                            {act.title || t('menu.calendar.untitledActivity')}
                           </p>
                           {act.description ? (
                             <p className="menu-card-copy mt-1 line-clamp-2">
@@ -405,15 +392,11 @@ export default function MenuCalendarSection({
                         </div>
                       </div>
 
-                      {canCancelActivity ? (
+                      {canCancelEvent ? (
                         <button
                           type="button"
                           onClick={() => beginCancellation(act)}
-                          aria-label={t(
-                            act.kind === 'callback'
-                              ? 'menu.calendar.cancelCallback'
-                              : 'menu.calendar.cancelEvent',
-                          )}
+                          aria-label={t('menu.calendar.cancelEvent')}
                           className="ml-3 flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-(--brand-danger) transition hover:bg-(--brand-danger-surface) focus-visible:ring-2 focus-visible:ring-(--brand-danger-border) focus-visible:ring-offset-2 focus-visible:outline-none active:scale-95"
                         >
                           <X size={19} strokeWidth={2.6} aria-hidden="true" />
@@ -440,23 +423,14 @@ export default function MenuCalendarSection({
                   id="cancel-calendar-event-title"
                   className="text-[length:var(--text-sm)] font-extrabold text-(--brand-danger-ink)"
                 >
-                  {t(
-                    cancellationTarget.kind === 'callback'
-                      ? 'menu.calendar.cancelCallbackTitle'
-                      : 'menu.calendar.cancelEventTitle',
-                  )}
+                  {t('menu.calendar.cancelEventTitle')}
                 </h5>
                 <p className="mt-1 text-[length:var(--text-xs)] leading-relaxed font-semibold text-(--brand-danger-ink)">
-                  {t(
-                    cancellationTarget.kind === 'callback'
-                      ? 'menu.calendar.cancelCallbackText'
-                      : 'menu.calendar.cancelEventText',
-                    {
-                      name:
-                        cancellationTarget.title ||
-                        t('menu.calendar.untitledActivity'),
-                    },
-                  )}
+                  {t('menu.calendar.cancelEventText', {
+                    name:
+                      cancellationTarget.title ||
+                      t('menu.calendar.untitledActivity'),
+                  })}
                 </p>
 
                 {cancellationError ? (
@@ -464,11 +438,7 @@ export default function MenuCalendarSection({
                     className="mt-3 text-[length:var(--text-xs)] font-bold text-(--brand-danger-ink-muted)"
                     role="status"
                   >
-                    {t(
-                      cancellationTarget.kind === 'callback'
-                        ? 'menu.calendar.cancelCallbackError'
-                        : 'menu.calendar.cancelEventError',
-                    )}
+                    {t('menu.calendar.cancelEventError')}
                   </p>
                 ) : null}
 
@@ -483,27 +453,12 @@ export default function MenuCalendarSection({
                   <button
                     type="button"
                     disabled={cancellingActivityId === cancellationTarget.id}
-                    onClick={() => {
-                      if (cancellationTarget.kind === 'callback') {
-                        onCancelCallback?.(cancellationTarget)
-                        return
-                      }
-
-                      onCancelEvent?.(cancellationTarget)
-                    }}
+                    onClick={() => onCancelEvent?.(cancellationTarget)}
                     className="rounded-xl bg-(--brand-danger) px-3 py-2.5 text-[length:var(--text-xs)] font-extrabold text-(--brand-on-danger) transition hover:bg-(--brand-danger-hover) focus-visible:ring-2 focus-visible:ring-(--brand-danger-border) focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-70"
                   >
                     {cancellingActivityId === cancellationTarget.id
-                      ? t(
-                          cancellationTarget.kind === 'callback'
-                            ? 'menu.calendar.cancelingCallback'
-                            : 'menu.calendar.cancelingEvent',
-                        )
-                      : t(
-                          cancellationTarget.kind === 'callback'
-                            ? 'menu.calendar.confirmCancelCallback'
-                            : 'menu.calendar.confirmCancelEvent',
-                        )}
+                      ? t('menu.calendar.cancelingEvent')
+                      : t('menu.calendar.confirmCancelEvent')}
                   </button>
                 </div>
               </section>

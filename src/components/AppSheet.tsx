@@ -1,4 +1,5 @@
 import { X } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import {
   type ReactNode,
   useEffect,
@@ -25,13 +26,13 @@ export const appSheetContentClass = 'menu-content-card'
 export const appSheetCardClass = 'menu-item-card'
 
 export const appSheetPrimaryButtonClass =
-  'w-full rounded-full bg-(--brand-primary) px-4 py-4 text-[length:var(--text-base)] font-extrabold text-(--brand-on-primary) transition hover:bg-(--brand-primary-strong) active:scale-[0.985] disabled:cursor-not-allowed disabled:opacity-70'
+  'w-full rounded-full bg-(--brand-primary) px-4 py-4 text-[length:var(--text-base)] font-extrabold text-(--brand-on-primary) transition hover:bg-(--brand-primary-strong) focus-visible:ring-2 focus-visible:ring-(--brand-border-strong) focus-visible:ring-offset-2 focus-visible:outline-none active:scale-[0.985] disabled:cursor-not-allowed disabled:opacity-70'
 
 export const appSheetInlineActionButtonClass =
-  'inline-flex h-10 w-20 shrink-0 items-center justify-center rounded-full bg-(--brand-primary) px-3 text-[length:var(--text-sm)] font-extrabold text-(--brand-on-primary) transition hover:opacity-95'
+  'inline-flex min-h-10 min-w-20 max-w-full shrink-0 items-center justify-center rounded-full bg-(--brand-primary) px-3 py-2 text-center text-[length:var(--text-sm)] leading-tight font-extrabold text-(--brand-on-primary) transition hover:opacity-95 focus-visible:ring-2 focus-visible:ring-(--brand-border-strong) focus-visible:ring-offset-2 focus-visible:outline-none'
 
 export const appSheetSecondaryButtonClass =
-  'w-full rounded-2xl border border-(--brand-btn-secondary-border) bg-(--brand-btn-secondary-bg) px-4 py-3.5 text-[length:var(--text-sm)] font-extrabold text-(--brand-btn-secondary-text) transition hover:bg-(--brand-btn-secondary-hover) active:scale-[0.985]'
+  'w-full rounded-2xl border border-(--brand-btn-secondary-border) bg-(--brand-btn-secondary-bg) px-4 py-3.5 text-[length:var(--text-sm)] font-extrabold text-(--brand-btn-secondary-text) transition hover:bg-(--brand-btn-secondary-hover) focus-visible:ring-2 focus-visible:ring-(--brand-border-strong) focus-visible:ring-offset-2 focus-visible:outline-none active:scale-[0.985]'
 
 type AppSheetProps = {
   open: boolean
@@ -48,6 +49,7 @@ type AppSheetProps = {
   motion?: 'slide' | 'instant'
   showScrollProgress?: boolean
   scrollProgressLabel?: string
+  restoreFocus?: boolean
 }
 
 const maxHeightClass = {
@@ -77,7 +79,9 @@ export function AppSheet({
   motion = 'slide',
   showScrollProgress = false,
   scrollProgressLabel,
+  restoreFocus = true,
 }: AppSheetProps) {
+  const { t } = useTranslation()
   const sectionRef = useRef<HTMLElement>(null)
   const backdropRef = useRef<HTMLDivElement>(null)
   const scrollBodyRef = useRef<HTMLDivElement>(null)
@@ -117,20 +121,23 @@ export function AppSheet({
     if (!open) {
       const previouslyFocused = previouslyFocusedElementRef.current
 
-      if (previouslyFocused) {
+      if (restoreFocus && previouslyFocused) {
         requestAnimationFrame(() =>
           previouslyFocused.focus({ preventScroll: true }),
         )
-        previouslyFocusedElementRef.current = null
       }
+
+      if (restoreFocus) previouslyFocusedElementRef.current = null
 
       return
     }
 
-    previouslyFocusedElementRef.current =
-      document.activeElement instanceof HTMLElement
-        ? document.activeElement
-        : null
+    if (!previouslyFocusedElementRef.current) {
+      previouslyFocusedElementRef.current =
+        document.activeElement instanceof HTMLElement
+          ? document.activeElement
+          : null
+    }
 
     const focusTimer = window.setTimeout(
       () => closeButtonRef.current?.focus({ preventScroll: true }),
@@ -151,7 +158,8 @@ export function AppSheet({
         )
       const focusable = focusableElements
         ? Array.from(focusableElements).filter(
-            (element) => element.offsetParent !== null,
+            (element) =>
+              element.offsetParent !== null && !element.closest('[inert]'),
           )
         : []
 
@@ -177,7 +185,7 @@ export function AppSheet({
       window.clearTimeout(focusTimer)
       document.removeEventListener('keydown', handleKeyDown)
     }
-  }, [open])
+  }, [open, restoreFocus])
 
   function applyBackdrop(fraction: number, animated: boolean) {
     const bd = backdropRef.current
@@ -188,6 +196,17 @@ export function AppSheet({
       : 'none'
     bd.style.opacity = String(1 - clamped)
     bd.style.backdropFilter = `blur(${3 * (1 - clamped)}px)`
+  }
+
+  function settleAfterCloseRequest() {
+    requestAnimationFrame(() => {
+      const el = sectionRef.current
+      if (!el || el.getAttribute('aria-hidden') !== 'false') return
+
+      el.style.transition = 'transform 300ms ease-out'
+      el.style.transform = 'translateY(0)'
+      applyBackdrop(0, true)
+    })
   }
 
   useLayoutEffect(() => {
@@ -354,6 +373,7 @@ export function AppSheet({
       el.style.transition = 'transform 300ms ease-out'
       if (dragged > 120) {
         onCloseRef.current()
+        settleAfterCloseRequest()
       } else {
         el.style.transform = 'translateY(0)'
         applyBackdrop(0, true)
@@ -384,6 +404,7 @@ export function AppSheet({
       // The close effect will animate translateY(100%) from wherever the sheet
       // currently is (the drag release point).
       onCloseRef.current()
+      settleAfterCloseRequest()
     } else {
       // Snap back to fully open.
       el.style.transform = 'translateY(0)'
@@ -454,7 +475,7 @@ export function AppSheet({
 
                 <h2
                   id={titleId}
-                  className="min-w-0 text-[length:var(--text-2xl)] leading-tight font-extrabold tracking-tight [overflow-wrap:anywhere] text-(--brand-title-ink)"
+                  className="min-w-0 text-[length:var(--text-2xl)] leading-tight font-extrabold tracking-tight [overflow-wrap:anywhere] text-(--brand-title-ink) max-[350px]:text-[length:var(--text-xl)]"
                 >
                   {title}
                 </h2>
@@ -475,7 +496,7 @@ export function AppSheet({
               type="button"
               onClick={onClose}
               className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-(--brand-soft) text-(--brand-primary) transition focus-visible:ring-2 focus-visible:ring-(--brand-border-strong) focus-visible:ring-offset-2 focus-visible:outline-none active:scale-95"
-              aria-label="Stäng"
+              aria-label={t('settings.close')}
             >
               <X size={21} strokeWidth={2.4} />
             </button>
@@ -529,7 +550,7 @@ export function AppSheet({
                 scrollProgressFrameRef.current = null
               })
             }}
-            className={`app-sheet-scroll min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain pr-1 pb-1 ${
+            className={`app-sheet-scroll min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain pe-1 pb-1 ${
               showScrollProgress ? 'mt-3' : 'mt-4'
             }`}
           >

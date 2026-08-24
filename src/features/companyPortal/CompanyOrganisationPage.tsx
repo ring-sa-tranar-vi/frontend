@@ -71,7 +71,10 @@ export default function CompanyOrganisationPage({
           </button>
         </div>
       )
-    } else if (vm.company?.canManageOrganisation) {
+    } else if (
+      vm.company?.canManageOrganisation &&
+      vm.company.organisationId != null
+    ) {
       content = (
         <CompanyOrganisationLayout
           vm={vm}
@@ -164,7 +167,7 @@ export default function CompanyOrganisationPage({
     )
   }
 
-  if (vm.company?.canManageOrganisation) {
+  if (vm.company?.canManageOrganisation && vm.company.organisationId != null) {
     return (
       <CompanyOrganisationLayout
         vm={vm}
@@ -183,7 +186,7 @@ export default function CompanyOrganisationPage({
             type="button"
             aria-label="Tillbaka"
             onClick={handleBack}
-            className="absolute top-0 left-0 flex h-10 w-10 items-center justify-center rounded-full bg-(--brand-soft) text-(--brand-primary) focus-visible:ring-2 focus-visible:ring-(--brand-border-strong) focus-visible:outline-none"
+            className="absolute start-0 top-0 flex h-10 w-10 items-center justify-center rounded-full bg-(--brand-soft) text-(--brand-primary) focus-visible:ring-2 focus-visible:ring-(--brand-border-strong) focus-visible:outline-none"
           >
             <ChevronLeft size={20} />
           </button>
@@ -199,7 +202,7 @@ export default function CompanyOrganisationPage({
             type="button"
             aria-label="Stäng"
             onClick={handleClose}
-            className="absolute top-0 right-0 flex h-10 w-10 items-center justify-center rounded-full bg-(--brand-soft) text-(--brand-primary) focus-visible:ring-2 focus-visible:ring-(--brand-border-strong) focus-visible:outline-none"
+            className="absolute end-0 top-0 flex h-10 w-10 items-center justify-center rounded-full bg-(--brand-soft) text-(--brand-primary) focus-visible:ring-2 focus-visible:ring-(--brand-border-strong) focus-visible:outline-none"
           >
             <X size={19} />
           </button>

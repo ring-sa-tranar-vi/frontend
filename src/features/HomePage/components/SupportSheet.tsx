@@ -1,3 +1,4 @@
+import { ArrowLeft } from 'lucide-react'
 import { useState } from 'react'
 import { useUser } from '@clerk/react'
 import { useTranslation } from 'react-i18next'
@@ -13,10 +14,12 @@ import {
 
 export default function SupportSheet({
   open,
-  setOpen,
+  onBack,
+  onClose,
 }: {
   open: boolean
-  setOpen: (v: boolean) => void
+  onBack: () => void
+  onClose: () => void
 }) {
   const { t } = useTranslation()
   const { user } = useUser()
@@ -24,6 +27,9 @@ export default function SupportSheet({
 
   const [message, setMessage] = useState('')
   const [feedback, setFeedback] = useState<string | null>(null)
+  const [feedbackTone, setFeedbackTone] = useState<'success' | 'danger'>(
+    'success',
+  )
 
   const submitIssue = () => {
     try {
@@ -32,10 +38,12 @@ export default function SupportSheet({
         `${t('support.emailIntro')}\n\n${message}\n\n${t('support.userEmail')} : ${userEmail}`,
       )
       window.location.href = `mailto:support@ringsatranarvi.se?subject=${subject}&body=${body}`
+      setFeedbackTone('success')
       setFeedback(t('support.sentSuccess'))
       setMessage('')
     } catch (err) {
       console.error('Support submit failed', err)
+      setFeedbackTone('danger')
       setFeedback(t('support.sentError'))
     }
   }
@@ -45,7 +53,10 @@ export default function SupportSheet({
       open={open}
       title={t('support.title')}
       subtitle={t('support.subtitle')}
-      onClose={() => setOpen(false)}
+      icon={<ArrowLeft size={20} strokeWidth={2.4} />}
+      onBack={onBack}
+      backLabel={t('menu.events.directory.back')}
+      onClose={onClose}
       height="large"
       motion="instant"
       footer={
@@ -85,7 +96,11 @@ export default function SupportSheet({
           </AppSheetSectionText>
 
           <div className="mt-3">
+            <label htmlFor="support-message" className="sr-only">
+              {t('support.formTitle')}
+            </label>
             <textarea
+              id="support-message"
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               placeholder={t('support.placeholder') || ''}
@@ -95,11 +110,7 @@ export default function SupportSheet({
 
           {feedback ? (
             <div className="mt-3">
-              <AppSheetNotice
-                tone={feedback.includes('✓') ? 'success' : 'danger'}
-              >
-                {feedback}
-              </AppSheetNotice>
+              <AppSheetNotice tone={feedbackTone}>{feedback}</AppSheetNotice>
             </div>
           ) : null}
         </section>
