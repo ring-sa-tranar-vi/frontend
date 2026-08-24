@@ -198,11 +198,11 @@ We deploy the React application to **Firebase Hosting** using GitHub Actions. Be
 
 All deployments are triggered by merging code into the `main` branch.
 
-1.  **Staging Build & Deploy:** \* The pipeline builds the React app injecting the Staging API URL (`VITE_API_URL`).
+1.  **Staging Build & Deploy:** The pipeline builds the React app injecting the Staging API URL (`VITE_API_URL`), Clerk Publishable Key (`VITE_CLERK_PUBLISHABLE_KEY`) and the Faro URL (`VITE_FARO_URL`).
     - The compiled code is deployed to our Staging Firebase Hosting site using Firebase Deploy Targets.
 2.  **Production Build & Deploy:**
     - The pipeline pauses and waits for manual approval via GitHub Environments.
-    - Once approved, the pipeline runs a _fresh build_, injecting the Production API URL.
+    - Once approved, the pipeline runs a _fresh build_, injecting the Production API URL, Clerk Publishable Key and the Faro URL.
     - The compiled code is deployed to our Production Firebase Hosting site.
 
 ### Firebase Configuration (`firebase.json`)
