@@ -78,6 +78,7 @@ export default function useCurrentWorkout() {
     data: workouts = [],
     isLoading,
     isError,
+    isFetched,
   } = useQuery<Workout[]>({
     queryKey: ['workouts'],
     queryFn: async () => await getJson<Workout[]>(`/api/workouts`),
@@ -227,6 +228,7 @@ export default function useCurrentWorkout() {
     workouts,
     isLoading,
     isError,
+    isFetched,
     refetchRecommendedWorkoutId,
     recommendedWorkoutReasoning,
     alreadyCompletedToday,
