@@ -14,7 +14,7 @@ export default function useAppStartup() {
   const { userId } = useAuth()
   const { isProfileSyncReady, profile } = useCreateCurrentUserProfile()
   const { isFetched: isTrainersFetched } = useTrainers()
-  const { isFetched: isActivitySummaryFetched } = useActivitySummary(true)
+  const { isFetched: isActivitySummaryFetched } = useActivitySummary(!!userId)
   const { isFetched: isWorkoutsFetched } = useCurrentWorkout()
 
   useEffect(() => {
@@ -29,11 +29,14 @@ export default function useAppStartup() {
     }
   }, [profile])
 
+  const isTrainsersReady = !!userId ? isTrainersFetched : true
+  const isActivitySummaryReady = !!userId ? isActivitySummaryFetched : true
+
   return {
     isAppReady:
       isProfileSyncReady &&
-      isTrainersFetched &&
-      isActivitySummaryFetched &&
+      isTrainsersReady &&
+      isActivitySummaryReady &&
       isWorkoutsFetched &&
       isStorageSyncComplete,
   }
