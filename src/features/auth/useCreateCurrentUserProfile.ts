@@ -1,6 +1,6 @@
 import { useAuth, useUser } from '@clerk/react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { createCurrentUser } from '../../lib/auth/clerkUser'
 
 type ProfileResponse = {
@@ -12,6 +12,8 @@ type ProfileResponse = {
 }
 
 export function useCreateCurrentUserProfile() {
+  const [isSyncComplete, setIsSyncComplete] = useState(false)
+  const [profile, setProfile] = useState<ProfileResponse | null>(null)
   const { isLoaded, isSignedIn, getToken, sessionClaims, userId } = useAuth()
   const { isLoaded: isUserLoaded, user } = useUser()
   const queryClient = useQueryClient()
@@ -23,57 +25,71 @@ export function useCreateCurrentUserProfile() {
         queryClient.setQueryData(['myProfile'], profile)
       }
 
-      queryClient.invalidateQueries({
-        queryKey: ['myProfile'],
-        refetchType: 'active',
-      })
+      // queryClient.invalidateQueries({
+      //   queryKey: ['myProfile'],
+      //   refetchType: 'active',
+      // })
     },
   })
 
   const clerkUserId = sessionClaims?.sub ?? userId ?? null
 
   useEffect(() => {
-    if (!isLoaded || !isUserLoaded || !isSignedIn || !clerkUserId) {
+    if (!isLoaded || !isUserLoaded) {
+      return
+    }
+
+    if (!isSignedIn || !clerkUserId) {
+      setIsSyncComplete(true)
       return
     }
 
     if (lastSyncedUserIdRef.current === clerkUserId) {
+      setIsSyncComplete(true)
       return
     }
 
     lastSyncedUserIdRef.current = clerkUserId
 
     void (async () => {
-      const token = await getToken()
-      const claims = (sessionClaims ?? {}) as Record<string, unknown>
-      const claimName = [
-        'name',
-        'full_name',
-        'given_name',
-        'preferred_username',
-        'email',
-      ]
-        .map((key) => claims[key])
-        .find(
-          (value) => typeof value === 'string' && value.trim().length > 0,
-        ) as string | undefined
+      try {
+        const token = await getToken()
+        const claims = (sessionClaims ?? {}) as Record<string, unknown>
+        const claimName = [
+          'name',
+          'full_name',
+          'given_name',
+          'preferred_username',
+          'email',
+        ]
+          .map((key) => claims[key])
+          .find(
+            (value) => typeof value === 'string' && value.trim().length > 0,
+          ) as string | undefined
 
-      const displayName =
-        user?.fullName?.trim() ||
-        [user?.firstName, user?.lastName].filter(Boolean).join(' ').trim() ||
-        user?.username?.trim() ||
-        user?.primaryEmailAddress?.emailAddress?.trim() ||
-        claimName?.trim() ||
-        ''
+        const displayName =
+          user?.fullName?.trim() ||
+          [user?.firstName, user?.lastName].filter(Boolean).join(' ').trim() ||
+          user?.username?.trim() ||
+          user?.primaryEmailAddress?.emailAddress?.trim() ||
+          claimName?.trim() ||
+          ''
 
-      if (!token) {
-        return
+        if (!token) {
+          return
+        }
+
+        const profile = await createUserMutation.mutateAsync({
+          token,
+          displayName,
+        })
+        setProfile(profile)
+      } catch (error) {
+        console.error('Failed to sync user profile with backend')
+      } finally {
+        setIsSyncComplete(true)
       }
-
-      await createUserMutation.mutateAsync({ token, displayName })
-    })().catch(() => {
-      console.error('Failed to sync user profile with backend')
-    })
+    })()
   }, [
     clerkUserId,
     createUserMutation,
@@ -85,4 +101,9 @@ export function useCreateCurrentUserProfile() {
     sessionClaims,
     user,
   ])
+
+  return {
+    isProfileSyncReady: isLoaded && isUserLoaded && isSyncComplete,
+    profile,
+  }
 }
