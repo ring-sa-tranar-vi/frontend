@@ -1,6 +1,6 @@
 import { useAuth } from '@clerk/react'
 import { useQuery } from '@tanstack/react-query'
-import { fetchTrainers, fetchTrainersWithToken } from '../api/trainers'
+import { fetchTrainersWithToken } from '../api/trainers'
 
 export const useTrainers = () => {
   const { getToken } = useAuth()
@@ -9,8 +9,9 @@ export const useTrainers = () => {
     queryKey: ['trainers'],
     queryFn: async () => {
       const token = await getToken()
+
       if (!token) {
-        return await fetchTrainers()
+        throw new Error('Missing Clerk token')
       }
 
       return await fetchTrainersWithToken(token)
