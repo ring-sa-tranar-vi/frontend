@@ -1,18 +1,11 @@
 import { Outlet, useRouterState } from '@tanstack/react-router'
 import AppStageFrame from './AppStageFrame'
-import useAppStartup from '../hooks/useAppStartup'
-import SplashScreen from './SpashScreen'
 
 export default function RootLayout() {
-  const { isAppReady } = useAppStartup()
   const pathname = useRouterState({
     select: (state) => state.location.pathname,
   })
   const isAdminRoute = pathname === '/admin' || pathname.startsWith('/admin/')
-
-  if (!isAppReady) {
-    return <SplashScreen />
-  }
 
   if (isAdminRoute) {
     return (
