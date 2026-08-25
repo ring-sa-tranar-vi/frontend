@@ -1,14 +1,11 @@
-import { useAuth } from '@clerk/react'
-import { useQueryClient } from '@tanstack/react-query'
 import { Outlet, useRouterState } from '@tanstack/react-router'
-import { useEffect } from 'react'
 import { useCreateCurrentUserProfile } from '../features/auth/useCreateCurrentUserProfile'
 import AppStageFrame from './AppStageFrame'
-import { fetchTrainersWithToken } from '../api/trainers'
+import useAppStartup from '../hooks/useAppStartup'
+import SplashScreen from './SpashScreen'
 
 export default function RootLayout() {
-  const queryClient = useQueryClient()
-  const { getToken, isLoaded, isSignedIn } = useAuth()
+  const { isAppReady } = useAppStartup()
   const pathname = useRouterState({
     select: (state) => state.location.pathname,
   })
@@ -16,24 +13,9 @@ export default function RootLayout() {
 
   useCreateCurrentUserProfile()
 
-  useEffect(() => {
-    if (!isLoaded || !isSignedIn) {
-      return
-    }
-
-    void (async () => {
-      const token = await getToken()
-
-      if (!token) {
-        return
-      }
-
-      await queryClient.prefetchQuery({
-        queryKey: ['trainers'],
-        queryFn: () => fetchTrainersWithToken(token),
-      })
-    })()
-  }, [getToken, isLoaded, isSignedIn, queryClient])
+  if (!isAppReady) {
+    return <SplashScreen />
+  }
 
   if (isAdminRoute) {
     return (
