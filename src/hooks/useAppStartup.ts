@@ -27,10 +27,10 @@ export default function useAppStartup() {
     } else {
       setIsStorageSyncComplete(true)
     }
-  }, [profile])
+  }, [profile, userId])
 
-  const isTrainsersReady = !!userId ? isTrainersFetched : true
-  const isActivitySummaryReady = !!userId ? isActivitySummaryFetched : true
+  const isTrainsersReady = userId ? isTrainersFetched : true
+  const isActivitySummaryReady = userId ? isActivitySummaryFetched : true
 
   return {
     isAppReady:

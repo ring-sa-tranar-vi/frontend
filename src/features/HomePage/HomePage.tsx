@@ -16,6 +16,8 @@ import {
 } from './trainerPreference'
 import useCurrentUser from '../../hooks/useCurrentUser'
 import { useCurrentTrainer } from '../../hooks/useCurrentTrainer'
+import useAppStartup from '../../hooks/useAppStartup'
+import SplashScreen from '../../components/SpashScreen'
 
 const assets = {
   background: '/start-page/background.webp',
@@ -81,6 +83,7 @@ export default function HomePage() {
   const { getToken, isLoaded, isSignedIn, userId } = useAuth()
   const { user: profile } = useCurrentUser()
   const { currentWorkout: workout } = useCurrentWorkout()
+  const { isAppReady } = useAppStartup()
 
   const {
     currentWorkoutId,
@@ -179,6 +182,10 @@ export default function HomePage() {
     setActiveAlreadyCompleted(alreadyCompletedToday)
     setActiveWorkoutId(selectedWorkoutId)
     setIsSessionActive(true)
+  }
+
+  if (!isAppReady) {
+    return <SplashScreen />
   }
 
   if (isSessionActive && trainer && activeWorkoutId) {
