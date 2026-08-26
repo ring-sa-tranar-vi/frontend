@@ -102,13 +102,6 @@ export function useCoachSession(
     ],
   )
 
-  useEffect(() => {
-    console.log('Instructions', session.instructions)
-  }, [session.instructions])
-  useEffect(() => {
-    console.log('Guidance', session.guidance)
-  }, [session.guidance])
-
   const [step, setStep] = useState<CoachSessionStep>('idle')
   const [error, setError] = useState<string | null>(null)
   const [audioCapturing, setAudioCapturing] = useState(false)
@@ -456,7 +449,6 @@ export function useCoachSession(
   const startSession = useCallback(async () => {
     if (hasStartedRef.current) return
 
-    console.log('playing ringback...')
     startRingback()
 
     startedAtRef.current = performance.now()
@@ -490,9 +482,9 @@ export function useCoachSession(
       hasStartedRef.current = false
       return
     }
-    console.log('sleep 1s before starting gym ambience...')
+
     await sleep(1000)
-    console.log('sleep done, starting gym ambience...')
+
     stopRingback()
 
     startGymAmbience(session.trainer?.ambience)
@@ -560,9 +552,10 @@ export function useCoachSession(
         )
         return
       }
+
       await updateProfile({ intensityLevel })
       const { id: newWorkoutId } = await refetchRecommendedWorkoutId()
-      console.log('New recommended workout ID:', newWorkoutId)
+
       // Find the workout from your workouts list using newWorkoutId
       const newWorkout = workouts?.find((w) => w.id === newWorkoutId)
       if (!newWorkout || !newWorkout.instructions || !newWorkout.guidance) {

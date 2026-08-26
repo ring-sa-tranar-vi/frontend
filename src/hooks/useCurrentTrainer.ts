@@ -1,5 +1,4 @@
 import { useQuery } from '@tanstack/react-query'
-import { useEffect } from 'react'
 import type { Trainer } from '../features/session/types'
 import { getJson } from '../lib/api/fetcher'
 
@@ -21,16 +20,6 @@ export const useCurrentTrainer = (trainerId: string) => {
   })
   const voice = (trainer?.voice as string | undefined) ?? 'Kore'
   const coachPrompt = trainer?.prompt ?? null
-
-  useEffect(() => {
-    console.log('[useCurrentTrainer] state', {
-      trainer,
-      voice,
-      coachPrompt,
-      isTrainerLoading,
-      isTrainerError,
-    })
-  }, [trainer, voice, coachPrompt, isTrainerLoading, isTrainerError])
 
   return {
     trainer,

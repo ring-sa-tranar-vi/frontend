@@ -33,12 +33,6 @@ export function SessionPage({
 
   const isLoading = isProfileLoading || isCurrentWorkoutLoading
 
-  useEffect(() => {
-    console.log('SessionPage state', {
-      user,
-      workout,
-    })
-  }, [user, workout])
   const isError = isProfileError || isCurrentWorkoutError
   const session: CoachCallSession = {
     workoutId: workout?.id ?? '',

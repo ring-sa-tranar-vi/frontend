@@ -167,10 +167,6 @@ export default function HomePage() {
   }
 
   async function handleStartCall() {
-    console.log(
-      '[HomePage] Trying to start session with workout ID:',
-      selectedWorkoutId,
-    )
     if (!selectedWorkoutId && !alreadyCompletedToday) {
       console.warn(
         '[HomePage] No workout ID available to start session. Aborting.',
