@@ -38,8 +38,6 @@ export function useVoicePlayer() {
       return
     }
 
-    console.log('Playing voice for trainer', id, 'URL:', url)
-
     // Stop existing
     stop()
 

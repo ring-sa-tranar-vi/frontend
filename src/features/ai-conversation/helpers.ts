@@ -174,7 +174,7 @@ export async function waitForAIToFinishSpeaking(
       state.interrupted
 
     const isAudioSilent = remainingAudio <= 0
-    console.log('remainingAudio:', remainingAudio)
+
     if (isStreamTerminal && isAudioSilent) {
       return true
     }

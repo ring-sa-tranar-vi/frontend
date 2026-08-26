@@ -200,27 +200,6 @@ export default function useCurrentWorkout() {
     [refetchRecommendation],
   )
 
-  useEffect(() => {
-    if (DEBUG) {
-      console.log(
-        '[useCurrentWorkout] shouldFetchRecommendation',
-        shouldFetchRecommendation,
-      )
-    }
-  }, [shouldFetchRecommendation])
-
-  useEffect(() => {
-    if (DEBUG) {
-      console.debug('[useCurrentWorkout] state', {
-        userId,
-        currentWorkoutId,
-        currentWorkout,
-        recommendedWorkoutReasoning,
-        workouts,
-      })
-    }
-  }, [userId, currentWorkoutId, recommendedWorkoutReasoning, workouts])
-
   return {
     currentWorkoutId,
     currentWorkout,
